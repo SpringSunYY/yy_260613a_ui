@@ -1,0 +1,129 @@
+<script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { InfraCodegenApi } from '#/api/infra/codegen';
+
+import { reactive } from 'vue';
+
+import { useVbenModal } from '@vben/common-ui';
+
+import { message } from 'ant-design-vue';
+
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { createCodegenList, getSchemaTableList } from '#/api/infra/codegen';
+import { $t } from '#/locales';
+import {
+  useImportTableColumns,
+  useImportTableFormSchema,
+} from '#/views/infra/codegen/data';
+
+/** 定义组件事件 */
+const emit = defineEmits<{
+  (e: 'success'): void;
+}>();
+
+const formData = reactive<InfraCodegenApi.CodegenCreateListReqVO>({
+  dataSourceConfigId: 0,
+  tableNames: [], // 已选择的表列表
+});
+
+/** 表格实例 */
+const [Grid] = useVbenVxeGrid({
+  formOptions: {
+    schema: useImportTableFormSchema(),
+    submitOnChange: true,
+    labelWidth: 80,
+  },
+  gridOptions: {
+    columns: useImportTableColumns(),
+    height: 600,
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          if (formValues.dataSourceConfigId === undefined) {
+            return [];
+          }
+          formData.dataSourceConfigId = formValues.dataSourceConfigId;
+          return await getSchemaTableList({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'name',
+    },
+    toolbarConfig: {
+      enabled: false,
+    },
+    checkboxConfig: {
+      highlight: true,
+      range: true,
+    },
+    pagerConfig: {
+      enabled: false,
+    },
+  } as VxeTableGridOptions<InfraCodegenApi.DatabaseTable>,
+  gridEvents: {
+    checkboxChange: ({
+      records,
+    }: {
+      records: InfraCodegenApi.DatabaseTable[];
+    }) => {
+      formData.tableNames = records.map((item) => item.name);
+    },
+    checkboxAll: ({
+      records,
+    }: {
+      records: InfraCodegenApi.DatabaseTable[];
+    }) => {
+      formData.tableNames = records.map((item) => item.name);
+    },
+  },
+});
+
+/** 模态框实例 */
+const [Modal, modalApi] = useVbenModal({
+  title: $t('infra.codegen.action.create'),
+  class: 'w-1/2',
+  async onConfirm() {
+    // 1.1 获取表单值
+    if (formData?.dataSourceConfigId === undefined) {
+      message.error($t('infra.codegen.message.selectDataSource'));
+      return;
+    }
+    // 1.2 校验是否选择了表
+    if (formData.tableNames.length === 0) {
+      message.error($t('infra.codegen.message.selectTables'));
+      return;
+    }
+    modalApi.lock();
+    // 2. 提交请求
+    const hideLoading = message.loading({
+      content: () => $t('infra.codegen.message.importing'),
+      key: 'action_key_msg',
+    });
+    try {
+      await createCodegenList(formData);
+      // 关闭并提示
+      await modalApi.close();
+      emit('success');
+      message.success({
+        content: $t('ui.actionMessage.operationSuccess'),
+        key: 'action_key_msg',
+      });
+    } finally {
+      hideLoading();
+      modalApi.unlock();
+    }
+  },
+});
+</script>
+
+<template>
+  <Modal>
+    <Grid />
+  </Modal>
+</template>

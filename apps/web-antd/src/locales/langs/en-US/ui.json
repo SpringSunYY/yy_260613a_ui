@@ -1,0 +1,412 @@
+{
+  "formRules": {
+    "required": "Please enter {0}",
+    "selectRequired": "Please select {0}",
+    "minLength": "{0} must be at least {1} characters",
+    "maxLength": "{0} can be at most {1} characters",
+    "alreadyExists": "{0} `{1}` already exists",
+    "startWith": "{0} must start with `{1}`",
+    "invalidURL": "Please input a valid URL",
+    "mobile": "Please input a valid {0}"
+  },
+  "actionTitle": {
+    "copy": "Copy {0}",
+    "edit": "Modify {0}",
+    "create": "Create {0}",
+    "delete": "Delete {0}",
+    "deleteBatch": "Delete Batch",
+    "detail": "Detail {0}",
+    "import": "Import {0}",
+    "importTemplate": "Import Template {0}",
+    "export": "Export",
+    "updateAllMenu": "update All Menu",
+    "clearCache": "Clear Cache {0}"
+  },
+  "actionName": {
+    "searchDept": "Search department"
+  },
+  "actionMessage": {
+    "deleteConfirm": "Are you sure to delete {0}?",
+    "deleteCascadeConfirm": "Are you sure to delete {0}?",
+    "deleting": "Deleting {0} ...",
+    "deleteSuccess": "{0} deleted successfully",
+    "operationSuccess": "Operation succeeded",
+    "operationFailed": "Operation failed",
+    "submitting": "Submitting {0} ...",
+    "submitSuccess": "{0} submitted successfully",
+    "downloading": "Downloading ...",
+    "exporting": "Exporting ...",
+    "importing": "Importing {0} ...",
+    "updating": "Updating {0}...",
+    "cascadeDelete": "Cascade Delete",
+    "cascadeDeleteTip": "When enabled, all child data will be deleted together",
+    "cascadeDeleteTipOff": "When disabled, only this item is deleted, child data remains",
+    "externalCloseConfirm": "Are you sure you want to exit?",
+    "externalCloseTip": "Your data will be lost after closing",
+    "copySuccess": "Copied successfully",
+    "grant": "Grant Menu Success",
+    "updateConfirm": "Confirm Update?",
+    "selectRequired": "Please select {0}",
+    "processing": "Processing...",
+    "updateSuccess": "{0} updated successfully"
+  },
+  "placeholder": {
+    "input": "Please enter {0}",
+    "select": "Please select {0}",
+    "date": "Please select {0}",
+    "autoGenerate": "Auto generated on save",
+    "accountCount": "{0} accounts"
+  },
+  "validate": {
+    "email": "Please enter a valid email address"
+  },
+  "color": {
+    "primary": "Primary",
+    "success": "Success",
+    "default": "Default",
+    "warning": "Warning",
+    "danger": "Danger"
+  },
+  "captcha": {
+    "title": "Please complete the security verification",
+    "sliderSuccessText": "Passed",
+    "sliderDefaultText": "Slide and drag",
+    "sliderRotateDefaultTip": "Click picture to refresh",
+    "sliderRotateFailTip": "Validation failed",
+    "sliderRotateSuccessTip": "Validation successful, time {0} seconds",
+    "alt": "Supports img tag src attribute value",
+    "refreshAriaLabel": "Refresh captcha",
+    "confirmAriaLabel": "Confirm selection",
+    "confirm": "Confirm",
+    "pointAriaLabel": "Click point",
+    "clickInOrder": "Please click in order"
+  },
+  "iconPicker": {
+    "placeholder": "Select an icon",
+    "search": "Search icon..."
+  },
+  "jsonViewer": {
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "fallback": {
+    "pageNotFound": "Oops! Page Not Found",
+    "pageNotFoundDesc": "Sorry, we couldn't find the page you were looking for.",
+    "forbidden": "Oops! Access Denied",
+    "forbiddenDesc": "Sorry, but you don't have permission to access this page.",
+    "internalError": "Oops! Something Went Wrong",
+    "internalErrorDesc": "Sorry, but the server encountered an error.",
+    "offline": "Offline Page",
+    "offlineError": "Oops! Network Error",
+    "offlineErrorDesc": "Sorry, can't connect to the internet. Check your connection.",
+    "comingSoon": "Coming Soon",
+    "http": {
+      "requestTimeout": "The request timed out. Please try again later.",
+      "networkError": "A network error occurred. Please check your internet connection and try again.",
+      "badRequest": "Bad Request. Please check your input and try again.",
+      "unauthorized": "Unauthorized. Please log in to continue.",
+      "forbidden": "Forbidden. You do not have permission to access this resource.",
+      "notFound": "Not Found. The requested resource could not be found.",
+      "internalServerError": "Internal Server Error. Something went wrong on our end. Please try again later."
+    }
+  },
+  "widgets": {
+    "document": "Document",
+    "profile": "Profile",
+    "profile.menu": "Profile",
+    "qa": "Q&A",
+    "logoutTip": "Do you want to logout?",
+    "viewAll": "View All Messages",
+    "notifications": "Notifications",
+    "markAllAsRead": "Make All as Read",
+    "clearNotifications": "Clear",
+    "checkUpdatesTitle": "New Version Available",
+    "checkUpdatesDescription": "Click to refresh and get the latest version",
+    "search": {
+      "title": "Search",
+      "searchNavigate": "Search Navigation",
+      "select": "Select",
+      "navigate": "Navigate",
+      "close": "Close",
+      "noResults": "No Search Results Found",
+      "noRecent": "No Search History",
+      "recent": "Search History"
+    },
+    "lockScreen": {
+      "title": "Lock Screen",
+      "screenButton": "Locking",
+      "placeholder": "Please enter password",
+      "unlock": "Click to unlock",
+      "backToLogin": "Back to login",
+      "entry": "Enter the system"
+    }
+  },
+  "upload": {
+    "upload": "Upload",
+    "imgUpload": "ImageUpload",
+    "accept": "Support {0} format",
+    "acceptUpload": "Only upload files in {0} format",
+    "maxSize": "A single file does not exceed {0}MB",
+    "minSize": "A single file no smaller than {0}MB",
+    "maxSizeMultiple": "Only upload files up to {0}MB!",
+    "minSizeMultiple": "Only upload files no smaller than {0}MB!",
+    "maxNumber": "Only upload up to {0} files",
+    "uploadSuccess": "Upload successfully",
+    "fileUpload": "File Upload"
+  },
+  "cropper": {
+    "selectImage": "Select Image",
+    "uploadSuccess": "Uploaded success!",
+    "imageTooBig": "Image too big",
+    "noImageSelected": "No image selected",
+    "modalTitle": "Avatar upload",
+    "okText": "Confirm and upload",
+    "btn_reset": "Reset",
+    "btn_rotate_left": "Counterclockwise rotation",
+    "btn_rotate_right": "Clockwise rotation",
+    "btn_scale_x": "Flip horizontal",
+    "btn_scale_y": "Flip vertical",
+    "btn_zoom_in": "Zoom in",
+    "btn_zoom_out": "Zoom out",
+    "preview": "Preview"
+  },
+  "filePreview": {
+    "viewFile": "View File"
+  },
+  "link": {
+    "view": "View",
+    "openLink": "Open Link",
+    "copyLink": "Copy Link",
+    "copySuccess": "Copied"
+  },
+  "json": {
+    "view": "View",
+    "copyJson": "Copy JSON",
+    "copySuccess": "Copied"
+  },
+  "selectToString": {
+    "placeholder": "Please select"
+  },
+  "treeRoot": "Top Level {0}",
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "noData": "No Data",
+    "selectFile": "Select File",
+    "downloadTemplate": "Download Template",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "reset": "Reset",
+    "submit": "Submit",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "prompt": "Prompt"
+  },
+  "menu": {
+    "clearCache": "Clear Cache"
+  },
+  "alert": {
+    "clearCacheConfirm": "Are you sure you want to clear all language caches?",
+    "clearCacheSuccess": "Cleared {count} cache entries. Page will refresh in 1 second"
+  },
+  "time": {
+    "day": "day",
+    "hour": "hour",
+    "minute": "minute",
+    "second": "second"
+  },
+  "tableToolbar": {
+    "search": "Search",
+    "refresh": "Refresh",
+    "fullscreen": "Fullscreen",
+    "restore": "Restore"
+  },
+  "amount": {
+    "yuan": "yuan"
+  },
+  "formCreate": {
+    "labels": {
+      "tinymce": "Rich Text",
+      "fileUpload": "File Upload",
+      "imageUpload": "Image Upload",
+      "imagesUpload": "Multiple Images",
+      "userSelect": "User Selector",
+      "deptSelect": "Department Selector",
+      "dictSelect": "Dict Selector",
+      "apiSelect": "API Selector",
+      "systemMenuTitle": "System Fields",
+      "areaSelect": "Area Selector",
+      "iframe": "Web Iframe"
+    },
+    "props": {
+      "required": "Required",
+      "height": "Height",
+      "readonly": "Readonly",
+      "showImageUpload": "Show Image Upload",
+      "showFileUpload": "Show File Upload",
+      "fileAccept": "File Upload Types",
+      "fileMaxSize": "File Upload Size Limit (MB)",
+      "imageAccept": "Image Upload Types",
+      "imageMaxSize": "Image Upload Size Limit (MB)",
+      "fileType": "File Type",
+      "moduleType": "Module Type",
+      "autoUpload": "Auto Upload",
+      "drag": "Drag Upload",
+      "isShowTip": "Show Tip",
+      "fileSize": "Size Limit (MB)",
+      "limit": "Count Limit",
+      "disabled": "Disabled",
+      "imageType": "Image Type",
+      "componentHeight": "Component Height",
+      "componentWidth": "Component Width",
+      "borderradius": "Border Radius",
+      "showDeleteButton": "Show Delete Button",
+      "showBtnText": "Show Button Text",
+      "dictType": "Dict Type",
+      "valueType": "Dict Value Type",
+      "clearable": "Clearable",
+      "placeholder": "Placeholder",
+      "url": "URL",
+      "level": "Selection Level",
+      "levelInfo": "Restrict the selectable area depth",
+      "areaLevelProvince": "Province",
+      "areaLevelCity": "Province / City",
+      "areaLevelDistrict": "Province / City / District",
+      "showAllLevels": "Show Full Path",
+      "showAllLevelsInfo": "Whether to display the full selected path in the input",
+      "separator": "Separator",
+      "separatorInfo": "Separator between selected options",
+      "iframeHeight": "Iframe Height",
+      "iframeHeightInfo": "Supports units like px, %, vh",
+      "iframeWidth": "Iframe Width",
+      "iframeWidthInfo": "Supports units like px, %, vw",
+      "loading": "Loading Mode",
+      "loadingLazy": "Lazy",
+      "loadingEager": "Eager",
+      "allowfullscreen": "Allow Fullscreen",
+      "sandbox": "Sandbox Attribute",
+      "sandboxInfo": "Security sandbox restrictions, e.g. allow-scripts allow-same-origin"
+    },
+    "component": {
+      "areaSelectPlaceholder": "Please select province/city/district",
+      "iframeEmpty": "Please configure the URL in the property panel on the right"
+    }
+  },
+  "none": "None",
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "codeLogin": "Code Login",
+    "qrcodeLogin": "Qr Code Login",
+    "forgetPassword": "Forget Password",
+    "codeSentTo": "Code sent to {0}",
+    "sendingCode": "Sending..."
+  },
+  "dashboard": {
+    "title.menu": "Dashboard",
+    "analytics.menu": "Analytics",
+    "workspace.menu": "Workspace"
+  },
+  "action": {
+    "more": "More"
+  },
+  "tenant": {
+    "placeholder": "Please select tenant"
+  },
+  "oauth2": {
+    "sso": "OAuth 2.0 (SSO Single Sign-On)"
+  },
+  "rangePicker": {
+    "today": "Today",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "yesterday": "Yesterday",
+    "lastMonth": "Last Month",
+    "last3Months": "Last 3 Months",
+    "lastYear": "Last Year",
+    "last3Years": "Last 3 Years",
+    "beginTime": "Begin Time",
+    "endTime": "End Time"
+  },
+  "cron": {
+    "generator": "Generator",
+    "custom": "Custom",
+    "modalTitle": "Cron Expression Builder",
+    "manualPlaceholder": "Enter cron expression directly, e.g.: 0 0 0 * * ?",
+    "currentExpr": "Current expression: ",
+    "type": "Type",
+    "range": "Range",
+    "interval": "Interval",
+    "appoint": "Specific",
+    "lastDay": "Last day of month",
+    "unspecified": "Unspecified",
+    "lastWeek": "Last week of month",
+    "from": "Start, every ",
+    "unitSecond": "sec",
+    "unitMinute": "min",
+    "unitHour": "hr",
+    "unitDay": "day(s)",
+    "unitMonth": "month(s)",
+    "unitYear": "year(s)",
+    "theNthWeek": "On the {0} week, weekday:",
+    "lastWeekday": "Last weekday",
+    "ignore": "Ignore",
+    "nextTimes": "Next 5 run times:",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "expressionError": "Invalid cron expression, converted to default",
+    "second": "Second",
+    "minute": "Minute",
+    "hour": "Hour",
+    "day": "Day",
+    "month": "Month",
+    "week": "Week",
+    "year": "Year",
+    "any": "Any",
+    "presets": {
+      "everySecond": "Every second",
+      "every5Seconds": "Every 5 sec",
+      "every10Seconds": "Every 10 sec",
+      "every30Seconds": "Every 30 sec",
+      "everyMinute": "Every minute",
+      "every5Minutes": "Every 5 min",
+      "every10Minutes": "Every 10 min",
+      "every30Minutes": "Every 30 min",
+      "everyHour": "Every hour",
+      "every2Hours": "Every 2 hours",
+      "daily0": "Daily at midnight",
+      "daily1": "Daily at 1 AM",
+      "daily2": "Daily at 2 AM",
+      "daily5": "Daily at 5 AM",
+      "daily8": "Daily at 8 AM",
+      "daily12": "Daily at noon",
+      "daily18": "Daily at 6 PM",
+      "daily2359": "Daily at 23:59",
+      "weeklyMon1": "Every Monday at 1 AM",
+      "weeklyFri18": "Every Friday at 6 PM",
+      "weeklyMon0": "Every Monday at midnight",
+      "weeklySun0": "Every Sunday at midnight",
+      "weeklyMonWedFri0": "Mon/Wed/Fri at midnight",
+      "monthly1": "1st of month at midnight",
+      "monthly15": "15th of month at midnight",
+      "monthlyLast0": "Last day of month at midnight",
+      "monthlyLast23": "Last day of month at 23:00",
+      "monthly1And15": "1st and 15th of month",
+      "yearlyJan1": "Jan 1st at midnight"
+    }
+  },
+  "selectModal": {
+    "userSelectModal": {
+      "confirmText": "confirm",
+      "cancelText": "cancel",
+      "searchDept": "search department",
+      "total": "total {0} items",
+      "pleaseSelectUser": "please select a user",
+      "unselected": "unselected",
+      "selected": "selected"
+    },
+    "deptSelectModal": {
+      "title": "select department"
+    }
+  }
+}

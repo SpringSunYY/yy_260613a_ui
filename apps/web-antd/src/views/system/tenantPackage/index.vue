@@ -1,0 +1,166 @@
+<script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { SystemTenantPackageApi } from '#/api/system/tenantPackage';
+
+import {
+  DocAlert,
+  Page,
+  useVbenDrawer,
+  useVbenModelDrawer,
+} from '@vben/common-ui';
+
+import { message } from 'ant-design-vue';
+
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  deleteTenantPackage,
+  getTenantPackagePage,
+} from '#/api/system/tenantPackage';
+import { $t } from '#/locales';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
+import MenuAuthDrawer from './modules/MenuAuthDrawer.vue';
+
+/** 创建/修改的表单 */
+const [FormModelDrawer, formModelDrawerApi] = useVbenModelDrawer({
+  connectedComponent: Form,
+  destroyOnClose: true,
+  type: 'drawer',
+});
+
+/** 菜单授权 */
+const [DrawerModal, formDrawerApi] = useVbenDrawer({
+  connectedComponent: MenuAuthDrawer,
+  destroyOnClose: true,
+});
+
+/** 刷新表格 */
+function onRefresh() {
+  gridApi.query();
+}
+
+/** 创建租户套餐 */
+function handleCreate() {
+  formModelDrawerApi.setData(null).open();
+}
+
+/** 编辑租户套餐 */
+function handleEdit(row: SystemTenantPackageApi.TenantPackage) {
+  formModelDrawerApi.setData(row).open();
+}
+
+/** 菜单授权 */
+function handleGrant(row: SystemTenantPackageApi.TenantPackage) {
+  formDrawerApi.setData(row).open();
+}
+
+/** 删除租户套餐 */
+async function handleDelete(row: SystemTenantPackageApi.TenantPackage) {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.name]),
+    key: 'action_key_msg',
+  });
+  try {
+    await deleteTenantPackage(row.id as number);
+    message.success({
+      content: $t('ui.actionMessage.deleteSuccess', [row.name]),
+      key: 'action_key_msg',
+    });
+    onRefresh();
+  } finally {
+    hideLoading();
+  }
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useGridFormSchema(),
+  },
+  gridOptions: {
+    columns: useGridColumns(),
+    height: 'auto',
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          return await getTenantPackagePage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+    },
+    toolbarConfig: {
+      refresh: { code: 'query' },
+      search: true,
+    },
+  } as VxeTableGridOptions<SystemTenantPackageApi.TenantPackage>,
+});
+</script>
+
+<template>
+  <Page auto-content-height>
+    <template #doc>
+      <DocAlert
+        :title="$t('system.tenant.message.saas')"
+        url="https://doc.iocoder.cn/saas-tenant/"
+      />
+    </template>
+
+    <FormModelDrawer @success="onRefresh" />
+    <DrawerModal />
+    <Grid :table-title="$t('system.tenantPackage.list')">
+      <template #toolbar-tools>
+        <TableAction
+          :actions="[
+            {
+              label: $t('ui.actionTitle.create', [
+                $t('system.tenantPackage.tenantPackage'),
+              ]),
+              type: 'primary',
+              icon: ACTION_ICON.ADD,
+              auth: ['system:tenantPackage:create'],
+              onClick: handleCreate,
+            },
+          ]"
+        />
+      </template>
+      <template #actions="{ row }">
+        <TableAction
+          :actions="[
+            {
+              label: $t('common.edit'),
+              type: 'link',
+              icon: ACTION_ICON.EDIT,
+              auth: ['system:tenantPackage:update'],
+              onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: $t('common.grant'),
+              type: 'link',
+              icon: ACTION_ICON.GRANT,
+              auth: ['system:tenantPackage:update'],
+              onClick: handleGrant.bind(null, row),
+            },
+            {
+              label: $t('common.delete'),
+              type: 'link',
+              danger: true,
+              icon: ACTION_ICON.DELETE,
+              auth: ['system:tenantPackage:delete'],
+              popConfirm: {
+                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                confirm: handleDelete.bind(null, row),
+              },
+            },
+          ]"
+        />
+      </template>
+    </Grid>
+  </Page>
+</template>

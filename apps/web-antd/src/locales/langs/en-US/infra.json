@@ -1,0 +1,501 @@
+{
+  "area": {
+    "area": "area",
+    "list": "area list",
+    "field": {
+      "id": "id",
+      "name": "area name",
+      "parentCode": "parent code",
+      "postalCode": "postal code",
+      "level": "level",
+      "longitude": "longitude",
+      "latitude": "latitude",
+      "source": "data source",
+      "geoJson": "geo json",
+      "sortNum": "sort order",
+      "createTime": "create time",
+      "code": "area code",
+      "ip": "ip address",
+      "parentId": "parent code"
+    },
+    "help": {
+      "ip": "ip address is used to identify the area"
+    }
+  },
+  "file": {
+    "list": "file list",
+    "field": {
+      "id": "file id",
+      "configKey": "config",
+      "name": "file name",
+      "path": "file path",
+      "absolutePath": "absolute path",
+      "relativePath": "relative path",
+      "type": "file type",
+      "size": "file size",
+      "moduleType": "module",
+      "createTime": "create time",
+      "file": "file upload",
+      "uploadTime": "upload time"
+    },
+    "action": {
+      "create": "upload image"
+    },
+    "copyUrl": "copy link",
+    "message": {
+      "urlEmpty": "file url is empty",
+      "copyFailed": "copy failed"
+    },
+    "upload": {
+      "modalTitle": "upload image",
+      "dragText": "click or drag files to this area to upload",
+      "hint": "supports .jpg, .png, .gif, .webp image files",
+      "placeholder": "select a file to upload"
+    },
+    "sizeZero": "0 b",
+    "fileCount": "file count {0} items,file count size {1}"
+  },
+  "fileConfig": {
+    "fileConfig": "file config",
+    "list": "file config list",
+    "field": {
+      "id": "id",
+      "configKey": "config key",
+      "name": "config name",
+      "pathType": "path type",
+      "returnType": "return type",
+      "maxSize": "file size",
+      "fileType": "file type",
+      "storage": "storage",
+      "basePath": "base path",
+      "host": "host",
+      "port": "port",
+      "username": "username",
+      "password": "password",
+      "mode": "connection mode",
+      "endpoint": "endpoint",
+      "bucket": "storage bucket",
+      "accessKey": "access key",
+      "accessSecret": "access secret",
+      "enablePathStyleAccess": "path style",
+      "domain": "custom domain",
+      "remark": "remark",
+      "master": "primary config",
+      "createTime": "create time",
+      "config": "storage config"
+    },
+    "help": {
+      "pathType": "returned path type: absolute returns full path, relative returns relative path.",
+      "returnType": "backend return type: backend download means download on server first then return; return url means redirect with url.",
+      "maxSize": "max upload size in mb, e.g. 1024 means 1gb.",
+      "fileType": "allowed file types; all means no limit; e.g. png allows png only."
+    },
+    "option": {
+      "activeMode": "active mode",
+      "passiveMode": "passive mode",
+      "enable": "enable",
+      "disable": "disable"
+    },
+    "action": {
+      "test": "test"
+    },
+    "message": {
+      "master": "primary",
+      "confirmSetMaster": "set {0} as primary config?",
+      "testingUpload": "testing upload...",
+      "testSuccessTitle": "test upload succeeded",
+      "testSuccessContent": "open this file?",
+      "visit": "open"
+    }
+  },
+  "apiErrorLog": {
+    "list": "api error log list",
+    "field": {
+      "id": "log id",
+      "traceId": "trace id",
+      "applicationName": "application",
+      "userId": "user id",
+      "userType": "user type",
+      "userIp": "user ip",
+      "userIpAddr": "login ip",
+      "userAgent": "user agent",
+      "userBrowser": "browser",
+      "userPlatform": "platform",
+      "requestMethod": "request method",
+      "requestUrl": "request url",
+      "requestParams": "request params",
+      "exceptionTime": "exception time",
+      "exceptionName": "exception name",
+      "exceptionStackTrace": "exception stack",
+      "processStatus": "process status",
+      "processUserId": "processed by",
+      "processTime": "process time"
+    },
+    "action": {
+      "export": "export api error log",
+      "markAsDone": "mark as done",
+      "markAsIgnored": "mark as ignored",
+      "confirmMarkAsDone": "confirm mark as done?",
+      "confirmMarkAsIgnored": "confirm mark as ignored?"
+    },
+    "detail": {
+      "title": "api error log detail"
+    }
+  },
+  "apiAccessLog": {
+    "list": "api access log list",
+    "field": {
+      "id": "log id",
+      "traceId": "trace id",
+      "applicationName": "application",
+      "userId": "user id",
+      "userType": "user type",
+      "userIp": "user ip",
+      "userIpAddr": "login ip",
+      "userAgent": "user agent",
+      "userBrowser": "browser",
+      "userPlatform": "platform",
+      "requestMethod": "request method",
+      "requestUrl": "request url",
+      "requestParams": "request params",
+      "responseBody": "response body",
+      "beginTime": "request start time",
+      "duration": "duration",
+      "resultCode": "result code",
+      "operateModule": "operate module",
+      "operateName": "operate name",
+      "operateType": "operate type"
+    },
+    "action": {
+      "export": "export api access log"
+    },
+    "detail": {
+      "title": "api access log detail"
+    },
+    "result": {
+      "success": "success",
+      "fail": "fail"
+    },
+    "unit": {
+      "duration": "ms"
+    }
+  },
+  "dataSourceConfig": {
+    "dataSourceConfig": "data source",
+    "list": "data source list",
+    "field": {
+      "id": "id",
+      "name": "data source name",
+      "url": "data source url",
+      "username": "username",
+      "password": "password",
+      "createTime": "create time"
+    }
+  },
+  "config": {
+    "config": "config",
+    "list": "config list",
+    "field": {
+      "id": "id",
+      "category": "category",
+      "name": "config name",
+      "key": "config key",
+      "value": "config value",
+      "visible": "visible",
+      "type": "type",
+      "remark": "remark",
+      "createTime": "create time"
+    }
+  },
+  "i18nLocale": {
+    "i18nLocale": "locale",
+    "list": "locale list",
+    "field": {
+      "id": "id",
+      "localeName": "locale",
+      "locale": "locale code",
+      "orderNum": "order",
+      "localeStatus": "status",
+      "localeTarget": "target",
+      "isDefault": "default",
+      "remark": "remark",
+      "createTime": "create time"
+    },
+    "help": {
+      "localeTarget": "display target, e.g. common for all ends, admin only for backend. do not modify casually, sync messages if changed.",
+      "isDefault": "whether it is the default language; only one default is allowed per target."
+    }
+  },
+  "i18nMessage": {
+    "key": "i18n key",
+    "keyList": "i18n key list",
+    "messageLabel": "i18n message",
+    "messageList": "i18n message list",
+    "field": {
+      "id": "id",
+      "messageName": "name",
+      "messageKey": "key",
+      "isSystem": "built-in",
+      "moduleType": "module",
+      "useType": "use type",
+      "orderNum": "order",
+      "locale": "locale code",
+      "localeTarget": "target",
+      "messageContent": "message content",
+      "remark": "remark",
+      "createTime": "create time"
+    },
+    "import": {
+      "updateSupport": "update support",
+      "help": "Whether to update the internationalization key. If yes, the internationalization key will be updated. This is unrelated to the message itself. Regardless, the message will be updated based on the key and locale settings."
+    },
+    "message": {
+      "confirmDelete": "confirm delete i18n key {0}? deleting this key will also delete all language messages."
+    }
+  },
+  "job": {
+    "job": "scheduled job",
+    "list": "job list",
+    "log": "job log",
+    "log.menu": "job log",
+    "field": {
+      "id": "job id",
+      "name": "job name",
+      "handlerName": "handler name",
+      "handlerParam": "handler param",
+      "cronExpression": "cron expression",
+      "status": "status",
+      "retryCount": "retry count",
+      "retryInterval": "retry interval",
+      "monitorTimeout": "monitor timeout",
+      "nextTimes": "next run times",
+      "noNextTimes": "no next run times",
+      "monitorTimeoutUnit": "ms",
+      "monitorTimeoutDisabled": "disabled"
+    },
+    "action": {
+      "trigger": "trigger job",
+      "start": "start",
+      "pause": "pause",
+      "confirmTrigger": "trigger job {0} now?",
+      "confirmStart": "enable job {0}?",
+      "confirmPause": "disable job {0}?",
+      "detail": "job detail"
+    },
+    "detail": {
+      "title": "job detail"
+    }
+  },
+  "jobLog": {
+    "jobLog": "job log",
+    "list": "job log list",
+    "field": {
+      "id": "log id",
+      "jobId": "job id",
+      "handlerName": "handler name",
+      "handlerParam": "handler param",
+      "executeIndex": "execution #",
+      "beginTime": "start time",
+      "endTime": "end time",
+      "duration": "duration",
+      "durationUnit": "ms",
+      "status": "status",
+      "result": "result"
+    },
+    "detail": {
+      "title": "log detail"
+    }
+  },
+  "redis": {
+    "redis": "redis cache",
+    "overview": "redis overview",
+    "memoryUsage": "memory usage",
+    "commandStats": "command stats",
+    "field": {
+      "redisVersion": "redis version",
+      "redisMode": "run mode",
+      "standalone": "standalone",
+      "cluster": "cluster",
+      "port": "port",
+      "clients": "clients",
+      "uptimeInDays": "uptime (days)",
+      "usedMemory": "used memory",
+      "usedCpu": "used cpu",
+      "maxMemory": "max memory",
+      "aofEnabled": "aof enabled",
+      "rdbStatus": "rdb status",
+      "keyCount": "key count",
+      "networkTraffic": "network in/out",
+      "memoryUsageTitle": "memory usage",
+      "memoryConsume": "memory usage",
+      "commandTitle": "command stats"
+    },
+    "loadFailed": "failed to load redis data"
+  },
+  "webSocket": {
+    "docTitle": "websocket realtime communication",
+    "connection": "connection management",
+    "connectionStatus": "connection status",
+    "serverAddress": "server address",
+    "openConnection": "open connection",
+    "closeConnection": "close connection",
+    "messageSend": "message send",
+    "selectReceiver": "please select receiver",
+    "all": "all",
+    "inputMessage": "enter message to send...",
+    "sendMessage": "send message",
+    "messageRecord": "message record",
+    "messageCount": "{0} items",
+    "noMessage": "no message record",
+    "userId": "user id",
+    "connected": "connected",
+    "disconnected": "disconnected",
+    "group": "group",
+    "single": "single",
+    "system": "system",
+    "unknown": "unknown",
+    "message": {
+      "messageContentEmpty": "message content cannot be empty",
+      "unknownMessageType": "unknown message type: {0}",
+      "unhandledMessage": "unhandled message: {0}",
+      "messageError": "message error: {0}"
+    }
+  },
+  "skywalking": {
+    "docTitle": "service monitor"
+  },
+  "server": {
+    "docTitle": "service monitor"
+  },
+  "codegen": {
+    "list": "code generation list",
+    "menu": "code generation",
+    "field": {
+      "dataSource": "data source",
+      "tableName": "table name",
+      "tableComment": "table comment",
+      "entity": "entity",
+      "className": "class name",
+      "classComment": "class comment",
+      "author": "author",
+      "remark": "remark",
+      "createTime": "create time",
+      "updateTime": "update time",
+      "templateType": "template type",
+      "frontType": "front type",
+      "scene": "scene",
+      "parentMenu": "parent menu",
+      "topMenu": "top level",
+      "moduleName": "module name",
+      "businessName": "business name",
+      "isI18n": "internationalization",
+      "i18nModuleType": "i18n module",
+      "isImport": "import",
+      "popupType": "popup type",
+      "drawer": "drawer",
+      "modal": "modal",
+      "treeParentColumn": "parent column",
+      "treeNameColumn": "name column",
+      "masterTable": "master table",
+      "subJoinColumn": "sub table join column",
+      "joinRelation": "join relation",
+      "oneToMany": "one to many",
+      "oneToOne": "one to one",
+      "columnName": "column name",
+      "columnComment": "column comment",
+      "dataType": "data type",
+      "javaType": "java type",
+      "javaField": "java field",
+      "insert": "insert",
+      "list": "list",
+      "query": "query",
+      "sort": "sort",
+      "sortHelp": "set sorting rules for fields in the list. fields must be queryable to be effective",
+      "queryType": "query type",
+      "nullable": "nullable",
+      "displayType": "display type",
+      "dictType": "dict type",
+      "example": "example",
+      "htmlTypeInput": "input",
+      "htmlTypeInputNumber": "input number",
+      "htmlTypeTextarea": "textarea",
+      "htmlTypeSelect": "select",
+      "htmlTypeRadio": "radio",
+      "htmlTypeCheckbox": "checkbox",
+      "htmlTypeDatetime": "datetime",
+      "htmlTypeImageUpload": "image upload",
+      "htmlTypeFileUpload": "file upload",
+      "htmlTypeEditor": "editor"
+    },
+    "help": {
+      "parentMenu": "assign to a specified menu, e.g. system management",
+      "moduleName": "module name, i.e. first level directory, e.g. system, infra, tool",
+      "businessName": "business name, i.e. second level directory, e.g. user, permission, dict",
+      "className": "class name (capitalized), e.g. sysuser, sysmenu, sysdictdata",
+      "classComment": "used as class description, e.g. user",
+      "isI18n": "when enabled, internationalization configuration will be generated in the code",
+      "i18nModuleType": "select the module for i18n messages, used to generate corresponding i18n keys",
+      "isImport": "when enabled, excel import functionality will be generated in the code",
+      "popupType": "select the display mode for the detail page popup",
+      "treeParentColumn": "parent code field name for tree display, e.g. parent_id",
+      "treeNameColumn": "name field for tree node display, usually name",
+      "masterTable": "master table (parent table) name, e.g. system_user",
+      "subJoinColumn": "sub table join column, e.g. user_id",
+      "joinRelation": "join relationship between master and sub tables"
+    },
+    "action": {
+      "create": "import table",
+      "preview": "preview",
+      "generateCode": "generate code",
+      "batchGenerateCode": "batch generate code",
+      "sync": "sync",
+      "update": "modify generation config",
+      "update.menu": "modify generation config"
+    },
+    "message": {
+      "generatingCode": "generating code...",
+      "batchGeneratingCode": "batch generating {0} tables code...",
+      "generateSuccess": "code generated successfully",
+      "batchGenerateCodeSuccess": "successfully generated code for {0} tables",
+      "selectTablesTip": "please select tables to generate code",
+      "getDataSourceConfigFailed": "failed to get data source config",
+      "selectDataSource": "please select data source",
+      "selectTables": "please select tables to import",
+      "importing": "importing...",
+      "nextStep": "next",
+      "prevStep": "previous",
+      "save": "save",
+      "basicInfo": "basic info",
+      "columnInfo": "column info",
+      "generationInfo": "generation info",
+      "basicInfoValidationFailed": "save failed, please check the basic info form validation!",
+      "generationInfoValidationFailed": "save failed, please check the generation info form validation!",
+      "saveFailed": "save failed"
+    }
+  },
+  "demo01Contact": {
+    "demo01Contact": "demo contact",
+    "field": {
+      "id": "id",
+      "name": "name",
+      "age": "age",
+      "sex": "sex",
+      "avatar": "avatar",
+      "birthday": "birthday",
+      "description": "description",
+      "createTime": "create time"
+    }
+  },
+  "build": {
+    "action": {
+      "showJson": "View JSON",
+      "showOption": "View Config",
+      "showTemplate": "View Template",
+      "copy": "Copy"
+    },
+    "message": {
+      "copySuccess": "Copied successfully",
+      "copyFailed": "Copy failed"
+    }
+  }
+}

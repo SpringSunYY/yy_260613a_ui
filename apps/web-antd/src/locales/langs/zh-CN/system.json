@@ -1,0 +1,635 @@
+{
+  "dept": {
+    "dept": "部门",
+    "list": "部门列表",
+    "field": {
+      "name": "部门名称",
+      "parentId": "上级部门",
+      "sort": "显示顺序",
+      "leaderUserId": "负责人",
+      "phone": "联系电话",
+      "email": "邮箱",
+      "status": "状态",
+      "createTime": "创建时间"
+    }
+  },
+  "dict": {
+    "type": "字典类型",
+    "typeList": "字典类型列表",
+    "data": "字典数据",
+    "dataList": "字典数据列表",
+    "menu": "字典管理",
+    "typeField": {
+      "id": "字典编号",
+      "name": "字典名称",
+      "type": "字典类型",
+      "status": "状态",
+      "remark": "备注",
+      "createTime": "创建时间"
+    },
+    "dataField": {
+      "id": "字典编号",
+      "dictType": "字典类型",
+      "label": "字典标签",
+      "i18n": "国际化",
+      "value": "字典键值",
+      "sort": "排序",
+      "status": "状态",
+      "colorType": "颜色类型",
+      "cssClass": "CSS Class",
+      "remark": "备注",
+      "createTime": "创建时间"
+    },
+    "action": {
+      "createI18n": "创建国际化"
+    },
+    "help": {
+      "cssClass": "请输入十六进制颜色代码，如 #108ee9",
+      "i18n": "您可以填写国际化键或不填写，如果您填写的国际化没有匹配到国际化键，将直接显示内容"
+    }
+  },
+  "post": {
+    "post": "岗位",
+    "list": "岗位列表",
+    "field": {
+      "id": "岗位编号",
+      "name": "岗位名称",
+      "code": "岗位编码",
+      "sort": "显示顺序",
+      "status": "岗位状态",
+      "remark": "岗位备注",
+      "createTime": "创建时间"
+    }
+  },
+  "role": {
+    "role": "角色",
+    "list": "角色列表",
+    "field": {
+      "id": "角色编号",
+      "name": "角色名称",
+      "code": "角色标识",
+      "sort": "显示顺序",
+      "status": "角色状态",
+      "remark": "角色备注",
+      "dataScope": "权限范围",
+      "dataScopeDeptIds": "部门范围",
+      "menuIds": "菜单权限",
+      "type": "角色类型",
+      "createTime": "创建时间"
+    },
+    "message": {
+      "dataPermission": "数据权限",
+      "menuPermission": "菜单权限"
+    }
+  },
+  "user": {
+    "user": "用户",
+    "list": "用户列表",
+    "field": {
+      "id": "用户编号",
+      "username": "用户名称",
+      "password": "用户密码",
+      "nickname": "用户昵称",
+      "deptId": "归属部门",
+      "deptName": "部门",
+      "postIds": "岗位",
+      "email": "邮箱",
+      "mobile": "手机号码",
+      "sex": "用户性别",
+      "status": "用户状态",
+      "remark": "备注",
+      "newPassword": "新密码",
+      "confirmPassword": "确认密码",
+      "roleIds": "角色",
+      "file": "用户数据",
+      "updateSupport": "是否覆盖",
+      "createTime": "创建时间"
+    },
+    "message": {
+      "socialLogin": "三方登陆",
+      "assignRole": "分配角色",
+      "resetPassword": "重置密码",
+      "statusConfirm": "你要将{0}的状态切换为【{1}】吗？",
+      "updateFailed": "更新失败",
+      "cancelOperation": "取消操作",
+      "confirmPasswordEmpty": "确认密码不能为空",
+      "passwordMismatch": "两次输入的密码不一致",
+      "importTemplate": "用户导入模板"
+    },
+    "help": {
+      "updateSupport": "是否更新已经存在的用户数据",
+      "fileType": "仅允许导入 xls、xlsx 格式文件"
+    }
+  },
+  "menu": {
+    "menu": "菜单管理",
+    "list": "菜单列表",
+    "field": {
+      "parentId": "上级菜单",
+      "name": "菜单名称",
+      "i18n": "国际化",
+      "type": "菜单类型",
+      "icon": "菜单图标",
+      "path": "路由地址",
+      "component": "组件地址",
+      "componentName": "组件名称",
+      "permission": "权限标识",
+      "sort": "显示顺序",
+      "status": "菜单状态",
+      "alwaysShow": "总是显示",
+      "keepAlive": "缓存状态",
+      "remark": "菜单备注",
+      "layout": "布局",
+      "newWindows": "新窗口"
+    },
+    "message": {
+      "route": "菜单路由",
+      "append": "新增下级"
+    },
+    "help": {
+      "pathTip": "访问的路由地址，如：`user`。如需外网地址时，则以 `http(s)://` 开头",
+      "pathRootStart": "路径必须以 / 开头",
+      "pathNoStart": "路径不能以 / 开头",
+      "pathEmpty": "路由地址不能为空",
+      "keepAliveTip": "选择缓存时，则会被 `keep-alive` 缓存，必须填写「组件名称」字段",
+      "alwaysShowTip": "选择不是时，不显示自己以及所有子菜单",
+      "layoutTip": "选择不同的布局排版，例如BasicLayout布局为后台有侧边栏、顶部栏布局，StandaloneLayout布局为无侧边栏顶、部栏布局",
+      "newWindowsTip": "选择开启时，会使用新窗口打开",
+      "i18nTip": "当填入键之后，菜单将以国际化信息显示"
+    },
+    "alwaysShow": {
+      "yes": "总是",
+      "no": "不是"
+    },
+    "keepAlive": {
+      "yes": "缓存",
+      "no": "不缓存"
+    },
+    "newWindows": {
+      "yes": "打开",
+      "no": "不打开"
+    }
+  },
+  "tenant": {
+    "tenant": "租户",
+    "list": "租户列表",
+    "field": {
+      "id": "租户编号",
+      "name": "租户名",
+      "code": "编码",
+      "contactName": "联系人",
+      "contactMobile": "联系手机",
+      "contactUserId": "联系人的用户编号",
+      "industry": "行业",
+      "type": "类型",
+      "addressCode": "地区",
+      "addressDetail": "地址",
+      "qualifications": "相关资质",
+      "username": "用户名称",
+      "password": "用户密码",
+      "website": "绑定域名",
+      "status": "租户状态",
+      "rechargeAmount": "充值金额",
+      "paymentAmount": "支付金额",
+      "balanceAmount": "余额",
+      "accountCount": "账号数量",
+      "currentAccountCount": "当前数量",
+      "createTime": "创建时间"
+    },
+    "message": {
+      "saas": "SaaS 多租户"
+    }
+  },
+  "tenantPackage": {
+    "tenantPackage": "租户套餐",
+    "list": "租户套餐列表",
+    "field": {
+      "id": "套餐编号",
+      "name": "套餐名",
+      "code": "套餐编码",
+      "price": "套餐价格",
+      "orderNum": "排序",
+      "subscriptionNum": "订阅数",
+      "subscriptionTotalAmount": "订阅总额",
+      "status": "套餐状态",
+      "published": "是否发布",
+      "type": "套餐类型",
+      "logo": "LOGO",
+      "description": "套餐描述",
+      "remark": "备注",
+      "createTime": "创建时间"
+    }
+  },
+  "tenantPackageSubscribe": {
+    "tenantPackageSubscribe": "租户套餐订阅",
+    "list": "租户套餐订阅列表",
+    "field": {
+      "id": "套餐编号",
+      "packageName": "套餐名",
+      "packageCode": "套餐编码",
+      "packageType": "套餐类型",
+      "packageStatus": "套餐状态",
+      "packageLogo": "LOGO",
+      "tenantName": "租户名",
+      "tenantCode": "租户编码",
+      "price": "套餐价格",
+      "discountPrice": "优惠价格",
+      "days": "天数",
+      "totalPrice": "总价格",
+      "status": "订阅状态",
+      "payStatus": "支付状态",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "remark": "备注",
+      "createTime": "创建时间"
+    }
+  },
+  "loginlog": {
+    "loginlog": "登录日志",
+    "list": "登录日志列表",
+    "field": {
+      "id": "日志编号",
+      "logType": "操作类型",
+      "username": "用户名称",
+      "userIp": "登录IP",
+      "userIpAddr": "登录地址",
+      "userAgent": "浏览器",
+      "userBrowser": "浏览器",
+      "userPlatform": "操作系统",
+      "result": "登录结果",
+      "createTime": "登录日期"
+    },
+    "message": {
+      "detail": "登录日志详情",
+      "systemLog": "系统日志"
+    }
+  },
+  "operatelog": {
+    "operatelog": "操作日志",
+    "list": "操作日志列表",
+    "field": {
+      "id": "日志编号",
+      "traceId": "链路追踪",
+      "userId": "操作人编号",
+      "userName": "操作人名字",
+      "userIp": "操作人IP",
+      "userAgent": "操作人UA",
+      "type": "操作模块",
+      "subType": "操作名",
+      "action": "操作内容",
+      "extra": "操作拓展参数",
+      "requestUrl": "请求URL",
+      "bizId": "业务编号",
+      "createTime": "操作时间"
+    },
+    "message": {
+      "detail": "操作日志详情"
+    }
+  },
+  "notice": {
+    "notice": "公告",
+    "list": "公告列表",
+    "field": {
+      "id": "公告编号",
+      "title": "公告标题",
+      "type": "公告类型",
+      "content": "公告内容",
+      "appendixUrl": "附件",
+      "status": "公告状态",
+      "remark": "备注",
+      "createTime": "创建时间"
+    },
+    "message": {
+      "detail": "公告详情",
+      "push": "推送",
+      "view": "查看"
+    }
+  },
+  "notify": {
+    "template": {
+      "template": "站内信模板",
+      "menu": "站内信模板",
+      "list": "站内信模板列表",
+      "field": {
+        "id": "编号",
+        "name": "模板名称",
+        "code": "模板编码",
+        "nickname": "发送人名称",
+        "content": "模板内容",
+        "type": "模板类型",
+        "status": "状态",
+        "remark": "备注",
+        "createTime": "创建时间",
+        "receiverId": "接收人ID",
+        "receiver": "接收人",
+        "params": "模板参数",
+        "param": "参数 {0}"
+      },
+      "action": {
+        "test": "测试",
+        "testSend": "测试发送"
+      },
+      "message": {
+        "sendFailed": "发送站内信失败"
+      }
+    },
+    "message": {
+      "menu": "站内信",
+      "list": "站内信列表",
+      "field": {
+        "id": "编号",
+        "userId": "用户编号",
+        "userType": "用户类型",
+        "templateId": "模版编号",
+        "templateContent": "模版内容",
+        "templateParams": "模版参数",
+        "templateType": "模版类型",
+        "readStatus": "是否已读",
+        "readTime": "阅读时间",
+        "createTime": "创建时间"
+      },
+      "detail": {
+        "detail": "站内信详情"
+      }
+    },
+    "my": {
+      "my": "我的站内信",
+      "menu": "我的站内信",
+      "field": {
+        "templateNickname": "发送人",
+        "templateType": "类型",
+        "templateContent": "消息内容",
+        "readStatus": "是否已读",
+        "readTime": "阅读时间",
+        "createTime": "发送时间"
+      },
+      "message": {
+        "detail": "消息详情",
+        "markRead": "标记已读",
+        "markAllRead": "全部已读",
+        "view": "查看"
+      }
+    }
+  },
+  "mail": {
+    "account": {
+      "mailAccount": "邮箱账号",
+      "list": "邮箱账号列表",
+      "field": {
+        "id": "编号",
+        "mail": "邮箱",
+        "username": "用户名",
+        "password": "密码",
+        "host": "SMTP 服务器域名",
+        "port": "SMTP 服务器端口",
+        "sslEnable": "是否开启 SSL",
+        "starttlsEnable": "是否开启 STARTTLS",
+        "remark": "备注",
+        "createTime": "创建时间"
+      },
+      "message": {
+        "config": "邮件配置"
+      }
+    },
+    "template": {
+      "template": "邮件模板",
+      "list": "邮件模板列表",
+      "field": {
+        "id": "编号",
+        "name": "模板名称",
+        "code": "模板编码",
+        "accountId": "邮箱账号",
+        "nickname": "发送人名称",
+        "title": "模板标题",
+        "content": "模板内容",
+        "status": "开启状态",
+        "remark": "备注",
+        "createTime": "创建时间",
+        "mail": "收件邮箱",
+        "params": "模板参数"
+      },
+      "message": {
+        "test": "测试",
+        "testSend": "测试发送邮件",
+        "sendSuccess": "邮件发送成功",
+        "sendFailed": "发送邮件失败",
+        "param": "参数 {0}"
+      }
+    },
+    "log": {
+      "list": "邮件日志列表",
+      "field": {
+        "id": "编号",
+        "sendTime": "发送时间",
+        "userId": "用户编号",
+        "userType": "用户类型",
+        "toMail": "收件邮箱",
+        "fromMail": "发送邮箱",
+        "templateTitle": "邮件标题",
+        "templateContent": "邮件内容",
+        "sendStatus": "发送状态",
+        "templateCode": "模板编码",
+        "templateId": "模板编号",
+        "sendMessageId": "发送消息编号",
+        "sendException": "发送异常",
+        "createTime": "创建时间"
+      },
+      "message": {
+        "detail": "邮件日志详情"
+      }
+    }
+  },
+  "sms": {
+    "channel": {
+      "channel": "短信渠道",
+      "menu": "短信渠道",
+      "list": "短信渠道列表",
+      "field": {
+        "id": "编号",
+        "signature": "短信签名",
+        "code": "渠道编码",
+        "status": "启用状态",
+        "apiKey": "短信 API 的账号",
+        "apiSecret": "短信 API 的密钥",
+        "callbackUrl": "短信发送回调 URL",
+        "remark": "备注",
+        "createTime": "创建时间"
+      },
+      "message": {
+        "config": "短信配置"
+      }
+    },
+    "template": {
+      "template": "短信模板",
+      "list": "短信模板列表",
+      "field": {
+        "id": "编号",
+        "type": "短信类型",
+        "name": "模板名称",
+        "code": "模板编码",
+        "channelId": "短信渠道",
+        "status": "开启状态",
+        "content": "模板内容",
+        "apiTemplateId": "短信 API 的模板编号",
+        "channelCode": "短信渠道",
+        "remark": "备注",
+        "createTime": "创建时间",
+        "mobile": "手机号码",
+        "templateParams": "模板参数"
+      },
+      "action": {
+        "send": "发送短信"
+      },
+      "message": {
+        "send": "发送短信",
+        "sendSuccess": "短信发送成功",
+        "param": "参数 {0}"
+      }
+    },
+    "log": {
+      "log": "短信日志",
+      "list": "短信日志列表",
+      "field": {
+        "id": "编号",
+        "mobile": "手机号",
+        "templateId": "模板编号",
+        "sendStatus": "发送状态",
+        "sendTime": "发送时间",
+        "receiveStatus": "接收状态",
+        "receiveTime": "接收时间",
+        "channelCode": "短信渠道",
+        "templateType": "短信类型",
+        "templateContent": "短信内容",
+        "apiSendCode": "API 发送编码",
+        "apiSendMsg": "API 发送消息",
+        "apiReceiveCode": "API 接收编码",
+        "apiReceiveMsg": "API 接收消息",
+        "apiRequestId": "API 请求 ID",
+        "apiSerialNo": "API 序列号",
+        "createTime": "创建时间"
+      },
+      "message": {
+        "detail": "短信日志详情"
+      }
+    }
+  },
+  "oauth2": {
+    "sso": "OAuth2.0",
+    "client": {
+      "client": "OAuth2 客户端",
+      "list": "OAuth2 客户端列表",
+      "field": {
+        "clientId": "客户端编号",
+        "secret": "客户端密钥",
+        "name": "应用名",
+        "logo": "应用图标",
+        "description": "应用描述",
+        "status": "状态",
+        "accessTokenValiditySeconds": "访问令牌的有效期",
+        "refreshTokenValiditySeconds": "刷新令牌的有效期",
+        "authorizedGrantTypes": "授权类型",
+        "scopes": "授权范围",
+        "autoApproveScopes": "自动授权范围",
+        "redirectUris": "可重定向的 URI 地址",
+        "authorities": "权限",
+        "resourceIds": "资源",
+        "additionalInformation": "附加信息",
+        "createTime": "创建时间"
+      },
+      "help": {
+        "accessTokenValidity": "请输入访问令牌的有效期，单位：秒",
+        "refreshTokenValidity": "请输入刷新令牌的有效期，单位：秒",
+        "additionalInformation": "请输入附加信息，JSON 格式数据"
+      }
+    },
+    "token": {
+      "token": "OAuth2 令牌",
+      "list": "OAuth2 令牌列表",
+      "field": {
+        "accessToken": "访问令牌",
+        "refreshToken": "刷新令牌",
+        "userId": "用户编号",
+        "userType": "用户类型",
+        "clientId": "客户端编号",
+        "expiresTime": "过期时间",
+        "createTime": "创建时间"
+      }
+    }
+  },
+  "profile": {
+    "profile": "个人中心",
+    "field": {
+      "roles": "所属角色",
+      "dept": "所属部门",
+      "posts": "所属岗位",
+      "loginDate": "登录时间",
+      "oldPassword": "旧密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认密码",
+      "openid": "标识",
+      "socialNickname": "昵称"
+    },
+    "action": {
+      "updateInfo": "更新信息",
+      "updatePassword": "修改密码"
+    },
+    "message": {
+      "basicInfo": "基本设置",
+      "password": "密码设置",
+      "socialBind": "社交绑定",
+      "bindPlatform": "绑定平台",
+      "operation": "操作",
+      "unbindConfirm": "确定解绑[{0}]平台的[{1}]账号吗？",
+      "bindSuccess": "绑定成功",
+      "uploadAvatar": "点击上传头像",
+      "bind": "绑定",
+      "bindAccount": "绑定{0}账号",
+      "unbind": "解绑",
+      "unbindSuccess": "解绑成功",
+      "bound": "已绑定",
+      "passwordMin": "密码长度不能少于 5 个字符",
+      "passwordMax": "密码长度不能超过 20 个字符",
+      "passwordOldRequired": "请输入密码",
+      "passwordNewRequired": "请输入新密码",
+      "passwordConfirmRequired": "请输入确认密码",
+      "passwordOldNewSame": "新旧密码不能相同",
+      "passwordMismatch": "新密码和确认密码不一致"
+    }
+  },
+  "social": {
+    "client": {
+      "client": "社交客户端",
+      "list": "社交客户端列表",
+      "field": {
+        "id": "编号",
+        "name": "应用名",
+        "socialType": "社交平台",
+        "userType": "用户类型",
+        "clientId": "客户端编号",
+        "clientSecret": "客户端密钥",
+        "agentId": "agentId",
+        "status": "状态",
+        "createTime": "创建时间"
+      }
+    },
+    "user": {
+      "list": "社交用户列表",
+      "field": {
+        "type": "社交平台",
+        "openid": "社交 openid",
+        "nickname": "用户昵称",
+        "avatar": "用户头像",
+        "token": "社交 token",
+        "rawTokenInfo": "原始 Token 数据",
+        "rawUserInfo": "原始 User 数据",
+        "code": "最后一次的认证 code",
+        "state": "最后一次的认证 state",
+        "createTime": "创建时间",
+        "updateTime": "更新时间"
+      },
+      "message": {
+        "detail": "社交用户详情"
+      }
+    }
+  }
+}

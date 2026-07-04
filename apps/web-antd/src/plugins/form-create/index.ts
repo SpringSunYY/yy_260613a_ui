@@ -1,0 +1,61 @@
+import type { App } from 'vue';
+
+// import install from '@form-create/ant-design-vue/auto-import';
+import FcDesigner from '@form-create/antd-designer';
+import Antd from 'ant-design-vue';
+
+// ======================= 自定义组件 =======================
+import { useApiSelect } from '#/components/form-create';
+import AreaSelect from '#/components/form-create/components/area-select.vue';
+import DictSelect from '#/components/form-create/components/dict-select.vue';
+import IframeComponent from '#/components/form-create/components/iframe.vue';
+import { useFileUpload } from '#/components/form-create/components/use-file-upload';
+import { useImageUpload } from '#/components/form-create/components/use-image-upload';
+import { useImagesUpload } from '#/components/form-create/components/use-images-upload';
+import { Tinymce } from '#/components/tinymce';
+
+// ======================= 样式 =======================
+import '#/components/form-create/styles/designer-dark.scss';
+
+const UserSelect = useApiSelect({
+  name: 'UserSelect',
+  labelField: 'nickname',
+  valueField: 'id',
+  url: '/system/user/simple-list',
+});
+const DeptSelect = useApiSelect({
+  name: 'DeptSelect',
+  labelField: 'name',
+  valueField: 'id',
+  url: '/system/dept/simple-list',
+});
+const ApiSelect = useApiSelect({
+  name: 'ApiSelect',
+});
+const FileUpload = useFileUpload();
+const ImageUpload = useImageUpload();
+const ImagesUpload = useImagesUpload();
+
+const components = [
+  ImageUpload,
+  ImagesUpload,
+  FileUpload,
+  Tinymce,
+  DictSelect,
+  AreaSelect,
+  IframeComponent,
+  UserSelect,
+  DeptSelect,
+  ApiSelect,
+];
+
+// TODO: @dhb52 按需导入，而不是app.use(Antd);
+// 参考 http://www.form-create.com/v3/ant-design-vue/auto-import.html 文档
+export const setupFormCreate = (app: App) => {
+  components.forEach((component) => {
+    app.component(component.name as string, component);
+  });
+  app.use(Antd);
+  app.use(FcDesigner);
+  app.use(FcDesigner.formCreate);
+};

@@ -1,0 +1,410 @@
+# 你好，YY <img src="assets/blob-sunglasses.gif" width="30"/>
+
+<div align="center">
+  <a href="https://github.com/SpringSunYY">
+    <img src="https://readme-typing-svg.vercel.app?font=Fira+Code&size=32&pause=1000&color=09F724&center=true&vCenter=true&width=600&height=60&lines=Hello%2C+I+am+YY;Welcome+to+my+code+world%F0%9F%9A%80" alt="Typing SVG" />
+  </a>
+</div>
+
+<div align="center">
+  <a href="https://github.com/SpringSunYY">
+    <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&width=435&lines=%E7%83%AD%E7%88%B1%E5%8F%AF%E6%8A%B5%E5%B2%81%E6%9C%88%E6%BC%AB%E9%95%BF%EF%BC%81%E8%AE%A9%E6%AD%A3%E7%A1%AE%E7%9A%84%E4%BA%8B%E6%83%85%E6%8C%81%E7%BB%AD%E5%8F%91%E7%94%9F%EF%BC%81" alt="Typing SVG" />
+  </a>
+</div>
+
+<div align="center">
+  <a href="https://github.com/SpringSunYY">
+    <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=28&pause=1000&color=F70000&width=800&lines=%E4%B8%A5%E8%82%83%E5%A3%B0%E6%98%8E%EF%BC%9A%E7%8E%B0%E5%9C%A8%E3%80%81%E6%9C%AA%E6%9D%A5%E9%83%BD%E4%B8%8D%E4%BC%9A%E6%9C%89%E5%95%86%E4%B8%9A%E7%89%88%E6%9C%AC%EF%BC%8C%E6%89%80%E6%9C%89%E4%BB%A3%E7%A0%81%E5%85%A8%E9%83%A8%E5%BC%80%E6%BA%90%EF%BC%81" alt="Typing SVG" />
+  </a>
+</div>
+## 🧑‍💻开发必读
+
+- 如果这个项目让你有所收获，记得 Star 关注哦，这对我们是非常不错的鼓励与支持。本项目基于芋道开发。
+
+> 因为国际化有几万条，数据量大，默认初始化SQL不提供国际化信息，可以联系我们给您【见下面联系方式】（推荐），或者可以自行运行代码国际化Python脚本，运行对应SQL，同时，因为根据芋道二次开发，原来没有国际化，国际化信息生成是使用AI生成的对应国际化Key，已经创建对应的国际化规范文档，可以使用规范文档生成，如果您觉得我们生成的不够好，可以自己生成，生成之后一定要在【国际化-国家地区】刷新国际化缓存，因为您直接执行SQL的话和系统无关，刷新不了缓存的。
+>
+> 后端脚本文件【consolidate_i18n_sql.py】会生成所有模块的国际化SQL，执行对应SQL即可
+>
+> 前端文件【apps/web-antd/src/locales/generate_i18n_sql.py】会生成一个all.sql和对应模块SQL，选择all.sql可以直接全部执行
+>
+> 后端规范文档【litchi-doc/i18n】、前端规范文档【litchi-doc/i18n】
+>
+> 注意注意，还有一个菜单的国际化和字典的国际化，视频说是自己生成，这里我们已经把字典和菜单SQL更新至【sql/mysql/lz-litchi-simp.sql】，所以无需重新生成，使用我们给的就可以
+>
+> 最后，如果国际化部分没有的话可以*Issues* ，也可以自行生成，如果想要其他语言，可以导出为Excel文件，检查没有错后导入就行了，发给豆包【帮我把message列翻译en-US，其他列不变，返回数据给我，翻译内容尽量简短，所有message列内容都要翻译】，豆包会给你生成一个新的翻译的Excel文件，这波豆包上大分，我用其他AI还不能给我生成Excel文件。当前我们使用这个方法是可以的，后续如果有新的方法待续。
+>
+> 还有一点，当前提供的SQL初始化脚本数据库为MySQL（后端【sql/mysql/lz-litchi-simp.sql】），如果您有其他的数据库需求，理论上是可以实现的，因为芋道本身就支持多个数据库，但是您要自己初始化SQL，如果您这样做了，还成功了，麻烦您也给我们一份，因为我们也很需要😁😁😁
+
+## 🐶 新手必读
+
+- 演示地址：https://www.litchi.work 【租户编码：litchi、账号：admin、密码：admin123】
+- 演示视频：https://www.bilibili.com/video/BV1RR7N6QEZo/?vd_source=c8ae193313b392ba04cef0f904b7106f
+- 启动教程：https://www.bilibili.com/video/BV1GMjm6cENu/?vd_source=c8ae193313b392ba04cef0f904b7106f
+- 视频教程：https://space.bilibili.com/3546627304327173/lists/8392666?type=season
+- 后端代码：https://github.com/SpringSunYY/LZ-litchi
+
+## 🐯 平台简介
+
+**荔枝**，以开发者为中心，打造中国第一流的快速开发平台，全部开源，个人与企业可 100% 免费使用。
+
+> 有任何问题，或者想要的功能，可以在 _Issues_ 中提给YY。
+>
+> 😜 给项目点点 Star 吧，这对我们真的很重要！
+
+- Java 后端：`JDK 21 + Spring Boot 3.4.5`，没错就是12345
+- 管理后台的电脑端：Vue3 、`vben(ant-design-vue)`
+- 后端采用 Spring Boot 多模块架构、MySQL + MyBatis Plus、Redis + Redisson
+- 数据库可使用 MySQL、Oracle、PostgreSQL、SQL Server、MariaDB、国产达梦 DM、TiDB 等
+- 消息队列可使用 Event、Redis、RabbitMQ、Kafka、RocketMQ 等
+- 权限认证使用 Spring Security & Token & Redis，支持多终端、多种用户的认证系统，支持 SSO 单点登录
+- 支持加载动态权限菜单，按钮级别权限控制，Redis 缓存提升性能
+- 支持 SaaS 多租户，可自定义每个租户的权限，提供透明化的多租户底层封装，为租户订阅租户套餐，让租户拥有权限
+- 国际化，使用在线配置的方式，实现多国语言在线配置国际化
+- 工作流使用 Flowable，支持动态表单、在线设计流程、会签 / 或签、多种任务分配方式
+- 高效率开发，使用代码生成器可以一键生成 Java、Vue 前后端代码、SQL 脚本、接口文档，支持单表、树表、主子表、国际化
+- 实时通信，采用 Spring WebSocket 实现，内置 Token 身份校验，支持 WebSocket 集群
+- 集成阿里云、腾讯云等短信渠道，集成 MinIO、阿里云、腾讯云、七牛云等云存储服务
+
+## 😎 开源协议
+
+**为什么推荐使用本项目？**
+
+① 本项目采用比 Apache 2.0 更宽松的 [MIT License](https://gitee.com/zhijiantianya/litchi/blob/master/LICENSE) 开源协议，个人与企业可 100% 免费使用，不用保留类作者、Copyright 信息。
+
+② 代码全部开源，不会像其他项目一样，只开源部分代码，让你无法了解整个项目的架构设计。
+
+③ 代码整洁、架构整洁，遵循《阿里巴巴 Java 开发手册》规范，代码注释详细。
+
+## 🤝 项目外包
+
+- 我们也是接外包滴，如果你有项目想要外包，可以微信联系【**SpringSun_YY**】。
+
+- 团队包含专业的项目经理、架构师、前端工程师、后端工程师、测试工程师、运维工程师，可以提供全流程的外包服务。
+- 项目可以是OA 系统、ERP 系统、CRM系统等等，或者您的二次开发。
+- 外包项目请联系
+
+![alt 定制开发](assets/wx.png)
+
+![2](assets/2.png)
+
+## 😁 联系我
+
+<p align="center" style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+  <a href="mailto:3217778348@qq.com">
+    <img height="60" src="./assets/qqmail.png" alt="QQ邮箱" title="QQ邮箱" />
+  </a>
+  <a href="mailto:waitspringyy@gmail.com">
+    <img height="60" src="./assets/gmail.png" alt="Google邮箱" title="Google邮箱" />
+  </a>
+  <a href="https://www.douyin.com/user/MS4wLjABAAAAgisqDvuV-EkMlik_LCT0fWvuIV1HoMY55uxeHiqpLg4?from_tab_name=main" target="_blank">
+    <img height="60" src="./assets/douyin.png" alt="抖音" title="抖音" />
+  </a>
+  <a href="https://space.bilibili.com/3546627304327173" target="_blank">
+    <img height="60" src="./assets/bilibili.png" alt="B站" title="B站" />
+  </a>
+  <a href="https://www.youtube.com/@SpringSunYY" target="_blank">
+    <img height="60" src="./assets/youtube.png" alt="YouTube" title="YouTube" />
+  </a>
+</p>
+
+## 🚀 技术栈
+
+| 框架 | 说明 | 版本 |
+| --- | --- | --- |
+| [Vue](https://staging-cn.vuejs.org/) | vue框架 | 3.5.13 |
+| [Vite](https://cn.vitejs.dev//) | 开发与构建工具 | 6.2.5 |
+| [Ant Design Vue](https://www.antdv.com/) | Ant Design Vue | 4.2.6 |
+| [Element Plus](https://element-plus.org/zh-CN/) | Element Plus | 2.9.7 |
+| [Naive UI](https://www.naiveui.com/) | Naive UI | 2.41.0 |
+| [TypeScript](https://www.typescriptlang.org/docs/) | JavaScript 超集 | 5.8.3 |
+| [pinia](https://pinia.vuejs.org/) | Vue 存储库替代 vuex5 | 2.3.1 |
+| [vueuse](https://vueuse.org/) | 常用工具集 | 12.8.2 |
+| [vue-i18n](https://kazupon.github.io/vue-i18n/zh/introduction.html/) | 国际化 | 11.1.3 |
+| [vue-router](https://router.vuejs.org/) | Vue 路由 | 4.5.0 |
+| [Tailwind CSS](https://tailwindcss.com/) | 原子 CSS | 3.4.17 |
+| [Iconify](https://icon-sets.iconify.design/) | 在线图标库 | 2.2.324 |
+| [TinyMCE](https://www.tiny.cloud/) | 富文本编辑器 | 6.1.0 |
+| [Echarts](https://echarts.apache.org/) | 图表库 | 5.6.0 |
+| [axios](https://axios-http.com/) | http客户端 | 1.8.4 |
+| [dayjs](https://day.js.org/) | 日期处理库 | 1.11.13 |
+| [vee-validate](https://vee-validate.logaretm.com/) | 表单验证 | 4.15.0 |
+| [zod](https://zod.dev/) | 数据验证 | 3.24.2 |
+
+## 🐼 内置功能
+
+- 通用模块（必选）：系统功能、基础设施
+- 通用模块（可选）：工作流程
+- 业务系统（按需）：ERP 系统、CRM 系统、AI 大模型
+
+🙂 所有功能，都通过 **单元测试** 保证高质量。
+
+### 系统功能
+
+| 功能       | 描述                                                           |
+| ---------- | -------------------------------------------------------------- |
+| 用户管理   | 用户是系统操作者，该功能主要完成系统用户配置                   |
+| 在线用户   | 当前系统中活跃用户状态监控，支持手动踢下线                     |
+| 角色管理   | 角色菜单权限分配、设置角色按机构进行数据范围权限划分           |
+| 菜单管理   | 配置系统菜单、操作权限、按钮权限标识等，本地缓存提供性能       |
+| 部门管理   | 配置系统组织机构（公司、部门、小组），树结构展现支持数据权限   |
+| 岗位管理   | 配置系统用户所属担任职务                                       |
+| 租户管理   | 配置系统租户，支持 SaaS 场景下的多租户功能                     |
+| 租户套餐   | 配置租户套餐，自定每个租户的菜单、操作、按钮的权限             |
+| 字典管理   | 对系统中经常使用的一些较为固定的数据进行维护                   |
+| 短信管理   | 短信渠道、短息模板、短信日志，对接阿里云、腾讯云等主流短信平台 |
+| 邮件管理   | 邮箱账号、邮件模版、邮件发送日志，支持所有邮件平台             |
+| 站内信     | 系统内的消息通知，提供站内信模版、站内信消息                   |
+| 操作日志   | 系统正常操作日志记录和查询，集成 Swagger 生成日志内容          |
+| 登录日志   | 系统登录日志记录查询，包含登录异常                             |
+| 错误码管理 | 系统所有错误码的管理，可在线修改错误提示，无需重启服务         |
+| 通知公告   | 系统通知公告信息发布维护                                       |
+| 敏感词     | 配置系统敏感词，支持标签分组                                   |
+| 应用管理   | 管理 SSO 单点登录的应用，支持多种 OAuth2 授权方式              |
+| 地区管理   | 展示省份、城市、区镇等城市信息，支持 IP 对应城市               |
+
+### 工作流程
+
+| 功能列表 | 功能描述 |
+| --- | --- |
+| SIMPLE 设计器 | 仿钉钉/飞书设计器，支持拖拽搭建表单流程，10 分钟快速完成审批流程配置 |
+| BPMN 设计器 | 基于 BPMN 标准开发，适配复杂业务场景，满足多层级审批及流程自动化需求 |
+| 会签 | 同一个审批节点设置多个人（如 A、B、C 三人，三人会同时收到待办任务），需全部同意之后，审批才可到下一审批节点 |
+| 或签 | 同一个审批节点设置多个人，任意一个人处理后，就能进入下一个节点 |
+| 依次审批 | （顺序会签）同一个审批节点设置多个人（如 A、B、C 三人），三人按顺序依次收到待办，即 A 先审批，A 提交后 B 才能审批，需全部同意之后，审批才可到下一审批节点 |
+| 抄送 | 将审批结果通知给抄送人，同一个审批默认排重，不重复抄送给同一人 |
+| 驳回 | （退回）将审批重置发送给某节点，重新审批。可驳回至发起人、上一节点、任意节点 |
+| 转办 | A 转给其 B 审批，B 审批后，进入下一节点 |
+| 委派 | A 转给其 B 审批，B 审批后，转给 A，A 继续审批后进入下一节点 |
+| 加签 | 允许当前审批人根据需要，自行增加当前节点的审批人，支持向前、向后加签 |
+| 减签 | （取消加签）在当前审批人操作之前，减少审批人 |
+| 撤销 | （取消流程）流程发起人，可以对流程进行撤销处理 |
+| 终止 | 系统管理员，在任意节点终止流程实例 |
+| 表单权限 | 支持拖拉拽配置表单，每个审批节点可配置只读、编辑、隐藏权限 |
+| 超时审批 | 配置超时审批时间，超时后自动触发审批通过、不通过、驳回等操作 |
+| 自动提醒 | 配置提醒时间，到达时间后自动触发短信、邮箱、站内信等通知提醒，支持自定义重复提醒频次 |
+| 父子流程 | 主流程设置子流程节点，子流程节点会自动触发子流程。子流程结束后，主流程才会执行（继续往下下执行），支持同步子流程、异步子流程 |
+| 条件分支 | （排它分支）用于在流程中实现决策，即根据条件选择一个分支执行 |
+| 并行分支 | 允许将流程分成多条分支，不进行条件判断，所有分支都会执行 |
+| 包容分支 | （条件分支 + 并行分支的结合体）允许基于条件选择多条分支执行，但如果没有任何一个分支满足条件，则可以选择默认分支 |
+| 路由分支 | 根据条件选择一个分支执行（重定向到指定配置节点），也可以选择默认分支执行（继续往下执行） |
+| 触发节点 | 执行到该节点，触发 HTTP 请求、HTTP 回调、更新数据、删除数据等 |
+| 延迟节点 | 执行到该节点，审批等待一段时间再执行，支持固定时长、固定日期等 |
+| 拓展设置 | 流程前置/后置通知，节点（任务）前置、后置通知，流程报表，自动审批去重，自定流程编号、标题、摘要，流程报表等 |
+
+### 基础设施
+
+| 功能 | 描述 |
+| --- | --- |
+| 代码生成 | 前后端代码的生成（Java、Vue、SQL、单元测试），支持 CRUD 下载 |
+| 国际化 | 在线国际化，前端、后台报错、导入导出均可以国际化，并且您可以选择是否开启国际化 |
+| 系统接口 | 基于 Swagger 自动生成相关的 RESTful API 接口文档 |
+| 数据库文档 | 基于 Screw 自动生成数据库文档，支持导出 Word、HTML、MD 格式 |
+| 表单构建 | 拖动表单元素生成相应的 HTML 代码，支持导出 JSON、Vue 文件 |
+| 配置管理 | 对系统动态配置常用参数，支持 SpringBoot 加载 |
+| 定时任务 | 在线（添加、修改、删除)任务调度包含执行结果日志 |
+| 文件服务 | 支持将文件存储到 S3（MinIO、阿里云、腾讯云、七牛云）、本地、FTP、数据库等 |
+| WebSocket | 提供 WebSocket 接入示例，支持一对一、一对多发送方式 |
+| API 日志 | 包括 RESTful API 访问日志、异常日志两部分，方便排查 API 相关的问题 |
+| MySQL 监控 | 监视当前系统数据库连接池状态，可进行分析SQL找出系统性能瓶颈 |
+| Redis 监控 | 监控 Redis 数据库的使用情况，使用的 Redis Key 管理 |
+| 消息队列 | 基于 Redis 实现消息队列，Stream 提供集群消费，Pub/Sub 提供广播消费 |
+| Java 监控 | 基于 Spring Boot Admin 实现 Java 应用的监控 |
+| 链路追踪 | 接入 SkyWalking 组件，实现链路追踪 |
+| 日志中心 | 接入 SkyWalking 组件，实现日志中心 |
+| 服务保障 | 基于 Redis 实现分布式锁、幂等、限流功能，满足高并发场景 |
+| 日志服务 | 轻量级日志中心，查看远程服务器的日志 |
+| 单元测试 | 基于 JUnit + Mockito 实现单元测试，保证功能的正确性、代码的质量等 |
+
+## 🐨 技术栈
+
+| 框架 | 说明 | 版本 |
+| --- | --- | --- |
+| [Vue](https://staging-cn.vuejs.org/) | vue框架 | 3.5.30 |
+| [Vite](https://cn.vitejs.dev//) | 开发与构建工具 | 8.0.0 |
+| [Ant Design Vue](https://www.antdv.com/) | Ant Design Vue | 4.2.6 |
+| [Element Plus](https://element-plus.org/zh-CN/) | Element Plus | 2.13.5 |
+| [Naive UI](https://www.naiveui.com/) | Naive UI | 2.44.1 |
+| [TDesign](https://tdesign.tencent.com/) | TDesign | 1.18.5 |
+| [TypeScript](https://www.typescriptlang.org/docs/) | JavaScript 超集 | 5.9.3 |
+| [pinia](https://pinia.vuejs.org/) | Vue 存储库替代 vuex5 | 3.0.4 |
+| [vueuse](https://vueuse.org/) | 常用工具集 | 14.2.1 |
+| [vue-i18n](https://kazupon.github.io/vue-i18n/zh/introduction.html/) | 国际化 | 11.3.0 |
+| [vue-router](https://router.vuejs.org/) | Vue 路由 | 5.0.3 |
+| [Tailwind CSS](https://tailwindcss.com/) | 原子 CSS | 4.2.1 |
+| [Iconify](https://iconify.design/) | 图标组件 | 5.0.0 |
+| [Iconify](https://icon-sets.iconify.design/) | 在线图标库 | 2.2.449 |
+| [TinyMCE](https://www.tiny.cloud/) | 富文本编辑器 | 7.3.0 |
+| [Echarts](https://echarts.apache.org/) | 图表库 | 6.0.0 |
+| [axios](https://axios-http.com/) | http客户端 | 1.13.6 |
+| [dayjs](https://day.js.org/) | 日期处理库 | 1.11.20 |
+| [vee-validate](https://vee-validate.logaretm.com/) | 表单验证 | 4.15.1 |
+| [zod](https://zod.dev/) | 数据验证 | 3.25.76 |
+
+## 🐷 演示图
+
+> 注：只是部分功能演示图，主要请查看演示地址
+
+### 系统功能
+
+| 模块 | biu | biu | biu |
+| --- | --- | --- | --- |
+| 登录 & 首页 | ![登录](assets/登录.jpg) | ![首页](assets/首页.jpg) | ![个人中心](assets/个人中心.jpg) |
+| 用户 & 应用 | ![用户管理](assets/用户管理.jpg) | ![令牌管理](assets/令牌管理.jpg) | ![应用管理](assets/应用管理.jpg) |
+| 租户 & 套餐 | ![租户管理](assets/租户管理.jpg) | ![租户套餐](assets/租户套餐.jpg) | ![租户套餐](assets/租户套餐订阅.jpg) |
+| 部门 & 岗位 | ![部门管理](assets/部门管理.jpg) | ![岗位管理](assets/岗位管理.jpg) | - |
+| 菜单 & 角色 | ![菜单管理](assets/菜单管理.jpg) | ![角色管理](assets/角色管理.jpg) | - |
+| 审计日志 | ![操作日志](assets/操作日志.jpg) | ![登录日志](assets/登录日志.jpg) | - |
+| 短信 | ![短信渠道](assets/短信渠道.jpg) | ![短信模版](assets/短信模版.jpg) | ![短信日志](assets/短信日志.jpg) |
+| 字典 | ![字典类型](assets/字典管理.jpg) |  |  |
+| 公告 & 通知 | ![错误码管理](assets/公告管理.jpg) | ![通知公告](assets/通知.jpg) | ![站内信](assets/站内信.jpg) |
+
+### 工作流程
+
+| 模块 | biu | biu | biu |
+| --- | --- | --- | --- |
+| 流程模型 | ![流程模型-列表](assets/流程模型-列表.jpg) | ![流程模型-设计](assets/流程模型-设计.jpg) | ![流程模型-定义](assets/流程模型-定义.jpg) |
+| 表单 & 分组 | ![流程表单](assets/流程表单-设计.jpg) | ![用户分组](assets/流程表单-列表.jpg) | ![用户分组](assets/用户分组.jpg) |
+| 我的流程 | ![我的流程-列表](assets/我的流程.jpg) | ![我的流程-发起](assets/发起流程.jpg) | ![我的流程-详情](assets/流程详情.jpg) |
+| 待办 & 已办 | ![任务列表-审批](assets/待办任务.jpg) | ![审批流程](assets/审批流程.jpg) | ![已办任务](assets/已办任务.jpg) |
+
+### 基础设施
+
+| 模块 | biu | biu | biu |
+| --- | --- | --- | --- |
+| 代码生成 | ![代码生成-列表](assets/代码生成-列表.jpg) | ![代码生成-预览](assets/代码生成-预览.jpg) | ![代码生成-效果](assets/代码生成-效果.jpg) |
+| 国际化 | ![国家地区](assets/国家地区.jpg) | ![国际化信息](assets/国际化信息.jpg) | ![国际化效果](assets/国际化效果.jpg) |
+| 文档&&监控 | ![接口文档](assets/接口文档.jpg) | ![redis监控](assets/redis监控.jpg) | ![服务监控](assets/服务监控.jpg) |
+| 文件 & 配置 | ![文件配置](assets/文件配置.jpg) | ![文件配置](assets/文件配置.jpg) |  |
+| 定时任务 | ![定时任务](assets/定时任务.jpg) | ![定时任务-日志](assets/定时任务-日志.jpg) | ![定时任务-详情](assets/定时任务-详情.jpg) |
+| API 日志 | ![访问日志](assets/访问日志.jpg) | ![错误日志](assets/错误日志.jpg) |  |
+
+## 🧐 项目启动
+
+> 环境：node20+、npm10+、pnpm10+
+>
+> 推荐下一个nvm，方便管理自己的node版本 (https://blog.csdn.net/sjp991012/article/details/134426007) 这个教程我觉得挺简单的，大家可以看看
+>
+> 如果看不懂这个简单的图文教程，见上面有启动教程链接，看视频就行了。
+>
+> 注意：个别步骤没有图片，自己执行即可
+
+- 下载源码（如下图）
+- 使用IDE打开：推荐使用WebStorm，当然VSCode、Cursor打开都行，我一般是WebStorm+Cursor一起打开，当然当前运行WebStorm一个IDE打开就行了，因为运行也没必要用那么多编辑器，后面开发推荐两个一起，WebStorm用来看代码和自己写代码，Cursor用来帮您AI生成代码
+- 下载依赖（见下图）：项目是使用pnpm作为下载依赖的，当然如果您npm也可以下载，不过推荐pnpm
+- 启动项目（见下图）
+- 验证启动（见下图）
+
+### 下载源码
+
+![项目启动-下载源码](assets/项目启动-下载源码.jpg)
+
+### 下载依赖
+
+如果您没有pnpm，可以使用此命令下载
+
+```shell
+npm install -g pnpm
+```
+
+安装依赖
+
+```shell
+# 安装依赖
+pnpm install
+```
+
+![项目启动-下载依赖](assets/项目启动-下载依赖.jpg)
+
+### 启动项目
+
+启动服务使用两种方式，一是根目录运行命令，而是直接在【package.json】文件运行dev（更推荐，因为WebStorm到时候右上角直接运行就行了）
+
+命令启动
+
+```shell
+npm run dev:antd
+```
+
+![项目启动-启动项目](assets/项目启动-启动项目.jpg)
+
+![项目启动-启动成功](assets/项目启动-启动成功.jpg)
+
+### 验证启动
+
+![项目启动-验证启动](assets/项目启动-验证启动.jpg)
+
+## 💕 项目部署
+
+- 推荐使用宝塔部署，一键安装好Nginx后，直接新增一个HTML项目即可，操作猛猛简单
+
+- 可以直接使用下面的Nginx配置，注意您的文件地址即可，使用这个配置，后面可以直接在项目管理部署您的SSL证书
+
+- 打包好，成功部署后访问你的你的项目就行了
+
+### 修改配置文件
+
+![项目部署-配置](assets/项目部署-配置.jpg)
+
+![项目部署-修改配置](assets/项目部署-修改配置.jpg)
+
+### 打包
+
+- 运行找到根目录下【package.json】文件打包
+
+![项目部署-打包](assets/项目部署-打包.jpg)
+
+### nginx配置
+
+```nginx
+server
+{
+    listen 80;
+    server_name litchi.work;
+    #修改成您的文件地址
+    root /www/wwwroot/code/front/dist;
+    index index.html;
+	#error_page 404/404.html;
+    # Vue history 模式支持
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端接口代理
+    location /admin-api/ {
+        proxy_pass http://127.0.0.1:48080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /app-api/ {
+        proxy_pass http://127.0.0.1:48080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # 可选：禁止访问隐藏文件
+    location ~ /\. {
+        deny all;
+    }
+
+    access_log /www/wwwlogs/litchi.work.log;
+    error_log /www/wwwlogs/litchi.work.error.log;
+}
+```
+
+## 🌟 致谢
+
+感谢芋道框架，感谢所有贡献者和使用者！如果这个项目对您有帮助，欢迎给个Star⭐，这样就对我很有帮助了。
+
+## Star History
+
+<p align="center">
+  <a href="https://github.com/SpringSunYY">
+    <img
+      src="https://api.star-history.com/svg?repos=SpringSunYY/LZ-litchi,SpringSunYY/LZ-litchi-ui-admin-vben,SpringSunYY/LZ-Picture,SpringSunYY/LZ-RuoYi,SpringSunYY/LZ-RuoYi-App,SpringSunYY/RuoYi_vue_flask&type=Date"
+      alt="Star History Chart"
+    />
+  </a>
+</p>

@@ -1,0 +1,279 @@
+<script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { InfraAreaApi } from '#/api/infra/area';
+import type { SystemTenantApi } from '#/api/system/tenant';
+
+import { onMounted, ref } from 'vue';
+
+import {
+  DocAlert,
+  Page,
+  useVbenDrawer,
+  useVbenModelDrawer,
+} from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
+
+import { message, TreeSelect } from 'ant-design-vue';
+
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getAreaTree } from '#/api/infra/area';
+import {
+  deleteTenant,
+  exportTenant,
+  getTenantPage,
+  updateAllTenantMenu,
+} from '#/api/system/tenant';
+import { $t } from '#/locales';
+import MenuDrawer from '#/views/system/tenant/modules/MenuDrawer.vue';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
+
+/** 表单弹窗 */
+const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: Form,
+  destroyOnClose: true,
+  type: 'drawer',
+});
+
+/** 菜单授权弹窗 */
+const [DrawerModal, formDrawerApi] = useVbenDrawer({
+  connectedComponent: MenuDrawer,
+  destroyOnClose: true,
+  externalCloseConfirm: false,
+});
+
+/** 菜单授权 */
+function handleGrant(row: SystemTenantApi.Tenant) {
+  formDrawerApi.setData(row).open();
+}
+
+/** 刷新表格 */
+function onRefresh() {
+  gridApi.query();
+}
+
+/** 导出表格 */
+async function handleExport() {
+  const data = await exportTenant(await gridApi.formApi.getValues());
+  downloadFileFromBlobPart({
+    fileName: `${$t('system.tenant.tenant')}.xls`,
+    source: data,
+  });
+}
+
+/** 创建租户 */
+function handleCreate() {
+  formModalDrawerApi.setData(null).open();
+}
+
+/** 编辑租户 */
+function handleEdit(row: SystemTenantApi.Tenant) {
+  formModalDrawerApi.setData(row).open();
+}
+
+/** 删除租户 */
+async function handleDelete(row: SystemTenantApi.Tenant) {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.name]),
+    key: 'action_key_msg',
+  });
+  try {
+    await deleteTenant(row.id as number);
+    message.success({
+      content: $t('ui.actionMessage.deleteSuccess', [row.name]),
+      key: 'action_key_msg',
+    });
+    onRefresh();
+  } finally {
+    hideLoading();
+  }
+}
+
+const updateAllMenuLoading = ref(false);
+const handleUpdateAllMenu = () => {
+  updateAllMenuLoading.value = true;
+  updateAllTenantMenu()
+    .then(() => {
+      message.success($t('ui.actionMessage.grant'));
+    })
+    .finally(() => {
+      updateAllMenuLoading.value = false;
+    });
+};
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useGridFormSchema(),
+  },
+  gridOptions: {
+    columns: useGridColumns(),
+    height: 'auto',
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          return await getTenantPage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+    },
+    toolbarConfig: {
+      refresh: { code: 'query' },
+      search: true,
+    },
+  } as VxeTableGridOptions<SystemTenantApi.Tenant>,
+});
+
+const addressList = ref<InfraAreaApi.Area[]>([]);
+const addressMap = ref<Map<string, InfraAreaApi.Area>>(new Map());
+
+function getAddressList() {
+  getAreaTree().then((res) => {
+    addressList.value = res;
+    getAddressMap();
+  });
+}
+
+function getAddressMap() {
+  const map = new Map<string, InfraAreaApi.Area & { children?: any[] }>();
+
+  function traverse(nodes: any[], parentCode?: string) {
+    for (const node of nodes) {
+      // 显式设置 parentId
+      if (parentCode !== undefined) {
+        node.parentCode = parentCode;
+      }
+      if (node.code) {
+        map.set(node.code, node);
+      }
+      // 递归处理子节点，传入当前节点的 id 作为父级 id
+      if (node.children?.length) {
+        traverse(node.children, node.code);
+      }
+    }
+  }
+
+  traverse(addressList.value);
+  addressMap.value = map as any;
+}
+
+function getAreaFullName(addressCode: string): string {
+  if (!addressCode || addressList.value.length === 0) return '';
+  const flatMap = addressMap.value;
+  const target = [...flatMap.values()].find((n) => n.code === addressCode);
+  if (!target || !target.code) {
+    return '';
+  }
+  const names: string[] = [];
+  let current: InfraAreaApi.Area | undefined = target;
+  let count = 0;
+  while (current && count < 10) {
+    // 添加循环保护
+    names.unshift(current.name);
+    if (current.parentCode === null || current.parentCode === undefined) break;
+    current = flatMap.get(current.parentCode);
+    count++;
+  }
+  return names.join('/');
+}
+
+onMounted(() => {
+  getAddressList();
+});
+</script>
+<template>
+  <Page auto-content-height>
+    <template #doc>
+      <DocAlert
+        :title="$t('system.tenant.message.saas')"
+        url="https://doc.iocoder.cn/saas-tenant/"
+      />
+    </template>
+    <DrawerModal />
+    <FormModalDrawer @success="onRefresh" />
+    <Grid :table-title="$t('system.tenant.list')">
+      <template #form-addressCode="slotProps">
+        <TreeSelect
+          v-bind="slotProps"
+          :tree-data="addressList"
+          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+          :field-names="{ label: 'name', value: 'code', children: 'children' }"
+          :placeholder="$t('ui.placeholder.select')"
+          allow-clear
+        />
+      </template>
+      <template #addressCode="{ row }">
+        {{ getAreaFullName(row.addressCode) }}
+      </template>
+      <template #toolbar-tools>
+        <TableAction
+          :actions="[
+            {
+              label: $t('ui.actionTitle.create', [$t('system.tenant.tenant')]),
+              type: 'primary',
+              icon: ACTION_ICON.ADD,
+              auth: ['system:tenant:create'],
+              onClick: handleCreate,
+            },
+            {
+              label: $t('ui.actionTitle.export'),
+              type: 'primary',
+              icon: ACTION_ICON.DOWNLOAD,
+              auth: ['system:tenant:export'],
+              onClick: handleExport,
+            },
+            {
+              label: $t('ui.actionTitle.updateAllMenu'),
+              type: 'primary',
+              icon: ACTION_ICON.EDIT,
+              auth: ['system:tenant:update'],
+              loading: updateAllMenuLoading,
+              popConfirm: {
+                title: $t('ui.actionMessage.updateConfirm'),
+                confirm: handleUpdateAllMenu,
+              },
+            },
+          ]"
+        />
+      </template>
+      <template #actions="{ row }">
+        <TableAction
+          :actions="[
+            {
+              label: $t('common.viewMenu'),
+              type: 'link',
+              icon: ACTION_ICON.VIEW as string,
+              auth: ['system:tenantPackage:update'],
+              onClick: handleGrant.bind(null, row),
+            },
+            {
+              label: $t('common.edit'),
+              type: 'link',
+              icon: ACTION_ICON.EDIT,
+              auth: ['system:tenant:update'],
+              onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: $t('common.delete'),
+              type: 'link',
+              danger: true,
+              icon: ACTION_ICON.DELETE,
+              auth: ['system:tenant:delete'],
+              popConfirm: {
+                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                confirm: handleDelete.bind(null, row),
+              },
+            },
+          ]"
+        />
+      </template>
+    </Grid>
+  </Page>
+</template>
