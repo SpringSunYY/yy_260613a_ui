@@ -29,7 +29,7 @@ const hasResults = computed(() => results.value.length > 0);
  *   <li>byId 模式：没有真文件，显示"按编号查询：xxx"（来自父组件 setData 时塞的 byRowId）。</li>
  * </ul>
  */
-//@ts-ignore 后面有用
+// @ts-ignore 后面有用
 const displayTitle = computed(() => {
   if (queryFile.value) return queryFile.value.name;
   // byId 模式下 queryImageUrl 由父组件传进来；rowId 也透传过来以便显示。
@@ -282,9 +282,9 @@ function resetQuery() {
           <div
             v-for="(r, idx) in results"
             :key="`${lastQueryTime}-${r.id ?? idx}`"
-            class="overflow-hidden rounded-md border border-gray-100 bg-white shadow-sm transition hover:shadow-md"
+            class="overflow-hidden rounded-md border border-gray-100 shadow-sm transition hover:shadow-md"
           >
-            <div class="flex h-32 items-center justify-center bg-gray-50">
+            <div class="flex h-32 items-center justify-center">
               <Image
                 :src="r.imagePath"
                 :preview="{ src: r.imagePath }"

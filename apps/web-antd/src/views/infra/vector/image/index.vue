@@ -247,7 +247,7 @@ loadCollectionInfo();
       <template #table-title>
         <!-- 集合信息条 -->
         <div
-          class="mb-3 flex flex-wrap items-center gap-x-6 gap-y-1 rounded-md bg-gray-50 px-4 py-2 text-sm"
+          class="mb-3 flex flex-wrap items-center gap-x-6 gap-y-1 rounded-md px-4 py-2 text-sm"
         >
           <span>
             {{ $t('infra.vectorImage.stats.collectionName') }}:

@@ -151,7 +151,7 @@ async function submit() {
     clearAll();
     await modalApi.close();
   } catch {
-    message.error($t('infra.vectorImage.message.uploadFailed'));
+    message.error($t('infra.vectorImage.message.uploadFailed', ['-']));
   } finally {
     submitEnd();
   }
@@ -199,14 +199,14 @@ const [Modal, modalApi] = useVbenModal({
       <!-- 已选文件列表 -->
       <div
         v-if="fileList.length > 0"
-        class="mt-3 max-h-48 overflow-y-auto rounded border border-gray-100 bg-gray-50 p-2 text-xs"
+        class="mt-3 max-h-48 overflow-y-auto rounded border p-2 text-xs"
       >
         <div
           v-for="(f, idx) in fileList"
           :key="idx"
-          class="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-white"
+          class="flex items-center gap-2 rounded px-1 py-0.5"
         >
-          <a-image :src="getThumb(f)" :alt="f.name" :width="64" />
+          <a-image :src="getThumb(f)" :alt="f.name" :width="64" :height="64" />
           <span class="truncate" :title="String(f.name ?? '')">
             {{ f.name }}
           </span>
