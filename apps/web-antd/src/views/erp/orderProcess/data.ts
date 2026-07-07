@@ -17,7 +17,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     /** 当前工序 */
-    {
+/*    {
       fieldName: 'currentProcess',
       label: $t('erp.orderProcess.field.currentProcess'),
       rules: 'required',
@@ -28,7 +28,7 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.orderProcess.field.currentProcess'),
         ]),
       },
-    },
+    },*/
     /** 订单号 */
     {
       fieldName: 'orderNo',
@@ -50,24 +50,6 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.layoutPerson'),
         ]),
-      },
-    },
-    /** 图片 */
-    {
-      fieldName: 'orderImage',
-      label: $t('erp.orderProcess.field.orderImage'),
-      component: 'ImageUpload',
-      componentProps: {
-        moduleType: 'erp',
-      },
-    },
-    /** 二维码 */
-    {
-      fieldName: 'qrCode',
-      label: $t('erp.orderProcess.field.qrCode'),
-      component: 'ImageUpload',
-      componentProps: {
-        moduleType: 'erp',
       },
     },
     /** 版型 */
@@ -177,7 +159,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'packagingRequirements',
       label: $t('erp.orderProcess.field.packagingRequirements'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.packagingRequirements'),
@@ -188,23 +170,44 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'workshopRequirements',
       label: $t('erp.orderProcess.field.workshopRequirements'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.workshopRequirements'),
         ]),
       },
     },
+    /** 图片 */
+    {
+      fieldName: 'orderImage',
+      label: $t('erp.orderProcess.field.orderImage'),
+      component: 'ImageUpload',
+      componentProps: {
+        moduleType: 'erp',
+      },
+      formItemClass: 'col-span-2',
+    },
+    /** 二维码 */
+    {
+      fieldName: 'qrCode',
+      label: $t('erp.orderProcess.field.qrCode'),
+      component: 'ImageUpload',
+      componentProps: {
+        moduleType: 'erp',
+      },
+      formItemClass: 'col-span-2',
+    },
     /** 特别备注 */
     {
       fieldName: 'remark',
       label: $t('erp.orderProcess.field.remark'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.remark'),
         ]),
       },
+      formItemClass: 'col-span-4',
     },
   ];
 }

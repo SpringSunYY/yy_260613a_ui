@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { OrderApi } from '#/api/erp/order';
+import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { computed, ref } from 'vue';
 
@@ -9,8 +10,10 @@ import { message, Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createOrder, getOrder, updateOrder } from '#/api/erp/order';
+import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import { $t } from '#/locales';
 
+import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
 import { useFormSchema } from '../data';
 import OrderDetailForm from './order-detail-form.vue';
 
@@ -26,14 +29,38 @@ const getTitle = computed(() => {
 const subTabsName = ref('orderDetail');
 const orderDetailFormRef = ref<InstanceType<typeof OrderDetailForm>>();
 
+/** 子表尺码合计 -> 写入主表 number 字段 */
+function onOrderDetailTotalChange(total: number) {
+  formApi.setFieldValue('number', total);
+}
+/** 修改订单号 */
+function changeOrderNo(orderNo: string) {
+  processFormApi.setFieldValue('orderNo', orderNo);
+}
+/** 工序 */
+const [ProcessForm, processFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-1',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  wrapperClass: 'grid-cols-4',
+  schema: useProcessFormSchema(),
+  showDefaultActions: false,
+});
+const processFormRef = ref<InstanceType<typeof ProcessForm>>();
+
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
     },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
+    formItemClass: 'col-span-1',
   },
+  wrapperClass: 'grid-cols-3',
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
@@ -45,12 +72,27 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     if (!valid) {
       return;
     }
+    // 校验订单明细
+    const detailValid = orderDetailFormRef.value?.validate();
+    if (!detailValid) {
+      subTabsName.value = 'orderDetail';
+      return;
+    }
+    // 校验工序
+    const processValid = await processFormApi.validate();
+    if (!processValid.valid) {
+      subTabsName.value = 'orderProcess';
+      return;
+    }
+
     // 校验子表单
     modalDrawerApi.lock();
     // 提交表单
     const data = (await formApi.getValues()) as OrderApi.Order;
     // 拼接子表的数据
     data.orderDetails = orderDetailFormRef.value?.getData() || [];
+    data.orderProcess =
+      (await processFormApi.getValues()) as OrderProcessApi.OrderProcess;
     try {
       await (formData.value?.id ? updateOrder(data) : createOrder(data));
       // 关闭并提示
@@ -79,6 +121,12 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         modalDrawerApi.unlock();
       }
     }
+    if (data.orderNo) {
+      // 查询订单工序
+      getOrderProcessByOrderNo(data.orderNo).then((res) => {
+        processFormApi.setValues(res);
+      });
+    }
     // 设置到 values
     formData.value = data;
     await formApi.setValues(formData.value);
@@ -87,8 +135,12 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 </script>
 
 <template>
-  <ModalDrawer :title="getTitle">
-    <Form class="mx-4" />
+  <ModalDrawer :title="getTitle" class="w-[75%]">
+    <Form class="mx-4">
+      <template #orderNo="slotProps">
+        <a-input v-bind="slotProps" @change="changeOrderNo" />
+      </template>
+    </Form>
     <!-- 子表的表单 -->
     <Tabs v-model:active-key="subTabsName">
       <Tabs.TabPane
@@ -99,7 +151,19 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         <OrderDetailForm
           ref="orderDetailFormRef"
           :order-no="formData?.orderNo"
+          @update:total="onOrderDetailTotalChange"
         />
+      </Tabs.TabPane>
+      <Tabs.TabPane
+        key="orderProcess"
+        :tab="$t('erp.orderProcess.orderProcess')"
+        force-render
+      >
+        <ProcessForm ref="processFormRef">
+          <template #orderNo="slotProps">
+            <a-input v-bind="slotProps" :readonly="true" />
+          </template>
+        </ProcessForm>
       </Tabs.TabPane>
     </Tabs>
   </ModalDrawer>

@@ -1,5 +1,4 @@
 import type { PageParam, PageResult } from '@vben/request';
-import type { Dayjs } from 'dayjs';
 
 import { requestClient } from '#/api/request';
 
@@ -28,12 +27,24 @@ export namespace OrderProcessApi {
 
 /** 查询订单工序分页 */
 export function getOrderProcessPage(params: PageParam) {
-  return requestClient.get<PageResult<OrderProcessApi.OrderProcess>>('/erp/order-process/page', { params });
+  return requestClient.get<PageResult<OrderProcessApi.OrderProcess>>(
+    '/erp/order-process/page',
+    { params },
+  );
 }
 
 /** 查询订单工序详情 */
 export function getOrderProcess(id: number) {
-  return requestClient.get<OrderProcessApi.OrderProcess>(`/erp/order-process/get?id=${id}`);
+  return requestClient.get<OrderProcessApi.OrderProcess>(
+    `/erp/order-process/get?id=${id}`,
+  );
+}
+
+/** 查询订单工序 */
+export function getOrderProcessByOrderNo(orderNo: string) {
+  return requestClient.get<OrderProcessApi.OrderProcess>(
+    `/erp/order-process/get-by-order-no?orderNo=${orderNo}`,
+  );
 }
 
 /** 新增订单工序 */
@@ -53,14 +64,15 @@ export function deleteOrderProcess(id: number) {
 
 /** 批量删除订单工序 */
 export function deleteOrderProcessList(ids: number[]) {
-  return requestClient.delete(`/erp/order-process/delete-list?ids=${ids.join(',')}`)
+  return requestClient.delete(
+    `/erp/order-process/delete-list?ids=${ids.join(',')}`,
+  );
 }
 
 /** 导出订单工序 */
 export function exportOrderProcess(params: OrderProcessApi.OrderProcess) {
-  return requestClient.download('/erp/order-process/export-excel',
-          {
-            params,
-            timeout:300_00
-          });
+  return requestClient.download('/erp/order-process/export-excel', {
+    params,
+    timeout: 30_000,
+  });
 }

@@ -55,7 +55,8 @@
     "select": "请选择{0}",
     "date": "请选择{0}",
     "autoGenerate": "保存时自动生成",
-    "accountCount": "账号数量{0}个"
+    "accountCount": "账号数量{0}个",
+    "subTableInput": "请输入第{0}行{1}的值"
   },
   "validate": {
     "email": "请输入正确的邮箱地址"

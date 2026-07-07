@@ -2,28 +2,31 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderApi } from '#/api/erp/order';
 
-import { Page, useVbenModelDrawer, useVbenModal } from '@vben/common-ui';
-import { message,Tabs } from 'ant-design-vue';
-import Form from './modules/form.vue';
+import { ref } from 'vue';
 
-
-import { ref, computed } from 'vue';
-import { $t } from '#/locales';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { pickSort } from '#/utils';
-import { getOrderPage, deleteOrder, deleteOrderList, exportOrder } from '#/api/erp/order';
+import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import { message } from 'ant-design-vue';
 
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  deleteOrder,
+  deleteOrderList,
+  exportOrder,
+  getOrderPage,
+} from '#/api/erp/order';
+import { $t } from '#/locales';
+import { pickSort } from '#/utils';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
-  type: 'modal'
+  type: 'drawer',
 });
-
-
 
 /** 刷新表格 */
 function onRefresh() {
@@ -40,12 +43,11 @@ function handleEdit(row: OrderApi.Order) {
   formModalDrawerApi.setData(row).open();
 }
 
-
 /** 删除订单信息 */
 async function handleDelete(row: OrderApi.Order) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.id]),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrder(row.id as number);
@@ -63,7 +65,7 @@ async function handleDelete(row: OrderApi.Order) {
 async function handleDeleteBatch() {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting'),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrderList(checkedIds.value);
@@ -77,34 +79,33 @@ async function handleDeleteBatch() {
   }
 }
 
-const checkedIds = ref<number[]>([])
-function handleRowCheckboxChange({
-  records
-}: {
-  records: OrderApi.Order[];
-}) {
+const checkedIds = ref<number[]>([]);
+function handleRowCheckboxChange({ records }: { records: OrderApi.Order[] }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
 /** 导出订单信息 */
 const exportLoading = ref(false);
 async function handleExport() {
-    try {
-      exportLoading.value = true;
-      message.loading({
-        content: $t('ui.actionMessage.exporting'),
-        key: 'action_key_msg',
-      });
-      const data = await exportOrder(await gridApi.formApi.getValues());
-      downloadFileFromBlobPart({ fileName: $t('erp.order.order') + '.xls', source: data });
-    }finally {
-      exportLoading.value = false;
-    }
+  try {
+    exportLoading.value = true;
+    message.loading({
+      content: $t('ui.actionMessage.exporting'),
+      key: 'action_key_msg',
+    });
+    const data = await exportOrder(await gridApi.formApi.getValues());
+    downloadFileFromBlobPart({
+      fileName: `${$t('erp.order.order')}.xls`,
+      source: data,
+    });
+  } finally {
+    exportLoading.value = false;
+  }
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: useGridFormSchema()
+    schema: useGridFormSchema(),
   },
   gridOptions: {
     columns: useGridColumns(),
@@ -137,21 +138,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
     sortConfig: {
       remote: true,
       multiple: true,
-    }
+    },
   } as VxeTableGridOptions<OrderApi.Order>,
-  gridEvents:{
-      checkboxAll: handleRowCheckboxChange,
-      checkboxChange: handleRowCheckboxChange,
-    sortChange: () => gridApi.query()
-  }
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+    sortChange: () => gridApi.query(),
+  },
 });
 </script>
 
 <template>
   <Page auto-content-height>
     <FormModalDrawer @success="onRefresh" />
-    
-    <Grid :table-title="$t('erp.order.order')" >
+
+    <Grid :table-title="$t('erp.order.order')">
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -179,7 +180,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order:delete'],
               onClick: handleDeleteBatch,
             },
-                      ]"
+          ]"
         />
       </template>
       <template #actions="{ row }">
@@ -199,7 +200,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.DELETE,
               auth: ['erp:order:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.id, $t('erp.order.order')]),
+                title: $t('ui.actionMessage.deleteConfirm', [
+                  row.id,
+                  $t('erp.order.order'),
+                ]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -207,6 +211,5 @@ const [Grid, gridApi] = useVbenVxeGrid({
         />
       </template>
     </Grid>
-
   </Page>
 </template>

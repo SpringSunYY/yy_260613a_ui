@@ -55,7 +55,8 @@
     "select": "Please select {0}",
     "date": "Please select {0}",
     "autoGenerate": "Auto generated on save",
-    "accountCount": "{0} accounts"
+    "accountCount": "{0} accounts",
+    "subTableInput": "Please enter the value {1} on line {0}"
   },
   "validate": {
     "email": "Please enter a valid email address"

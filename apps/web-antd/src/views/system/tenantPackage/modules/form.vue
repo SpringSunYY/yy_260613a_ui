@@ -83,6 +83,6 @@ const [FormModelDrawer, formModelDrawerApi] = useVbenModelDrawer({
 
 <template>
   <FormModelDrawer :title="getTitle">
-    <Form class="mx-6" />
+    <Form class="mx-2" />
   </FormModelDrawer>
 </template>

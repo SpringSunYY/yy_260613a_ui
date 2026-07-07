@@ -80,7 +80,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     /** 审核状态 */
-    {
+    /*    {
       fieldName: 'auditStatus',
       label: $t('erp.order.field.auditStatus'),
       rules: 'required',
@@ -91,9 +91,9 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.auditStatus'),
         ]),
       },
-    },
+    },*/
     /** 当前工序 */
-    {
+    /*    {
       fieldName: 'currentProcess',
       label: $t('erp.order.field.currentProcess'),
       rules: 'required',
@@ -104,9 +104,9 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.currentProcess'),
         ]),
       },
-    },
+    },*/
     /** 出货日期 */
-    {
+    /*    {
       fieldName: 'shipmentTime',
       label: $t('erp.order.field.shipmentTime'),
       component: 'DatePicker',
@@ -115,7 +115,8 @@ export function useFormSchema(): VbenFormSchema[] {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',
       },
-    },
+
+    },*/
     /** 客户 */
     {
       fieldName: 'customer',
@@ -128,25 +129,25 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     /** 图片 */
-    {
+    /* {
       fieldName: 'orderImage',
       label: $t('erp.order.field.orderImage'),
       component: 'ImageUpload',
       componentProps: {
         moduleType: 'erp',
       },
-    },
+    },*/
     /** 二维码 */
-    {
+    /*  {
       fieldName: 'qrCode',
       label: $t('erp.order.field.qrCode'),
       component: 'ImageUpload',
       componentProps: {
         moduleType: 'erp',
       },
-    },
+    },*/
     /** 规格 */
-    {
+    /*  {
       fieldName: 'specification',
       label: $t('erp.order.field.specification'),
       rules: 'required',
@@ -157,9 +158,9 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.specification'),
         ]),
       },
-    },
+    },*/
     /** 版型 */
-    {
+    /* {
       fieldName: 'pattern',
       label: $t('erp.order.field.pattern'),
       component: 'I18nSelect',
@@ -169,9 +170,9 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.pattern'),
         ]),
       },
-    },
+    },*/
     /** 布料 */
-    {
+    /*  {
       fieldName: 'fabric',
       label: $t('erp.order.field.fabric'),
       rules: 'required',
@@ -182,7 +183,7 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.fabric'),
         ]),
       },
-    },
+    },*/
     /** 数量 */
     {
       fieldName: 'number',
@@ -193,7 +194,9 @@ export function useFormSchema(): VbenFormSchema[] {
         min: 0,
         controlsPosition: 'right',
         placeholder: $t('ui.placeholder.input', [$t('erp.order.field.number')]),
+        readonly: true,
       },
+      defaultValue: 0,
     },
     /** 提货方式 */
     {
@@ -243,7 +246,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     /** 发货时间 */
-    {
+    /* {
       fieldName: 'shippingTime',
       label: $t('erp.order.field.shippingTime'),
       component: 'DatePicker',
@@ -252,9 +255,9 @@ export function useFormSchema(): VbenFormSchema[] {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',
       },
-    },
+    },*/
     /** 打印状态 */
-    {
+    /* {
       fieldName: 'printStatus',
       label: $t('erp.order.field.printStatus'),
       rules: 'required',
@@ -265,7 +268,7 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.order.field.printStatus'),
         ]),
       },
-    },
+    },*/
     /** 补水 */
     {
       fieldName: 'hydration',
@@ -281,10 +284,11 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'remark',
       label: $t('erp.order.field.remark'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [$t('erp.order.field.remark')]),
       },
+      formItemClass: 'col-span-3',
     },
   ];
 }

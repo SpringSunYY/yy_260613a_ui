@@ -2,6 +2,8 @@ import type { Dayjs } from 'dayjs';
 
 import type { PageParam, PageResult } from '@vben/request';
 
+import type { OrderProcessApi } from '#/api/erp/orderProcess';
+
 import { requestClient } from '#/api/request';
 
 export namespace OrderApi {
@@ -43,6 +45,7 @@ export namespace OrderApi {
     hydration: string; // 补水
     remark: string; // 备注
     orderDetails?: OrderDetail[];
+    orderProcess?: OrderProcessApi.OrderProcess;
   }
 }
 
