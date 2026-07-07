@@ -117,6 +117,7 @@ export function useTypeGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'id',
       title: $t('system.dict.typeField.id'),
+      visible: false,
     },
     {
       field: 'name',
@@ -138,11 +139,13 @@ export function useTypeGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'remark',
       title: $t('system.dict.typeField.remark'),
+      visible: false,
     },
     {
       field: 'createTime',
       title: $t('system.dict.typeField.createTime'),
       formatter: 'formatDateTime',
+      visible: false,
     },
     {
       title: $t('common.operation'),
@@ -336,6 +339,7 @@ export function useDataGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'id',
       title: $t('system.dict.dataField.id'),
+      visible: false,
     },
     {
       field: 'label',

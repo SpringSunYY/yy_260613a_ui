@@ -116,7 +116,7 @@ async function runSearch() {
       message.info($t('infra.vectorImage.search.empty'));
     }
   } catch (error: any) {
-    message.error(
+    console.error(
       $t('infra.vectorImage.message.searchFailed', [
         error?.message ?? queryFile.value.name,
       ]),

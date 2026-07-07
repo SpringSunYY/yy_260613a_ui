@@ -165,7 +165,7 @@ async function handleSearchByRow(row: VectorImageApi.VectorImage) {
       })
       .open();
   } catch (error: any) {
-    message.error(
+    console.error(
       $t('infra.vectorImage.message.searchFailed', [
         error?.message ?? String(error),
       ]),
@@ -261,7 +261,7 @@ loadCollectionInfo();
             {{ $t('infra.vectorImage.stats.rowCount') }}:
             <b class="ml-1">{{ collectionInfo.rowCount }}</b>
           </span>
-<!--          <a-button size="small" type="link" @click="loadCollectionInfo">
+          <!--          <a-button size="small" type="link" @click="loadCollectionInfo">
             {{ $t('infra.vectorImage.action.refresh') }}
           </a-button>-->
         </div>
