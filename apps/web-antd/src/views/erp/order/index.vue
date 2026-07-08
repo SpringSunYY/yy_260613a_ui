@@ -220,8 +220,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: $t('common.submit'),
               type: 'link',
               auth: ['erp:order:create'],
-              // ifShow:
-              //   row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1,
+              ifShow:
+                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1,
               popConfirm: {
                 title: $t('ui.actionMessage.submitConfirm', [
                   row.orderNo,

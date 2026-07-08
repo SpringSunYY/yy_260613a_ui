@@ -1,0 +1,9 @@
+{
+  "orderProcess": {
+    "selectRowHint": "请选择左侧或右侧的卡片",
+    "pane": {
+      "pendingTitle": "待排版",
+      "layoutTitle": "排版中"
+    }
+  }
+}

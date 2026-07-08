@@ -1,0 +1,9 @@
+{
+  "orderProcess": {
+    "selectRowHint": "Please select a card on the left or right",
+    "pane": {
+      "pendingTitle": "Pending Layout",
+      "layoutTitle": "In Layout"
+    }
+  }
+}
