@@ -4,6 +4,13 @@
     "pane": {
       "pendingTitle": "待排版",
       "layoutTitle": "排版中"
+    },
+    "action": {
+      "layout": "完成排版",
+      "paper": "完成打纸",
+      "roller": "完成滚筒",
+      "laser": "完成激光",
+      "ship": "完成裁缝发货"
     }
   }
 }

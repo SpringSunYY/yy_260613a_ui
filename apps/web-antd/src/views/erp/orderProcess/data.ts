@@ -2,9 +2,12 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
+import { useAccess } from '@vben/access';
 import { $t } from '@vben/locales';
 
 import { DICT_TYPE, getDictOptions, getRangePickerDefaultProps } from '#/utils';
+
+const { hasAccessByCodes } = useAccess();
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -17,7 +20,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     /** 当前工序 */
-/*    {
+    {
       fieldName: 'currentProcess',
       label: $t('erp.orderProcess.field.currentProcess'),
       rules: 'required',
@@ -28,7 +31,12 @@ export function useFormSchema(): VbenFormSchema[] {
           $t('erp.orderProcess.field.currentProcess'),
         ]),
       },
-    },*/
+      dependencies: {
+        triggerFields: [''],
+        show: () => hasAccessByCodes(['erp:order-process:complete']),
+      },
+      formItemClass: 'col-span-4',
+    },
     /** 订单号 */
     {
       fieldName: 'orderNo',

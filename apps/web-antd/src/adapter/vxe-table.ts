@@ -130,7 +130,7 @@ setupVbenVxeTable({
         return h(JsonPreview, { value });
       },
     });
-    
+
 
     // 表格配置项可以用 cellRender: { name: 'CellFilePreview' },
     // 支持单个文件URL或 || 分隔的多个URL字符串

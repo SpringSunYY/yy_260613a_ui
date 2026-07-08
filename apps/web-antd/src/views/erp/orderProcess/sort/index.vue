@@ -3,8 +3,9 @@ import type { CardField } from './data';
 
 import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
-import { nextTick, reactive, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 
 import { message, Pagination } from 'ant-design-vue';
@@ -14,9 +15,11 @@ import {
   getOrderProcess,
   getOrderProcessPage,
   updateOrderProcess,
+  updateProcessToTargetProcess,
 } from '#/api/erp/orderProcess';
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
+import { ErpOrderCurrentProcess } from '#/utils';
 
 import {
   CARD_PAGE_SIZE_OPTIONS,
@@ -27,6 +30,8 @@ import {
   useDetailSchema,
   useSearchSchema,
 } from './data';
+
+const { hasAccessByCodes } = useAccess();
 
 /** 顶部查询表单 */
 const [SearchForm, searchFormApi] = useVbenForm({
@@ -122,7 +127,13 @@ async function refreshAll() {
   await Promise.all([loadLeft(), loadRight()]);
   scrollToTop(leftScrollRef.value);
   scrollToTop(rightScrollRef.value);
-  syncSelectedAfterRefresh();
+  if (selectedRow.value?.id) {
+    await reselectRow(selectedRow.value.id);
+  } else {
+    selectedRow.value = null;
+    detailFormApi.setValues({});
+    detailFormApi.setState({ commonConfig: { disabled: true } });
+  }
 }
 
 /** 顶部查询 -> 触发刷新 */
@@ -147,6 +158,7 @@ async function handleLeftPageChange(page: number, pageSize: number) {
   await nextTick();
   scrollToTop(leftScrollRef.value);
 }
+
 async function handleRightPageChange(page: number, pageSize: number) {
   rightPane.pageNo = page;
   rightPane.pageSize = pageSize;
@@ -155,31 +167,51 @@ async function handleRightPageChange(page: number, pageSize: number) {
   scrollToTop(rightScrollRef.value);
 }
 
-/** 卡片点击：选中并加载详情到中间 */
+/** 详情加载态 */
 const detailLoading = ref(false);
-async function selectRow(row: OrderProcessApi.OrderProcess) {
-  selectedRow.value = row;
+
+/** 在某个 pane 的列表里按 id 找出最新一行的引用 */
+function findRowInPane(id: number, list: OrderProcessApi.OrderProcess[]) {
+  return list.find((it) => it.id === id) ?? null;
+}
+
+/**
+ * 刷新左右两侧后，按 id 重新定位当前选中项
+ * - 命中左侧：selectedRow 指向 leftPane.list 里那一行
+ * - 命中右侧：同理
+ * - 推进工序后会自然发生跨 pane 切换
+ * - 命中后重新拉详情，保证中间表单拿到最新数据
+ */
+async function reselectRow(targetId: number) {
+  let next: null | OrderProcessApi.OrderProcess = findRowInPane(
+    targetId,
+    leftPane.list,
+  );
+  if (!next) {
+    next = findRowInPane(targetId, rightPane.list);
+  }
+  if (!next) {
+    // 理论上保存/推进后仍可能因为过滤条件被排除掉
+    selectedRow.value = null;
+    detailFormApi.setValues({});
+    detailFormApi.setState({ commonConfig: { disabled: true } });
+    return;
+  }
+  selectedRow.value = next;
   detailLoading.value = true;
   try {
-    const detail = await getOrderProcess(row.id as number);
-    detailFormApi.setValues(detail);
+    await detailFormApi.resetForm();
+    const detail = await getOrderProcess(next.id as number);
+    await detailFormApi.setValues(detail);
     detailFormApi.setState({ commonConfig: { disabled: false } });
   } finally {
     detailLoading.value = false;
   }
 }
 
-/** 刷新后如果选中项已不在左右列表中，清空选中 */
-function syncSelectedAfterRefresh() {
-  if (!selectedRow.value) return;
-  const stillExists =
-    leftPane.list.some((it) => it.id === selectedRow.value!.id) ||
-    rightPane.list.some((it) => it.id === selectedRow.value!.id);
-  if (!stillExists) {
-    selectedRow.value = null;
-    detailFormApi.setValues({});
-    detailFormApi.setState({ commonConfig: { disabled: true } });
-  }
+/** 主动选择某行：详情已由调用方刷新，这里只同步 selectedRow 引用 + 拉详情 */
+async function selectRow(row: OrderProcessApi.OrderProcess) {
+  await reselectRow(row.id as number);
 }
 
 const [DetailForm, detailFormApi] = useVbenForm({
@@ -201,8 +233,10 @@ detailFormApi.setState({ commonConfig: { disabled: true } });
 
 /** 保存中间详情 */
 const saving = ref(false);
+
 async function handleSave() {
   if (!selectedRow.value?.id) return;
+  const targetId = selectedRow.value.id;
   const { valid } = await detailFormApi.validate();
   if (!valid) return;
   saving.value = true;
@@ -213,11 +247,100 @@ async function handleSave() {
     await Promise.all([loadLeft(), loadRight()]);
     scrollToTop(leftScrollRef.value);
     scrollToTop(rightScrollRef.value);
-    syncSelectedAfterRefresh();
+    await reselectRow(targetId);
   } finally {
     saving.value = false;
   }
 }
+
+/** 推进工序 */
+async function handleToTargetProcess(targetProcess: string) {
+  if (!selectedRow.value?.id) return;
+  const { valid } = await detailFormApi.validate();
+  if (!valid) return;
+  const targetId = selectedRow.value.id;
+  saving.value = true;
+  try {
+    const values =
+      (await detailFormApi.getValues()) as OrderProcessApi.OrderProcess;
+    await updateProcessToTargetProcess({
+      ...values,
+      currentProcess: targetProcess,
+    });
+    await Promise.all([loadLeft(), loadRight()]);
+    scrollToTop(leftScrollRef.value);
+    scrollToTop(rightScrollRef.value);
+    await reselectRow(targetId);
+    message.success($t('ui.actionMessage.operationSuccess'));
+  } finally {
+    saving.value = false;
+  }
+}
+
+function confirmToTargetProcess(targetProcess: string) {
+  if (selectedRow.value !== null) {
+    handleToTargetProcess(targetProcess);
+  }
+}
+
+/**
+ * 工序推进动作配置：根据当前工序计算可用的「完成 XX」操作
+ * - currentProcess=2 待排版  -> 完成排版 -> 3
+ * - currentProcess=3 待打纸  -> 完成打纸 -> 4
+ * - currentProcess=4 待滚筒  -> 完成滚筒 -> 5
+ * - currentProcess=5 待激光  -> 完成激光 -> 6
+ * - currentProcess=6 待裁缝发货 -> 完成裁缝发货 -> 7
+ * - 1 草稿 / 7 完结 不展示
+ */
+const processActions = computed(() => {
+  const order = [
+    ErpOrderCurrentProcess.CURRENT_PROCESS_2,
+    ErpOrderCurrentProcess.CURRENT_PROCESS_3,
+    ErpOrderCurrentProcess.CURRENT_PROCESS_4,
+    ErpOrderCurrentProcess.CURRENT_PROCESS_5,
+    ErpOrderCurrentProcess.CURRENT_PROCESS_6,
+    ErpOrderCurrentProcess.CURRENT_PROCESS_7,
+  ] as const;
+  const labels: Record<(typeof order)[number], string> = {
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_2]:
+      'erp.orderProcess.action.layout',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_3]: 'erp.orderProcess.action.paper',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_4]:
+      'erp.orderProcess.action.roller',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_5]: 'erp.orderProcess.action.laser',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_6]: 'erp.orderProcess.action.ship',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_7]:
+      'erp.orderProcess.action.complete',
+  };
+  // 每个工序独立权限码
+  const auths: Record<(typeof order)[number], string> = {
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_2]: 'erp:order-process:layout',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_3]: 'erp:order-process:paper',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_4]: 'erp:order-process:roller',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_5]: 'erp:order-process:laser',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_6]: 'erp:order-process:ship',
+    [ErpOrderCurrentProcess.CURRENT_PROCESS_7]: 'erp:order-process:complete',
+  };
+  // 只生成向前推进一格的动作（最后一格不生成"完成"，由 6 进入 7 完结由其它入口处理）
+  return order.slice(0, -1).map((current, index) => {
+    const target = order[index + 1] as (typeof order)[number];
+    return {
+      key: current,
+      i18nKey: labels[current],
+      target,
+      auth: auths[current],
+    };
+  });
+});
+
+/** 当前选中行可执行的动作（按当前工序 + 权限过滤） */
+const currentActions = computed(() => {
+  const current = selectedRow.value?.currentProcess;
+  if (!current) return [];
+  return processActions.value
+    .filter((a) => a.key === current)
+    .filter((a) => hasAccessByCodes([a.auth]));
+});
 
 /** 卡片选中态 */
 const isLeftSelected = (row: OrderProcessApi.OrderProcess) =>
@@ -340,15 +463,38 @@ refreshAll();
                   : $t('erp.orderProcess.orderProcess')
               }}
             </span>
-            <a-button
-              type="primary"
-              size="small"
-              :disabled="!selectedRow?.id"
-              :loading="saving"
-              @click="handleSave"
-            >
-              {{ $t('common.save') }}
-            </a-button>
+            <span class="sort-pane__actions">
+              <a-popconfirm
+                v-for="action in currentActions"
+                :key="action.key"
+                :disabled="!selectedRow?.id"
+                :title="
+                  $t('ui.actionMessage.submitConfirm', [
+                    $t('erp.orderProcess.orderProcess'),
+                  ])
+                "
+                :ok-text="$t('common.confirm')"
+                :cancel-text="$t('common.cancel')"
+                @confirm="confirmToTargetProcess(action.target)"
+              >
+                <a-button
+                  size="small"
+                  :disabled="!selectedRow?.id"
+                  :loading="saving"
+                >
+                  {{ $t(action.i18nKey) }}
+                </a-button>
+              </a-popconfirm>
+              <a-button
+                type="primary"
+                size="small"
+                :disabled="!selectedRow?.id"
+                :loading="saving"
+                @click="handleSave"
+              >
+                {{ $t('common.save') }}
+              </a-button>
+            </span>
           </div>
           <div class="sort-pane__scroll">
             <a-spin :spinning="detailLoading" class="sort-pane__spin">
@@ -524,6 +670,12 @@ refreshAll();
   text-align: center;
 }
 
+.sort-pane__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sort-pane__scroll {
   flex: 1;
   overflow-y: auto;
@@ -655,6 +807,7 @@ refreshAll();
 .sort-detail {
   padding: 8px 14px 16px;
 }
+
 .ant-pagination {
   white-space: nowrap;
 }

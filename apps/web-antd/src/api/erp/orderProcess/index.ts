@@ -57,6 +57,13 @@ export function updateOrderProcess(data: OrderProcessApi.OrderProcess) {
   return requestClient.put('/erp/order-process/update', data);
 }
 
+/** 更新订单工序 */
+export function updateProcessToTargetProcess(
+  data: OrderProcessApi.OrderProcess,
+) {
+  return requestClient.put('/erp/order-process/update/process', data);
+}
+
 /** 删除订单工序 */
 export function deleteOrderProcess(id: number) {
   return requestClient.delete(`/erp/order-process/delete?id=${id}`);

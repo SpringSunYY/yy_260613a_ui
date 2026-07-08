@@ -4,6 +4,13 @@
     "pane": {
       "pendingTitle": "Pending Layout",
       "layoutTitle": "In Layout"
+    },
+    "action": {
+      "layout": "Complete Layout",
+      "paper": "Complete Paper",
+      "roller": "Complete Roller",
+      "laser": "Complete Laser",
+      "ship": "Complete Shipping"
     }
   }
 }
