@@ -526,6 +526,13 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
       title: $t('erp.orderProcess.field.remark'),
       minWidth: 120,
     },
+    /** 创建人*/
+    {
+      field: 'creator',
+      title: $t('erp.orderProcess.field.creator'),
+      minWidth: 120,
+      visible: false,
+    },
     /** 创建时间 */
     {
       field: 'createTime',

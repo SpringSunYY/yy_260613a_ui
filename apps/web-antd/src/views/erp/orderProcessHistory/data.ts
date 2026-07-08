@@ -146,6 +146,12 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessHistoryApi.Ord
         props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
       },
     },
+    /** 创建人*/
+    {
+      field: 'creator',
+      title: $t('erp.orderProcessHistory.field.creator'),
+      minWidth: 120,
+    },
     /** 创建时间 */
     {
       field: 'createTime',

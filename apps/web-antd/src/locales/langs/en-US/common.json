@@ -58,5 +58,6 @@
   "copy": "Copy",
   "clear": "Clear",
   "remove": "Remove",
-  "submit": "Submit"
+  "submit": "Submit",
+  "approve": "Approve"
 }

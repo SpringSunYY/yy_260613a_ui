@@ -5,15 +5,18 @@ import { computed, ref } from 'vue';
 
 import { useVbenModelDrawer } from '@vben/common-ui';
 
+import { message } from 'ant-design-vue';
+
 import { useVbenForm } from '#/adapter/form';
-import { getOrderAudit } from '#/api/erp/orderAudit';
+import { createOrderAudit } from '#/api/erp/orderAudit';
 import { $t } from '#/locales';
 
-import { useFormSchema } from '../data';
+import { useAuditFormSchema } from '../data';
 
+const emit = defineEmits(['success']);
 const formData = ref<OrderAuditApi.OrderAudit>();
 const getTitle = computed(() => {
-  return $t('erp.orderAudit.orderAudit');
+  return $t('ui.actionTitle.create', [$t('erp.orderAudit.orderAudit')]);
 });
 
 const [Form, formApi] = useVbenForm({
@@ -25,7 +28,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useAuditFormSchema(),
   showDefaultActions: false,
 });
 
@@ -36,9 +39,18 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     modalDrawerApi.lock();
+    // 提交表单
+    const data = (await formApi.getValues()) as OrderAuditApi.OrderAudit;
     try {
+      // 不能传递id
+      await createOrderAudit({
+        ...data,
+        id: null,
+      });
       // 关闭并提示
       await modalDrawerApi.close();
+      emit('success');
+      message.success($t('ui.actionMessage.operationSuccess'));
     } finally {
       modalDrawerApi.unlock();
     }
@@ -49,17 +61,9 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     // 加载数据
-    let data = modalDrawerApi.getData<OrderAuditApi.OrderAudit>();
+    const data = modalDrawerApi.getData<OrderAuditApi.OrderAudit>();
     if (!data) {
       return;
-    }
-    if (data.id) {
-      modalDrawerApi.lock();
-      try {
-        data = await getOrderAudit(data.id);
-      } finally {
-        modalDrawerApi.unlock();
-      }
     }
     // 设置到 values
     formData.value = data;

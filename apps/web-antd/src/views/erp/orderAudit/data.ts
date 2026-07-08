@@ -23,6 +23,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'Input',
       componentProps: {
+        readonly: true,
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderAudit.field.orderNo'),
         ]),
@@ -33,12 +34,11 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'oldAuditStatus',
       label: $t('erp.orderAudit.field.oldAuditStatus'),
       rules: 'required',
-      component: 'I18nSelect',
+      component: 'I18nRadioGroup',
       componentProps: {
         options: getDictOptions(DICT_TYPE.ERP_ORDER_AUDIT_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderAudit.field.oldAuditStatus'),
-        ]),
+        buttonStyle: 'solid',
+        optionType: 'button',
       },
     },
     /** 审核状态 */
@@ -53,36 +53,13 @@ export function useFormSchema(): VbenFormSchema[] {
         optionType: 'button',
       },
     },
-    /** 审核人 */
-    {
-      fieldName: 'auditPerson',
-      label: $t('erp.orderAudit.field.auditPerson'),
-      rules: 'required',
-      component: 'Input',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderAudit.field.auditPerson'),
-        ]),
-      },
-    },
-    /** 审核时间 */
-    {
-      fieldName: 'auditTime',
-      label: $t('erp.orderAudit.field.auditTime'),
-      rules: 'required',
-      component: 'DatePicker',
-      componentProps: {
-        showTime: true,
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-      },
-    },
     /** 审核意见 */
     {
       fieldName: 'auditRemark',
       label: $t('erp.orderAudit.field.auditRemark'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
+        readonly: true,
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderAudit.field.auditRemark'),
         ]),
@@ -130,28 +107,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
         placeholder: $t('ui.placeholder.select', [
           $t('erp.orderAudit.field.auditStatus'),
         ]),
-      },
-    },
-    /** 审核人 */
-    {
-      fieldName: 'auditPerson',
-      label: $t('erp.orderAudit.field.auditPerson'),
-      component: 'Input',
-      componentProps: {
-        allowClear: true,
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderAudit.field.auditPerson'),
-        ]),
-      },
-    },
-    /** 审核时间 */
-    {
-      fieldName: 'auditTime',
-      label: $t('erp.orderAudit.field.auditTime'),
-      component: 'RangePicker',
-      componentProps: {
-        ...getRangePickerDefaultProps(),
-        allowClear: true,
       },
     },
     /** 创建时间 */
@@ -203,24 +158,16 @@ export function useGridColumns(): VxeTableGridOptions<OrderAuditApi.OrderAudit>[
         props: { type: DICT_TYPE.ERP_ORDER_AUDIT_STATUS },
       },
     },
-    /** 审核人 */
-    {
-      field: 'auditPerson',
-      title: $t('erp.orderAudit.field.auditPerson'),
-      minWidth: 120,
-    },
-    /** 审核时间 */
-    {
-      field: 'auditTime',
-      title: $t('erp.orderAudit.field.auditTime'),
-      minWidth: 120,
-      sortable: true,
-      formatter: 'formatDateTime',
-    },
     /** 审核意见 */
     {
       field: 'auditRemark',
       title: $t('erp.orderAudit.field.auditRemark'),
+      minWidth: 120,
+    },
+    /** 创建人*/
+    {
+      field: 'creator',
+      title: $t('erp.orderAudit.field.creator'),
       minWidth: 120,
     },
     /** 创建时间 */

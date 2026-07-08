@@ -2,37 +2,36 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderAuditApi } from '#/api/erp/orderAudit';
 
-import { Page, useVbenModelDrawer, useVbenModal } from '@vben/common-ui';
-import { message,Tabs } from 'ant-design-vue';
-import Form from './modules/form.vue';
+import { ref } from 'vue';
 
-
-import { ref, computed } from 'vue';
-import { $t } from '#/locales';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { pickSort } from '#/utils';
-import { getOrderAuditPage, deleteOrderAudit, deleteOrderAuditList, exportOrderAudit } from '#/api/erp/orderAudit';
+import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import { message } from 'ant-design-vue';
 
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  deleteOrderAudit,
+  deleteOrderAuditList,
+  exportOrderAudit,
+  getOrderAuditPage,
+} from '#/api/erp/orderAudit';
+import { $t } from '#/locales';
+import { pickSort } from '#/utils';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
-  type: 'drawer'
+  type: 'drawer',
+  externalCloseConfirm: false,
 });
-
-
 
 /** 刷新表格 */
 function onRefresh() {
   gridApi.query();
-}
-
-/** 创建订单审核记录 */
-function handleCreate() {
-  formModalDrawerApi.setData({}).open();
 }
 
 /** 编辑订单审核记录 */
@@ -40,12 +39,11 @@ function handleEdit(row: OrderAuditApi.OrderAudit) {
   formModalDrawerApi.setData(row).open();
 }
 
-
 /** 删除订单审核记录 */
 async function handleDelete(row: OrderAuditApi.OrderAudit) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.id]),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrderAudit(row.id as number);
@@ -63,7 +61,7 @@ async function handleDelete(row: OrderAuditApi.OrderAudit) {
 async function handleDeleteBatch() {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting'),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrderAuditList(checkedIds.value);
@@ -77,34 +75,37 @@ async function handleDeleteBatch() {
   }
 }
 
-const checkedIds = ref<number[]>([])
+const checkedIds = ref<number[]>([]);
 function handleRowCheckboxChange({
-  records
+  records,
 }: {
   records: OrderAuditApi.OrderAudit[];
 }) {
-  checkedIds.value = records.map((item) => item.id);
+  checkedIds.value = records.map((item) => item.id || 0);
 }
 
 /** 导出订单审核记录 */
 const exportLoading = ref(false);
 async function handleExport() {
-    try {
-      exportLoading.value = true;
-      message.loading({
-        content: $t('ui.actionMessage.exporting'),
-        key: 'action_key_msg',
-      });
-      const data = await exportOrderAudit(await gridApi.formApi.getValues());
-      downloadFileFromBlobPart({ fileName: $t('erp.orderAudit.orderAudit') + '.xls', source: data });
-    }finally {
-      exportLoading.value = false;
-    }
+  try {
+    exportLoading.value = true;
+    message.loading({
+      content: $t('ui.actionMessage.exporting'),
+      key: 'action_key_msg',
+    });
+    const data = await exportOrderAudit(await gridApi.formApi.getValues());
+    downloadFileFromBlobPart({
+      fileName: `${$t('erp.orderAudit.orderAudit')}.xls`,
+      source: data,
+    });
+  } finally {
+    exportLoading.value = false;
+  }
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: useGridFormSchema()
+    schema: useGridFormSchema(),
   },
   gridOptions: {
     columns: useGridColumns(),
@@ -137,33 +138,37 @@ const [Grid, gridApi] = useVbenVxeGrid({
     sortConfig: {
       remote: true,
       multiple: true,
-    }
+    },
   } as VxeTableGridOptions<OrderAuditApi.OrderAudit>,
-  gridEvents:{
-      checkboxAll: handleRowCheckboxChange,
-      checkboxChange: handleRowCheckboxChange,
-    sortChange: () => gridApi.query()
-  }
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+    sortChange: () => gridApi.query(),
+  },
 });
 </script>
 
 <template>
   <Page auto-content-height>
-    <FormModalDrawer @success="onRefresh" />
-    
-    <Grid :table-title="$t('erp.orderAudit.orderAudit')" >
+    <FormModalDrawer />
+
+    <Grid :table-title="$t('erp.orderAudit.orderAudit')">
       <template #toolbar-tools>
         <TableAction
           :actions="[
-            {
-              label: $t('ui.actionTitle.create', [$t('erp.orderAudit.orderAudit')]),
+            /*  {
+              label: $t('ui.actionTitle.create', [
+                $t('erp.orderAudit.orderAudit'),
+              ]),
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['erp:order-audit:create'],
               onClick: handleCreate,
-            },
+            },*/
             {
-              label: $t('ui.actionTitle.export', [$t('erp.orderAudit.orderAudit')]),
+              label: $t('ui.actionTitle.export', [
+                $t('erp.orderAudit.orderAudit'),
+              ]),
               type: 'primary',
               icon: ACTION_ICON.DOWNLOAD,
               auth: ['erp:order-audit:export'],
@@ -171,7 +176,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
               loading: exportLoading,
             },
             {
-              label: $t('ui.actionTitle.deleteBatch', [$t('erp.orderAudit.orderAudit')]),
+              label: $t('ui.actionTitle.deleteBatch', [
+                $t('erp.orderAudit.orderAudit'),
+              ]),
               type: 'primary',
               danger: true,
               icon: ACTION_ICON.DELETE,
@@ -179,17 +186,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order-audit:delete'],
               onClick: handleDeleteBatch,
             },
-                      ]"
+          ]"
         />
       </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
             {
-              label: $t('common.edit'),
+              label: $t('common.view'),
               type: 'link',
-              icon: ACTION_ICON.EDIT,
-              auth: ['erp:order-audit:update'],
+              icon: ACTION_ICON.VIEW,
+              auth: ['erp:order-audit:query'],
               onClick: handleEdit.bind(null, row),
             },
             {
@@ -199,7 +206,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.DELETE,
               auth: ['erp:order-audit:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.id, $t('erp.orderAudit.orderAudit')]),
+                title: $t('ui.actionMessage.deleteConfirm', [
+                  row.id,
+                  $t('erp.orderAudit.orderAudit'),
+                ]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -207,6 +217,5 @@ const [Grid, gridApi] = useVbenVxeGrid({
         />
       </template>
     </Grid>
-
   </Page>
 </template>

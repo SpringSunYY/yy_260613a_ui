@@ -58,5 +58,6 @@
   "copy": "复制",
   "clear": "清空",
   "remove": "移除",
-  "submit": "提交"
+  "submit": "提交",
+  "approve": "审核"
 }

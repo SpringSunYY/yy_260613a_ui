@@ -21,6 +21,7 @@ import { $t } from '#/locales';
 import { ErpOrderAuditStatus, pickSort } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
+import AuditForm from './modules/audit-form.vue';
 import Form from './modules/form.vue';
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
@@ -69,6 +70,16 @@ async function handleSubmitAudit(row: OrderApi.Order) {
   onRefresh();
 }
 
+const [AuditFormModalDrawer, auditFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: AuditForm,
+  destroyOnClose: true,
+  type: 'modal',
+});
+/** 审核*/
+function handleApproveAudit(row: OrderApi.Order) {
+  auditFormModalDrawerApi.setData(row).open();
+}
+
 /** 批量删除订单信息 */
 async function handleDeleteBatch() {
   const hideLoading = message.loading({
@@ -88,12 +99,14 @@ async function handleDeleteBatch() {
 }
 
 const checkedIds = ref<number[]>([]);
+
 function handleRowCheckboxChange({ records }: { records: OrderApi.Order[] }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
 /** 导出订单信息 */
 const exportLoading = ref(false);
+
 async function handleExport() {
   try {
     exportLoading.value = true;
@@ -159,7 +172,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 <template>
   <Page auto-content-height>
     <FormModalDrawer @success="onRefresh" />
-
+    <AuditFormModalDrawer @success="onRefresh" />
     <Grid :table-title="$t('erp.order.order')">
       <template #toolbar-tools>
         <TableAction
@@ -201,13 +214,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order:update'],
               onClick: handleEdit.bind(null, row),
             },
+          ]"
+          :drop-down-actions="[
             {
               label: $t('common.submit'),
               type: 'link',
-              icon: ACTION_ICON.AUDIT,
               auth: ['erp:order:create'],
-              ifShow:
-                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1,
+              // ifShow:
+              //   row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1,
               popConfirm: {
                 title: $t('ui.actionMessage.submitConfirm', [
                   row.orderNo,
@@ -217,10 +231,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
               },
             },
             {
+              label: $t('common.approve'),
+              type: 'link',
+              auth: ['erp:order-audit:create'],
+              ifShow:
+                row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1 &&
+                row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3,
+              onClick: handleApproveAudit.bind(null, row),
+            },
+            {
               label: $t('common.delete'),
               type: 'link',
               danger: true,
-              icon: ACTION_ICON.DELETE,
               auth: ['erp:order:delete'],
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [

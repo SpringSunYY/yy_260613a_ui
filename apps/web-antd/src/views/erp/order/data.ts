@@ -5,7 +5,12 @@ import type { OrderApi } from '#/api/erp/order';
 import { useAccess } from '@vben/access';
 import { $t } from '@vben/locales';
 
-import { DICT_TYPE, getDictOptions, getRangePickerDefaultProps } from '#/utils';
+import {
+  DICT_TYPE,
+  ErpOrderAuditStatus,
+  getDictOptions,
+  getRangePickerDefaultProps,
+} from '#/utils';
 
 const { hasAccessByCodes } = useAccess();
 /** 新增/修改的表单 */
@@ -732,6 +737,13 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       title: $t('erp.order.field.remark'),
       minWidth: 120,
     },
+    /** 创建人*/
+    {
+      field: 'creator',
+      title: $t('erp.order.field.creator'),
+      minWidth: 120,
+      visible: false,
+    },
     /** 创建时间 */
     {
       field: 'createTime',
@@ -814,6 +826,63 @@ export function useOrderDetailGridEditColumns(
             show: hasAccessByCodes(['erp:order:delete']),
           },
         ],
+      },
+    },
+  ];
+}
+
+/** 新增/修改的表单 */
+export function useAuditFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      fieldName: 'id',
+      component: 'Input',
+      dependencies: {
+        triggerFields: [''],
+        show: () => false,
+      },
+    },
+    /** 订单号 */
+    {
+      fieldName: 'orderNo',
+      label: $t('erp.orderAudit.field.orderNo'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        readonly: true,
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderAudit.field.orderNo'),
+        ]),
+      },
+    },
+    /** 审核状态 */
+    {
+      fieldName: 'auditStatus',
+      label: $t('erp.orderAudit.field.auditStatus'),
+      rules: 'required',
+      component: 'I18nRadioGroup',
+      componentProps: {
+        options: getDictOptions(
+          DICT_TYPE.ERP_ORDER_AUDIT_STATUS,
+          'string',
+        ).filter(
+          (item) =>
+            item.value !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1 &&
+            item.value !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_2,
+        ),
+        buttonStyle: 'solid',
+        optionType: 'button',
+      },
+    },
+    /** 审核意见 */
+    {
+      fieldName: 'auditRemark',
+      label: $t('erp.orderAudit.field.auditRemark'),
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderAudit.field.auditRemark'),
+        ]),
       },
     },
   ];
