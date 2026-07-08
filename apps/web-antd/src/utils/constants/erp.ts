@@ -1,10 +1,15 @@
 // ========== ERP - 企业资源计划 ==========
 
-export const ErpBizType = {
-  PURCHASE_ORDER: 10,
-  PURCHASE_IN: 11,
-  PURCHASE_RETURN: 12,
-  SALE_ORDER: 20,
-  SALE_OUT: 21,
-  SALE_RETURN: 22,
-};
+export const ErpOrderAuditStatus = {
+  /** 草稿 */
+  ORDER_AUDIT_STATUS_1: '1',
+
+  /** 待审核 */
+  ORDER_AUDIT_STATUS_2: '2',
+
+  /** 同意 */
+  ORDER_AUDIT_STATUS_3: '3',
+
+  /** 拒绝 */
+  ORDER_AUDIT_STATUS_4: '4',
+} as const;

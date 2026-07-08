@@ -48,7 +48,8 @@
     "updateConfirm": "您确定要更新吗？",
     "selectRequired": "请选择{0}",
     "processing": "处理中...",
-    "updateSuccess": "{0}更新成功"
+    "updateSuccess": "{0}更新成功",
+    "submitConfirm": "您确定要提交{0}吗？"
   },
   "placeholder": {
     "input": "请输入{0}",

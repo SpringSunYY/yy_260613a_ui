@@ -155,7 +155,10 @@ export const getBoolDictOptions = (dictType: string) => {
 enum DICT_TYPE {
   COMMON_STATUS = 'common_status',
 
+  ERP_CATEGORY = 'erp_category',
   ERP_FABRIC = 'erp_fabric',
+  ERP_HAS_FORKED = 'erp_has_forked',
+  ERP_NECKLINE = 'erp_neckline',
   ERP_ORDER_AUDIT_STATUS = 'erp_order_audit_status',
   ERP_ORDER_CURRENT_PROCESS = 'erp_order_current_process',
   ERP_ORDER_PICKUP_METHOD = 'erp_order_pickup_method',
@@ -163,13 +166,10 @@ enum DICT_TYPE {
   ERP_ORDER_RESOURCE = 'erp_order_resource',
   ERP_ORDER_STATUS = 'erp_order_status',
   ERP_PATTERN = 'erp_pattern',
-  ERP_CATEGORY='erp_category',
-  ERP_HAS_FORKED='erp_has_forked',
-  ERP_SHIRT_HEM='erp_shirt_hem',
-  ERP_POCKET='erp_pocket',
-  ERP_NECKLINE='erp_neckline',
+  ERP_POCKET = 'erp_pocket',
   // ========== ERP 模块 ==========
   ERP_SET_SIZE = 'erp_set_size',
+  ERP_SHIRT_HEM = 'erp_shirt_hem',
   ERP_SPECIFICATION = 'erp_specification',
 
   // ========== INFRA 模块 ==========

@@ -71,6 +71,11 @@ export function updateOrder(data: OrderApi.Order) {
   return requestClient.put('/erp/order/update', data);
 }
 
+/** 提交审核订单*/
+export function submitAuditOrder(data: OrderApi.Order) {
+  return requestClient.post(`/erp/order/submit-audit-order`, data);
+}
+
 /** 删除订单信息 */
 export function deleteOrder(id: number) {
   return requestClient.delete(`/erp/order/delete?id=${id}`);

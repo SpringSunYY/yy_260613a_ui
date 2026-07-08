@@ -15,9 +15,10 @@ import {
   deleteOrderList,
   exportOrder,
   getOrderPage,
+  submitAuditOrder,
 } from '#/api/erp/order';
 import { $t } from '#/locales';
-import { pickSort } from '#/utils';
+import { ErpOrderAuditStatus, pickSort } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -59,6 +60,13 @@ async function handleDelete(row: OrderApi.Order) {
   } finally {
     hideLoading();
   }
+}
+
+/** 提交审核 */
+async function handleSubmitAudit(row: OrderApi.Order) {
+  // 根据订单no更新至待审核
+  await submitAuditOrder(row);
+  onRefresh();
 }
 
 /** 批量删除订单信息 */
@@ -192,6 +200,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.EDIT,
               auth: ['erp:order:update'],
               onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: $t('common.submit'),
+              type: 'link',
+              icon: ACTION_ICON.AUDIT,
+              auth: ['erp:order:create'],
+              ifShow:
+                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1,
+              popConfirm: {
+                title: $t('ui.actionMessage.submitConfirm', [
+                  row.orderNo,
+                  $t('erp.order.order'),
+                ]),
+                confirm: handleSubmitAudit.bind(null, row),
+              },
             },
             {
               label: $t('common.delete'),

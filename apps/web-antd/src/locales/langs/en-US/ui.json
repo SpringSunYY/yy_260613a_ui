@@ -48,7 +48,8 @@
     "updateConfirm": "Confirm Update?",
     "selectRequired": "Please select {0}",
     "processing": "Processing...",
-    "updateSuccess": "{0} updated successfully"
+    "updateSuccess": "{0} updated successfully",
+    "submitConfirm": "Are you sure you want to submit {0}?"
   },
   "placeholder": {
     "input": "Please enter {0}",

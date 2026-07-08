@@ -1,5 +1,3 @@
-export * from './constants/ai';
-export * from './constants/bpm';
 export * from './constants/common';
 export * from './constants/erp';
 export * from './constants/infra';
