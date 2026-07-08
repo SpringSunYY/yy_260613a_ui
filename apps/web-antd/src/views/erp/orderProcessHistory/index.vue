@@ -2,28 +2,32 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderProcessHistoryApi } from '#/api/erp/orderProcessHistory';
 
-import { Page, useVbenModelDrawer, useVbenModal } from '@vben/common-ui';
-import { message,Tabs } from 'ant-design-vue';
-import Form from './modules/form.vue';
+import { ref } from 'vue';
 
-
-import { ref, computed } from 'vue';
-import { $t } from '#/locales';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { pickSort } from '#/utils';
-import { getOrderProcessHistoryPage, deleteOrderProcessHistory, deleteOrderProcessHistoryList, exportOrderProcessHistory } from '#/api/erp/orderProcessHistory';
+import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import { message } from 'ant-design-vue';
 
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  deleteOrderProcessHistory,
+  deleteOrderProcessHistoryList,
+  exportOrderProcessHistory,
+  getOrderProcessHistoryPage,
+} from '#/api/erp/orderProcessHistory';
+import { $t } from '#/locales';
+import { pickSort } from '#/utils';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
-  type: 'drawer'
+  type: 'drawer',
+  externalCloseConfirm: false,
 });
-
-
 
 /** 刷新表格 */
 function onRefresh() {
@@ -36,16 +40,15 @@ function handleCreate() {
 }
 
 /** 编辑订单工序记录 */
-function handleEdit(row: OrderProcessHistoryApi.OrderProcessHistory) {
+function handleView(row: OrderProcessHistoryApi.OrderProcessHistory) {
   formModalDrawerApi.setData(row).open();
 }
-
 
 /** 删除订单工序记录 */
 async function handleDelete(row: OrderProcessHistoryApi.OrderProcessHistory) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.id]),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrderProcessHistory(row.id as number);
@@ -63,7 +66,7 @@ async function handleDelete(row: OrderProcessHistoryApi.OrderProcessHistory) {
 async function handleDeleteBatch() {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting'),
-    key: 'action_key_msg'
+    key: 'action_key_msg',
   });
   try {
     await deleteOrderProcessHistoryList(checkedIds.value);
@@ -77,9 +80,9 @@ async function handleDeleteBatch() {
   }
 }
 
-const checkedIds = ref<number[]>([])
+const checkedIds = ref<number[]>([]);
 function handleRowCheckboxChange({
-  records
+  records,
 }: {
   records: OrderProcessHistoryApi.OrderProcessHistory[];
 }) {
@@ -89,22 +92,27 @@ function handleRowCheckboxChange({
 /** 导出订单工序记录 */
 const exportLoading = ref(false);
 async function handleExport() {
-    try {
-      exportLoading.value = true;
-      message.loading({
-        content: $t('ui.actionMessage.exporting'),
-        key: 'action_key_msg',
-      });
-      const data = await exportOrderProcessHistory(await gridApi.formApi.getValues());
-      downloadFileFromBlobPart({ fileName: $t('erp.orderProcessHistory.orderProcessHistory') + '.xls', source: data });
-    }finally {
-      exportLoading.value = false;
-    }
+  try {
+    exportLoading.value = true;
+    message.loading({
+      content: $t('ui.actionMessage.exporting'),
+      key: 'action_key_msg',
+    });
+    const data = await exportOrderProcessHistory(
+      await gridApi.formApi.getValues(),
+    );
+    downloadFileFromBlobPart({
+      fileName: `${$t('erp.orderProcessHistory.orderProcessHistory')}.xls`,
+      source: data,
+    });
+  } finally {
+    exportLoading.value = false;
+  }
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: useGridFormSchema()
+    schema: useGridFormSchema(),
   },
   gridOptions: {
     columns: useGridColumns(),
@@ -137,33 +145,37 @@ const [Grid, gridApi] = useVbenVxeGrid({
     sortConfig: {
       remote: true,
       multiple: true,
-    }
+    },
   } as VxeTableGridOptions<OrderProcessHistoryApi.OrderProcessHistory>,
-  gridEvents:{
-      checkboxAll: handleRowCheckboxChange,
-      checkboxChange: handleRowCheckboxChange,
-    sortChange: () => gridApi.query()
-  }
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+    sortChange: () => gridApi.query(),
+  },
 });
 </script>
 
 <template>
   <Page auto-content-height>
-    <FormModalDrawer @success="onRefresh" />
-    
-    <Grid :table-title="$t('erp.orderProcessHistory.orderProcessHistory')" >
+    <FormModalDrawer />
+
+    <Grid :table-title="$t('erp.orderProcessHistory.orderProcessHistory')">
       <template #toolbar-tools>
         <TableAction
           :actions="[
-            {
-              label: $t('ui.actionTitle.create', [$t('erp.orderProcessHistory.orderProcessHistory')]),
+            /*    {
+              label: $t('ui.actionTitle.create', [
+                $t('erp.orderProcessHistory.orderProcessHistory'),
+              ]),
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['erp:order-process-history:create'],
               onClick: handleCreate,
-            },
+            },*/
             {
-              label: $t('ui.actionTitle.export', [$t('erp.orderProcessHistory.orderProcessHistory')]),
+              label: $t('ui.actionTitle.export', [
+                $t('erp.orderProcessHistory.orderProcessHistory'),
+              ]),
               type: 'primary',
               icon: ACTION_ICON.DOWNLOAD,
               auth: ['erp:order-process-history:export'],
@@ -171,7 +183,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
               loading: exportLoading,
             },
             {
-              label: $t('ui.actionTitle.deleteBatch', [$t('erp.orderProcessHistory.orderProcessHistory')]),
+              label: $t('ui.actionTitle.deleteBatch', [
+                $t('erp.orderProcessHistory.orderProcessHistory'),
+              ]),
               type: 'primary',
               danger: true,
               icon: ACTION_ICON.DELETE,
@@ -179,18 +193,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order-process-history:delete'],
               onClick: handleDeleteBatch,
             },
-                      ]"
+          ]"
         />
       </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
             {
-              label: $t('common.edit'),
+              label: $t('common.view'),
               type: 'link',
-              icon: ACTION_ICON.EDIT,
-              auth: ['erp:order-process-history:update'],
-              onClick: handleEdit.bind(null, row),
+              icon: ACTION_ICON.VIEW,
+              auth: ['erp:order-process-history:query'],
+              onClick: handleView.bind(null, row),
             },
             {
               label: $t('common.delete'),
@@ -199,7 +213,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.DELETE,
               auth: ['erp:order-process-history:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.id, $t('erp.orderProcessHistory.orderProcessHistory')]),
+                title: $t('ui.actionMessage.deleteConfirm', [
+                  row.id,
+                  $t('erp.orderProcessHistory.orderProcessHistory'),
+                ]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -207,6 +224,5 @@ const [Grid, gridApi] = useVbenVxeGrid({
         />
       </template>
     </Grid>
-
   </Page>
 </template>

@@ -23,6 +23,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'Input',
       componentProps: {
+        readonly: true,
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcessHistory.field.orderNo'),
         ]),
