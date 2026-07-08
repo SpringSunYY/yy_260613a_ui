@@ -617,8 +617,8 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       cellRender: {
         name: 'CellImage',
         props: {
-          width: 40,
-          height: 40,
+          width: 80,
+          height: 80,
         },
       },
     },
@@ -631,8 +631,8 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       cellRender: {
         name: 'CellImage',
         props: {
-          width: 40,
-          height: 40,
+          width: 80,
+          height: 80,
         },
       },
     },

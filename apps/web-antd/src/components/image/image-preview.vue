@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-const props = defineProps<{
-  src: string | string[] | null;
-}>();
+interface ImagePreviewProps {
+  height?: number | string;
+  src: string | string[];
+  width?: number | string;
+}
 
+const props = withDefaults(defineProps<ImagePreviewProps>(), {
+  height: '100%',
+  width: '100%',
+  src: '',
+});
 const imageUrls = computed(() => {
   if (!props.src) return [];
   if (Array.isArray(props.src)) return props.src;
@@ -23,7 +30,8 @@ const handleVisibleChange = (vis: boolean) => {
 <template>
   <a-image
     :preview="{ visible: false }"
-    width="100%"
+    :height="props.height"
+    :width="props.width"
     :src="imageUrls[0]"
     @click="visible = true"
   />
@@ -32,9 +40,11 @@ const handleVisibleChange = (vis: boolean) => {
       :preview="{ visible, onVisibleChange: handleVisibleChange }"
     >
       <a-image
-        v-for="url in imageUrls"
-        :key="url"
+        v-for="(url, index) in imageUrls"
+        :key="index"
         :src="url"
+        :height="props.height"
+        :width="props.width"
         class="hidden-preview-source"
       />
     </a-image-preview-group>

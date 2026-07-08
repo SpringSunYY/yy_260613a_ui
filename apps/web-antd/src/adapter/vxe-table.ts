@@ -111,8 +111,13 @@ setupVbenVxeTable({
     addRenderer('CellImage', {
       renderTableDefault(_renderOpts: any, params: any) {
         const { column, row } = params;
+        const { props } = _renderOpts;
         const value = row[column.field];
-        return h(CellImage, { src: value });
+        return h(CellImage, {
+          src: value,
+          height: props?.height,
+          width: props?.width,
+        });
       },
     });
 
@@ -125,22 +130,7 @@ setupVbenVxeTable({
         return h(JsonPreview, { value });
       },
     });
-
-    addRenderer('CellImages', {
-      renderTableDefault(_renderOpts: any, params: any) {
-        const { column, row } = params;
-        if (column && column.field && row[column.field]) {
-          let list = row[column.field];
-          if (typeof list === 'string' && list.includes('||')) {
-            list = list.split('||').map((item: string) => item.trim());
-          }
-          if (Array.isArray(list)) {
-            return list.map((item: any) => h(Image, { src: item }));
-          }
-        }
-        return '';
-      },
-    });
+    
 
     // 表格配置项可以用 cellRender: { name: 'CellFilePreview' },
     // 支持单个文件URL或 || 分隔的多个URL字符串
