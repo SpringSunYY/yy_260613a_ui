@@ -5,7 +5,7 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 import { useAccess } from '@vben/access';
 import { $t } from '@vben/locales';
 
-import { DICT_TYPE, getDictOptions, getRangePickerDefaultProps } from '#/utils';
+import {DICT_TYPE, getDictOptions, getRangePickerDefaultProps, MODULE_TYPE_ENUM} from '#/utils';
 
 const { hasAccessByCodes } = useAccess();
 /** 新增/修改的表单 */
@@ -192,7 +192,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('erp.orderProcess.field.orderImage'),
       component: 'ImageUpload',
       componentProps: {
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
       },
       formItemClass: 'col-span-2',
     },
@@ -202,7 +202,8 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('erp.orderProcess.field.qrCode'),
       component: 'ImageUpload',
       componentProps: {
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
+        maxNumber: 1,
       },
       formItemClass: 'col-span-2',
     },

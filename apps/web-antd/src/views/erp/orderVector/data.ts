@@ -47,7 +47,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'ImageUpload',
       componentProps: {
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
       },
     },
   ];

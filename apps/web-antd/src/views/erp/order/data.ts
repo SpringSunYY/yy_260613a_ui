@@ -139,7 +139,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('erp.order.field.orderImage'),
       component: 'ImageUpload',
       componentProps: {
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
       },
     },*/
     /** 二维码 */
@@ -148,7 +148,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('erp.order.field.qrCode'),
       component: 'ImageUpload',
       componentProps: {
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
       },
     },*/
     /** 规格 */

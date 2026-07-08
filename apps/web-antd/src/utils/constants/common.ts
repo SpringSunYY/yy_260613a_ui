@@ -18,4 +18,5 @@ export const MODULE_TYPE_ENUM = {
   CRM: 'crm', // CRM 模块
   INFRA: 'infra', // 基础模块
   BPM: 'bpm', // 工作流模块
+  ERP: 'erp', // ERP 模块
 };
