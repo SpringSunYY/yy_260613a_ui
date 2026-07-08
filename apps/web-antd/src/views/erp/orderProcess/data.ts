@@ -39,6 +39,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.orderNo'),
         ]),
+        readonly: true,
       },
     },
     /** 排版人 */

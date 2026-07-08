@@ -160,7 +160,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       <template #toolbar-tools>
         <TableAction
           :actions="[
-            {
+            /* {
               label: $t('ui.actionTitle.create', [
                 $t('erp.orderProcess.orderProcess'),
               ]),
@@ -168,7 +168,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.ADD,
               auth: ['erp:order-process:create'],
               onClick: handleCreate,
-            },
+            },*/
             {
               label: $t('ui.actionTitle.export', [
                 $t('erp.orderProcess.orderProcess'),

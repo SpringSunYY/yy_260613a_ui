@@ -4,6 +4,7 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { computed, ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { useVbenModelDrawer } from '@vben/common-ui';
 
 import { message, Tabs } from 'ant-design-vue';
@@ -18,6 +19,9 @@ import { useFormSchema } from '../data';
 import OrderDetailForm from './order-detail-form.vue';
 
 const emit = defineEmits(['success']);
+
+const { hasAccessByCodes } = useAccess();
+
 const formData = ref<OrderApi.Order>();
 const getTitle = computed(() => {
   return formData.value?.id
@@ -34,7 +38,8 @@ function onOrderDetailTotalChange(total: number) {
   formApi.setFieldValue('number', total);
 }
 /** 修改订单号 */
-function changeOrderNo(orderNo: string) {
+function changeOrderNo(event: Event) {
+  const orderNo = (event.target as HTMLInputElement)?.value || '';
   processFormApi.setFieldValue('orderNo', orderNo);
 }
 /** 工序 */
@@ -93,6 +98,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     data.orderDetails = orderDetailFormRef.value?.getData() || [];
     data.orderProcess =
       (await processFormApi.getValues()) as OrderProcessApi.OrderProcess;
+    console.log(data.orderProcess);
     try {
       await (formData.value?.id ? updateOrder(data) : createOrder(data));
       // 关闭并提示
@@ -130,6 +136,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     // 设置到 values
     formData.value = data;
     await formApi.setValues(formData.value);
+    processFormApi.setFieldValue('orderNo', data.orderNo);
   },
 });
 </script>
@@ -155,15 +162,12 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         />
       </Tabs.TabPane>
       <Tabs.TabPane
+        v-if="hasAccessByCodes(['erp:order-process:create'])"
         key="orderProcess"
         :tab="$t('erp.orderProcess.orderProcess')"
         force-render
       >
-        <ProcessForm ref="processFormRef">
-          <template #orderNo="slotProps">
-            <a-input v-bind="slotProps" :readonly="true" />
-          </template>
-        </ProcessForm>
+        <ProcessForm ref="processFormRef" />
       </Tabs.TabPane>
     </Tabs>
   </ModalDrawer>

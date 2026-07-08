@@ -527,6 +527,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'id',
       title: $t('erp.order.field.id'),
       minWidth: 120,
+      visible: false,
     },
     /** 订单名称 */
     {
@@ -595,6 +596,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       minWidth: 120,
       sortable: true,
       formatter: 'formatDateTime',
+      visible: false,
     },
     /** 客户 */
     {
@@ -620,6 +622,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'qrCode',
       title: $t('erp.order.field.qrCode'),
       minWidth: 120,
+      visible: false,
       cellRender: {
         name: 'CellImage',
         props: {
@@ -680,6 +683,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'shippingAddress',
       title: $t('erp.order.field.shippingAddress'),
       minWidth: 120,
+      visible: false,
     },
     /** 预计发货时间 */
     {
@@ -688,12 +692,14 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       minWidth: 120,
       sortable: true,
       formatter: 'formatDateTime',
+      visible: false,
     },
     /** 发货订单 */
     {
       field: 'shippingNo',
       title: $t('erp.order.field.shippingNo'),
       minWidth: 120,
+      visible: false,
     },
     /** 发货时间 */
     {
@@ -702,6 +708,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       minWidth: 120,
       sortable: true,
       formatter: 'formatDateTime',
+      visible: false,
     },
     /** 打印状态 */
     {
