@@ -31,10 +31,10 @@ const routes: RouteRecordRaw[] = [
           },
           {
             name: 'FormQueryExample',
-            path: '/examples/form/query',
+            path: '/examples/form/search',
             component: () => import('#/views/examples/form/query.vue'),
             meta: {
-              title: $t('examples.form.query'),
+              title: $t('examples.form.search'),
             },
           },
           {

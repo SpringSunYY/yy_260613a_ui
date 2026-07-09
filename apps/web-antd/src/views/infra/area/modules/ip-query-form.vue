@@ -44,7 +44,7 @@ const [Modal, modalApi] = useVbenModelDrawer({
 </script>
 
 <template>
-  <Modal :title="`IP ${$t('common.query')}`">
+  <Modal :title="`IP ${$t('common.search')}`">
     <Form class="mx-4" />
   </Modal>
 </template>

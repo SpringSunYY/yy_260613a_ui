@@ -3,6 +3,7 @@ import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderVectorApi } from '#/api/erp/orderVector';
 
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -21,6 +22,8 @@ import { pickSort } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+
+const router = useRouter();
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
@@ -42,6 +45,23 @@ function handleCreate() {
 /** 编辑订单向量 */
 function handleView(row: OrderVectorApi.OrderVector) {
   formModalDrawerApi.setData(row).open();
+}
+
+/**
+ * 按行内向量编号触发"以图搜图"。
+ * <p>这里走页面跳转（不是 modal），把 {@code vectorId} 通过 query string
+ * 透传给 {@link ./search/index.vue}，搜索页面进入时会立刻搜一次，
+ * 命中的图片作为左侧默认预览图（与 infra/vector/image 的 modal 行为对齐）。
+ */
+function handleSearchByRow(row: OrderVectorApi.OrderVector) {
+  if (!row.vectorId) {
+    message.warning($t('erp.orderVector.message.searchEmpty'));
+    return;
+  }
+  router.push({
+    name: 'OrderVectorSearch',
+    query: { vectorId: row.vectorId },
+  });
 }
 
 /** 删除订单向量 */
@@ -108,6 +128,11 @@ async function handleExport() {
   }
 }
 
+/** 进入以图搜图页面（上传图搜索模式） */
+function handleSearch() {
+  router.push('/erp/order-vector/search');
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -161,6 +186,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
       <template #toolbar-tools>
         <TableAction
           :actions="[
+            {
+              label: $t('erp.orderVector.action.search'),
+              type: 'primary',
+              icon: ACTION_ICON.SEARCH,
+              auth: ['erp:order-vector:query'],
+              onClick: handleSearch,
+            },
             /*  {
               label: $t('ui.actionTitle.create', [
                 $t('erp.orderVector.orderVector'),
@@ -197,6 +229,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
       <template #actions="{ row }">
         <TableAction
           :actions="[
+            {
+              label: $t('erp.orderVector.action.searchById'),
+              type: 'link',
+              icon: ACTION_ICON.SEARCH,
+              auth: ['erp:order-vector:query'],
+              onClick: handleSearchByRow.bind(null, row),
+            },
             {
               label: $t('common.view'),
               type: 'link',

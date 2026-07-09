@@ -87,7 +87,7 @@ function setupAccessGuard(router: Router) {
       if (to.fullPath !== LOGIN_PATH) {
         return {
           path: LOGIN_PATH,
-          // 如不需要，直接删除 query
+          // 如不需要，直接删除 search
           query:
             to.fullPath === preferences.app.defaultHomePath
               ? {}

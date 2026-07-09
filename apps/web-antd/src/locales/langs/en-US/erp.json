@@ -1,4 +1,39 @@
 {
+  "orderVector": {
+    "orderVector": "Order Vector",
+    "field": {
+      "id": "ID",
+      "orderNo": "Order No.",
+      "vectorId": "Vector ID",
+      "imageUrl": "Image URL",
+      "createTime": "Created At"
+    },
+    "search": {
+      "modalTitle": "Order Vector Search by Image",
+      "uploadTitle": "Upload Query Image",
+      "uploadHint": "Upload an image and the system will find the top K most similar ones",
+      "actionSearch": "Start Search",
+      "tip": "Upload an image and click \"Start Search\" to query",
+      "tipReupload": "{0} results returned. Upload a new image to run another search.",
+      "queryByIdLabel": "searching by id: {0}",
+      "result": "similar images (top {0})",
+      "resultEmpty": "search results",
+      "empty": "no results. please upload an image and click \"start search\".",
+      "loading": "searching…",
+      "topK": "Top K",
+      "clear": "Clear",
+      "reupload": "Re-upload"
+    },
+    "action": {
+      "search": "Search by Image",
+      "searchById": "Search by ID"
+    },
+    "message": {
+      "searchEmpty": "please select a query image first",
+      "searchFailed": "search failed: {0}",
+      "searchNoResult": "no matches found. please index images in order process first."
+    }
+  },
   "orderProcess": {
     "selectRowHint": "Please select a card on the left or right",
     "pane": {

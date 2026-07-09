@@ -229,7 +229,7 @@ getCurrentIpAddr();
               onClick: handleImport,
             },
             {
-              label: `IP ${$t('common.query')}`,
+              label: `IP ${$t('common.search')}`,
               type: 'primary',
               icon: ACTION_ICON.IP,
               onClick: handleQueryIp,

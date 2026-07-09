@@ -69,7 +69,7 @@ const [Grid] = useVbenVxeGrid({
               label: $t('common.detail'),
               type: 'link',
               icon: ACTION_ICON.VIEW,
-              auth: ['system:social-user:query'],
+              auth: ['system:social-user:search'],
               onClick: handleDetail.bind(null, row),
             },
           ]"

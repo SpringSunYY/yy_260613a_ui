@@ -15,7 +15,7 @@ async function fetchApi() {
 }
 
 const { error, isFetching, refetch } = useQuery({
-  enabled: false, // Disable automatic refetching when the query mounts
+  enabled: false, // Disable automatic refetching when the search mounts
   queryFn: fetchApi,
   queryKey: ['queryKey'],
   retry: 3, // Will retry failed requests 3 times before displaying an error

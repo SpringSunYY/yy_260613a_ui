@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { OrderApi } from '#/api/erp/order';
+import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { computed, ref } from 'vue';
 
@@ -48,7 +49,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       // 发货
       await shipOrder(data);
       await updateProcessToTargetProcess({
-        ...rowData.value,
+        ...(rowData.value as unknown as OrderProcessApi.OrderProcess),
         currentProcess: ErpOrderCurrentProcess.CURRENT_PROCESS_7,
       });
       // 关闭并提示

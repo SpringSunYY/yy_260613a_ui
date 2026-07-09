@@ -203,7 +203,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: $t('common.view'),
               type: 'link',
               icon: ACTION_ICON.VIEW,
-              auth: ['erp:order-process-history:query'],
+              auth: ['erp:order-process-history:search'],
               onClick: handleView.bind(null, row),
             },
             {

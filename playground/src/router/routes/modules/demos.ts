@@ -211,7 +211,7 @@ const routes: RouteRecordRaw[] = [
           },
           {
             name: 'MenuQueryDemo',
-            path: '/demos/menu-query',
+            path: '/demos/menu-search',
             component: () =>
               import('#/views/demos/features/menu-query/index.vue'),
             meta: {
@@ -235,7 +235,7 @@ const routes: RouteRecordRaw[] = [
           },
           {
             name: 'VueQueryDemo',
-            path: '/demos/features/vue-query',
+            path: '/demos/features/vue-search',
             component: () =>
               import('#/views/demos/features/vue-query/index.vue'),
             meta: {

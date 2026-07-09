@@ -24,7 +24,7 @@ const queryParams = reactive({
   clientId: '',
   redirectUri: '',
   state: '',
-  scopes: [] as string[], // 优先从 query 参数获取；如果未传递，从后端获取
+  scopes: [] as string[], // 优先从 search 参数获取；如果未传递，从后端获取
 }); // URL 上的 client_id、scope 等参数
 
 const loading = ref(false); // 表单是否提交中

@@ -590,7 +590,7 @@ export function useCodegenColumnTableColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'listOperation',
-      title: $t('infra.codegen.field.query'),
+      title: $t('infra.codegen.field.search'),
       width: 40,
       slots: { default: 'listOperation' },
     },

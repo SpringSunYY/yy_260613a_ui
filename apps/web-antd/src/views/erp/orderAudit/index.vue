@@ -196,7 +196,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: $t('common.view'),
               type: 'link',
               icon: ACTION_ICON.VIEW,
-              auth: ['erp:order-audit:query'],
+              auth: ['erp:order-audit:search'],
               onClick: handleEdit.bind(null, row),
             },
             {

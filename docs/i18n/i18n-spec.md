@@ -350,7 +350,7 @@ message.success($t('ui.actionMessage.deleteSuccess', [row.id]));
       "createTime": "create time"
     },
     "action": {
-      "query": "query area",
+      "query": "search area",
       "create": "create area",
       "export": "export area",
       "update": "update area",

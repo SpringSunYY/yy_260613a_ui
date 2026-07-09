@@ -232,13 +232,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: $t('infra.job.action.detail'),
               type: 'link',
-              auth: ['infra:job:query'],
+              auth: ['infra:job:search'],
               onClick: handleDetail.bind(null, row),
             },
             {
               label: $t('infra.job.log'),
               type: 'link',
-              auth: ['infra:job:query'],
+              auth: ['infra:job:search'],
               onClick: handleLog.bind(null, row),
             },
             {
