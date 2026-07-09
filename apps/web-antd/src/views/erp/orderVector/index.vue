@@ -25,7 +25,8 @@ import Form from './modules/form.vue';
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
-  type: 'drawer',
+  type: 'modal',
+  externalCloseConfirm: false,
 });
 
 /** 刷新表格 */
@@ -39,7 +40,7 @@ function handleCreate() {
 }
 
 /** 编辑订单向量 */
-function handleEdit(row: OrderVectorApi.OrderVector) {
+function handleView(row: OrderVectorApi.OrderVector) {
   formModalDrawerApi.setData(row).open();
 }
 
@@ -160,7 +161,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       <template #toolbar-tools>
         <TableAction
           :actions="[
-            {
+            /*  {
               label: $t('ui.actionTitle.create', [
                 $t('erp.orderVector.orderVector'),
               ]),
@@ -168,7 +169,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.ADD,
               auth: ['erp:order-vector:create'],
               onClick: handleCreate,
-            },
+            },*/
             {
               label: $t('ui.actionTitle.export', [
                 $t('erp.orderVector.orderVector'),
@@ -197,11 +198,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <TableAction
           :actions="[
             {
-              label: $t('common.edit'),
+              label: $t('common.view'),
               type: 'link',
-              icon: ACTION_ICON.EDIT,
-              auth: ['erp:order-vector:update'],
-              onClick: handleEdit.bind(null, row),
+              icon: ACTION_ICON.VIEW,
+              auth: ['erp:order-vector:query'],
+              onClick: handleView.bind(null, row),
             },
             {
               label: $t('common.delete'),

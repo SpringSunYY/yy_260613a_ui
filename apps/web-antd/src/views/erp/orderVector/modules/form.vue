@@ -8,11 +8,7 @@ import { useVbenModelDrawer } from '@vben/common-ui';
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import {
-  createOrderVector,
-  getOrderVector,
-  updateOrderVector,
-} from '#/api/erp/orderVector';
+import { getOrderVector } from '#/api/erp/orderVector';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -20,9 +16,7 @@ import { useFormSchema } from '../data';
 const emit = defineEmits(['success']);
 const formData = ref<OrderVectorApi.OrderVector>();
 const getTitle = computed(() => {
-  return formData.value?.id
-    ? $t('ui.actionTitle.edit', [$t('erp.orderVector.orderVector')])
-    : $t('ui.actionTitle.create', [$t('erp.orderVector.orderVector')]);
+  return $t('erp.orderVector.orderVector');
 });
 
 const [Form, formApi] = useVbenForm({
@@ -45,19 +39,11 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     modalDrawerApi.lock();
-    // 提交表单
-    const data = (await formApi.getValues()) as OrderVectorApi.OrderVector;
-    try {
-      await (formData.value?.id
-        ? updateOrderVector(data)
-        : createOrderVector(data));
-      // 关闭并提示
-      await modalDrawerApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
-    } finally {
-      modalDrawerApi.unlock();
-    }
+    // 关闭并提示
+    await modalDrawerApi.close();
+    emit('success');
+    message.success($t('ui.actionMessage.operationSuccess'));
+    modalDrawerApi.unlock();
   },
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {

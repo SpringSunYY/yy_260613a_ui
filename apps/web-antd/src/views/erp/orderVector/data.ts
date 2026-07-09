@@ -23,6 +23,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'Input',
       componentProps: {
+        readonly: true,
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderVector.field.orderNo'),
         ]),
@@ -35,6 +36,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'Input',
       componentProps: {
+        readonly: true,
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderVector.field.vectorId'),
         ]),
@@ -47,6 +49,8 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'ImageUpload',
       componentProps: {
+        maxNumber: 1,
+        disabled: true,
         moduleType: MODULE_TYPE_ENUM.ERP,
       },
     },
