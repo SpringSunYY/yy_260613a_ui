@@ -28,7 +28,6 @@ export namespace OrderApi {
     orderStatus?: string; // 订单状态
     auditStatus?: string; // 审核状态
     currentProcess?: string; // 当前工序
-    shipmentTime: Dayjs | string; // 出货日期
     customer: string; // 客户
     orderImage: string; // 图片
     qrCode: string; // 二维码
@@ -47,6 +46,20 @@ export namespace OrderApi {
     orderDetails?: OrderDetail[];
     orderProcess?: OrderProcessApi.OrderProcess;
   }
+  // 发货信息
+  export interface OrderShip {
+    id: number; // 编号
+    name?: string; // 订单名称
+    orderNo?: string; // 订单号
+    orderTime?: Dayjs | string; // 下单日期
+    orderResource?: string; // 订单来源
+    orderStatus?: string; // 订单状态
+    pickupMethod?: string; // 提货方式
+    shippingAddress: string; // 发货地址
+    exceptShippingTime?: Dayjs | string; // 预计发货时间
+    shippingNo: string; // 发货订单
+    shippingTime: Dayjs | string; // 发货时间
+  }
 }
 
 /** 查询订单信息分页 */
@@ -61,6 +74,13 @@ export function getOrder(id: number) {
   return requestClient.get<OrderApi.Order>(`/erp/order/get?id=${id}`);
 }
 
+/** 查询订单信息-no*/
+export function getOrderNo(orderNo: string) {
+  return requestClient.get<OrderApi.Order>(
+    `/erp/order/get/no?orderNo=${orderNo}`,
+  );
+}
+
 /** 新增订单信息 */
 export function createOrder(data: OrderApi.Order) {
   return requestClient.post('/erp/order/create', data);
@@ -69,6 +89,11 @@ export function createOrder(data: OrderApi.Order) {
 /** 修改订单信息 */
 export function updateOrder(data: OrderApi.Order) {
   return requestClient.put('/erp/order/update', data);
+}
+
+/** 订单发货*/
+export function shipOrder(data: OrderApi.OrderShip) {
+  return requestClient.put(`/erp/order/ship`, data);
 }
 
 /** 提交审核订单*/

@@ -110,18 +110,6 @@ export function useFormSchema(): VbenFormSchema[] {
         ]),
       },
     },*/
-    /** 出货日期 */
-    /*    {
-      fieldName: 'shipmentTime',
-      label: $t('erp.order.field.shipmentTime'),
-      component: 'DatePicker',
-      componentProps: {
-        showTime: true,
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-      },
-
-    },*/
     /** 客户 */
     {
       fieldName: 'customer',
@@ -385,16 +373,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 出货日期 */
-    {
-      fieldName: 'shipmentTime',
-      label: $t('erp.order.field.shipmentTime'),
-      component: 'RangePicker',
-      componentProps: {
-        ...getRangePickerDefaultProps(),
-        allowClear: true,
-      },
-    },
     /** 客户 */
     {
       fieldName: 'customer',
@@ -593,15 +571,6 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
         name: 'CellI18nDict',
         props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
       },
-    },
-    /** 出货日期 */
-    {
-      field: 'shipmentTime',
-      title: $t('erp.order.field.shipmentTime'),
-      minWidth: 120,
-      sortable: true,
-      formatter: 'formatDateTime',
-      visible: false,
     },
     /** 客户 */
     {
@@ -883,6 +852,145 @@ export function useAuditFormSchema(): VbenFormSchema[] {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderAudit.field.auditRemark'),
         ]),
+      },
+    },
+  ];
+}
+
+/** 发货*/
+export function useShipFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      fieldName: 'id',
+      component: 'Input',
+      dependencies: {
+        triggerFields: [''],
+        show: () => false,
+      },
+    },
+    /** 订单名称 */
+    {
+      fieldName: 'name',
+      label: $t('erp.order.field.name'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        readonly: true,
+        placeholder: $t('ui.placeholder.input', [$t('erp.order.field.name')]),
+      },
+    },
+    /** 订单号 */
+    {
+      fieldName: 'orderNo',
+      label: $t('erp.order.field.orderNo'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        readonly: true,
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.orderNo'),
+        ]),
+      },
+    },
+    /** 下单日期 */
+    {
+      fieldName: 'orderTime',
+      label: $t('erp.order.field.orderTime'),
+      rules: 'required',
+      component: 'DatePicker',
+      componentProps: {
+        disabled: true,
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+    },
+    /** 订单来源 */
+    {
+      fieldName: 'orderResource',
+      label: $t('erp.order.field.orderResource'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        disabled: true,
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_RESOURCE, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.orderResource'),
+        ]),
+      },
+    },
+    /** 订单状态 */
+    {
+      fieldName: 'orderStatus',
+      label: $t('erp.order.field.orderStatus'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        disabled: true,
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.orderStatus'),
+        ]),
+      },
+    },
+    /** 提货方式 */
+    {
+      fieldName: 'pickupMethod',
+      label: $t('erp.order.field.pickupMethod'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_PICKUP_METHOD, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.pickupMethod'),
+        ]),
+      },
+    },
+    /** 发货地址 */
+    {
+      fieldName: 'shippingAddress',
+      label: $t('erp.order.field.shippingAddress'),
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.shippingAddress'),
+        ]),
+      },
+    },
+    /** 预计发货时间 */
+    {
+      fieldName: 'exceptShippingTime',
+      label: $t('erp.order.field.exceptShippingTime'),
+      rules: 'required',
+      component: 'DatePicker',
+      componentProps: {
+        readonly: true,
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+    },
+    /** 发货订单 */
+    {
+      fieldName: 'shippingNo',
+      label: $t('erp.order.field.shippingNo'),
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.shippingNo'),
+        ]),
+      },
+    },
+    /** 发货时间 */
+    {
+      fieldName: 'shippingTime',
+      label: $t('erp.order.field.shippingTime'),
+      component: 'DatePicker',
+      rules: 'required',
+      componentProps: {
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
       },
     },
   ];

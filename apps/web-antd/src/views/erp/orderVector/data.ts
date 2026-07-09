@@ -4,7 +4,7 @@ import type { OrderVectorApi } from '#/api/erp/orderVector';
 
 import { $t } from '@vben/locales';
 
-import { getRangePickerDefaultProps } from '#/utils';
+import { getRangePickerDefaultProps, MODULE_TYPE_ENUM } from '#/utils';
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   return [

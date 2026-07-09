@@ -6,7 +6,7 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 
 import { useAccess } from '@vben/access';
-import { Page } from '@vben/common-ui';
+import { Page, useVbenModelDrawer } from '@vben/common-ui';
 
 import { message, Pagination } from 'ant-design-vue';
 
@@ -20,6 +20,7 @@ import {
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
 import { ErpOrderCurrentProcess } from '#/utils';
+import ShipForm from '#/views/erp/order/modules/ship-form.vue';
 
 import {
   CARD_PAGE_SIZE_OPTIONS,
@@ -233,7 +234,12 @@ detailFormApi.setState({ commonConfig: { disabled: true } });
 
 /** 保存中间详情 */
 const saving = ref(false);
-
+async function toSelectRow(targetId: number) {
+  await Promise.all([loadLeft(), loadRight()]);
+  scrollToTop(leftScrollRef.value);
+  scrollToTop(rightScrollRef.value);
+  await reselectRow(targetId);
+}
 async function handleSave() {
   if (!selectedRow.value?.id) return;
   const targetId = selectedRow.value.id;
@@ -244,10 +250,7 @@ async function handleSave() {
     const values = await detailFormApi.getValues();
     await updateOrderProcess(values as OrderProcessApi.OrderProcess);
     message.success($t('ui.actionMessage.operationSuccess'));
-    await Promise.all([loadLeft(), loadRight()]);
-    scrollToTop(leftScrollRef.value);
-    scrollToTop(rightScrollRef.value);
-    await reselectRow(targetId);
+    await toSelectRow(targetId);
   } finally {
     saving.value = false;
   }
@@ -267,10 +270,7 @@ async function handleToTargetProcess(targetProcess: string) {
       ...values,
       currentProcess: targetProcess,
     });
-    await Promise.all([loadLeft(), loadRight()]);
-    scrollToTop(leftScrollRef.value);
-    scrollToTop(rightScrollRef.value);
-    await reselectRow(targetId);
+    await toSelectRow(targetId);
     message.success($t('ui.actionMessage.operationSuccess'));
   } finally {
     saving.value = false;
@@ -278,9 +278,14 @@ async function handleToTargetProcess(targetProcess: string) {
 }
 
 function confirmToTargetProcess(targetProcess: string) {
-  if (selectedRow.value !== null) {
-    handleToTargetProcess(targetProcess);
+  if (selectedRow.value === null) {
+    return;
   }
+  // // 如果是发货
+  if (targetProcess === ErpOrderCurrentProcess.CURRENT_PROCESS_7) {
+    return handleOrderShip();
+  }
+  handleToTargetProcess(targetProcess);
 }
 
 /**
@@ -333,6 +338,19 @@ const processActions = computed(() => {
   });
 });
 
+/** 发货*/
+const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: ShipForm,
+  destroyOnClose: true,
+  type: 'modal',
+});
+async function handleOrderShip() {
+  if (!selectedRow.value?.id) return;
+  const { valid } = await detailFormApi.validate();
+  if (!valid) return;
+  shipFormModalDrawerApi.setData(selectedRow.value).open();
+}
+
 /** 当前选中行可执行的动作（按当前工序 + 权限过滤） */
 const currentActions = computed(() => {
   const current = selectedRow.value?.currentProcess;
@@ -361,6 +379,7 @@ refreshAll();
 
 <template>
   <Page auto-content-height>
+    <ShipFormModalDrawer @success="toSelectRow(selectedRow.id)" />
     <div class="sort-page">
       <!-- 顶部搜索区：与原列表一致 -->
       <div class="sort-search">
