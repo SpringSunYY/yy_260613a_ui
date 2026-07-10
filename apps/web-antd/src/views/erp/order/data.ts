@@ -799,6 +799,50 @@ export function useOrderDetailGridEditColumns(
     },
   ];
 }
+/** 新增/修改列表的字段 */
+export function useOrderDetailGridViewColumns(
+): VxeTableGridOptions<OrderApi.OrderDetail>['columns'] {
+  return [
+    /** 名字 */
+    {
+      field: 'setName',
+      title: $t('erp.orderDetail.field.setName'),
+      minWidth: 120,
+      slots: { default: 'setName' },
+    },
+    /** 号码 */
+    {
+      field: 'setNumber',
+      title: $t('erp.orderDetail.field.setNumber'),
+      minWidth: 120,
+      slots: { default: 'setNumber' },
+    },
+    /** 尺码 */
+    {
+      field: 'setSize',
+      title: $t('erp.orderDetail.field.setSize'),
+      minWidth: 120,
+      slots: { default: 'setSize' },
+      params: {
+        options: getDictOptions(DICT_TYPE.ERP_SET_SIZE, 'string'),
+      },
+    },
+    /** 数量 */
+    {
+      field: 'setQuantity',
+      title: $t('erp.orderDetail.field.setQuantity'),
+      minWidth: 120,
+      slots: { default: 'setQuantity' },
+    },
+    /** 备注 */
+    {
+      field: 'remark',
+      title: $t('erp.orderDetail.field.remark'),
+      minWidth: 120,
+      slots: { default: 'remark' },
+    },
+  ];
+}
 
 /** 新增/修改的表单 */
 export function useAuditFormSchema(): VbenFormSchema[] {

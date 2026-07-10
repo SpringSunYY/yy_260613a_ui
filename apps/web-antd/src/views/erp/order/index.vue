@@ -17,8 +17,11 @@ import {
   getOrderPage,
   submitAuditOrder,
 } from '#/api/erp/order';
+import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import { $t } from '#/locales';
-import { ErpOrderAuditStatus, pickSort } from '#/utils';
+import { ErpOrderAuditStatus, ErpOrderCurrentProcess, pickSort } from '#/utils';
+import FormView from '#/views/erp/order/modules/form-view.vue';
+import ShipForm from '#/views/erp/order/modules/ship-form.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import AuditForm from './modules/audit-form.vue';
@@ -29,6 +32,25 @@ const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   destroyOnClose: true,
   type: 'drawer',
 });
+const [ViewFormModalDrawer, viewFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: FormView,
+  destroyOnClose: true,
+  type: 'drawer',
+  externalCloseConfirm: false,
+});
+
+/** 发货*/
+const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: ShipForm,
+  destroyOnClose: true,
+  type: 'modal',
+});
+async function handleOrderShip(row: OrderApi.Order) {
+  if (!row.orderNo) return;
+  // 先查询一遍订单工序
+  const data = await getOrderProcessByOrderNo(row.orderNo);
+  shipFormModalDrawerApi.setData(data).open();
+}
 
 /** 刷新表格 */
 function onRefresh() {
@@ -43,6 +65,11 @@ function handleCreate() {
 /** 编辑订单信息 */
 function handleEdit(row: OrderApi.Order) {
   formModalDrawerApi.setData(row).open();
+}
+
+/** 查看订单信息 */
+function handleView(row: OrderApi.Order) {
+  viewFormModalDrawerApi.setData(row).open();
 }
 
 /** 删除订单信息 */
@@ -75,6 +102,7 @@ const [AuditFormModalDrawer, auditFormModalDrawerApi] = useVbenModelDrawer({
   destroyOnClose: true,
   type: 'modal',
 });
+
 /** 审核*/
 function handleApproveAudit(row: OrderApi.Order) {
   auditFormModalDrawerApi.setData(row).open();
@@ -172,6 +200,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 <template>
   <Page auto-content-height>
     <FormModalDrawer @success="onRefresh" />
+    <ViewFormModalDrawer />
+    <ShipFormModalDrawer @success="onRefresh" />
     <AuditFormModalDrawer @success="onRefresh" />
     <Grid :table-title="$t('erp.order.order')">
       <template #toolbar-tools>
@@ -208,6 +238,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <TableAction
           :actions="[
             {
+              label: $t('common.view'),
+              type: 'link',
+              icon: ACTION_ICON.VIEW,
+              auth: ['erp:order:query'],
+              onClick: handleView.bind(null, row),
+            },
+            {
               label: $t('common.edit'),
               type: 'link',
               icon: ACTION_ICON.EDIT,
@@ -238,6 +275,20 @@ const [Grid, gridApi] = useVbenVxeGrid({
                 row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1 &&
                 row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3,
               onClick: handleApproveAudit.bind(null, row),
+            },
+            //发货
+            {
+              label: $t('erp.orderProcess.action.ship'),
+              type: 'link',
+              auth: [
+                'erp.orderProcess.action.ship',
+                'erp:order-process:complete',
+              ],
+              ifShow:
+                row.currentProcess ===
+                  ErpOrderCurrentProcess.CURRENT_PROCESS_6 ||
+                row.currentProcess === ErpOrderCurrentProcess.CURRENT_PROCESS_7,
+              onClick: handleOrderShip.bind(null, row),
             },
             {
               label: $t('common.delete'),

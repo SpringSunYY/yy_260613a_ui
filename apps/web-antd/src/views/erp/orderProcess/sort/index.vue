@@ -20,6 +20,7 @@ import {
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
 import { ErpOrderCurrentProcess } from '#/utils';
+import FormView from '#/views/erp/order/modules/form-view.vue';
 import ShipForm from '#/views/erp/order/modules/ship-form.vue';
 
 import {
@@ -75,6 +76,19 @@ const rightPane = reactive<PaneState>({
   pageNo: 1,
   pageSize: Number(CARD_PAGE_SIZE_OPTIONS[0]),
 });
+
+const [ViewFormModalDrawer, viewFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: FormView,
+  destroyOnClose: true,
+  type: 'drawer',
+  externalCloseConfirm: false,
+});
+
+/** 查看订单信息 */
+function handleView(orderNo: string) {
+  if (!orderNo || orderNo === '') return;
+  viewFormModalDrawerApi.setData({ orderNo }).open();
+}
 
 const leftScrollRef = useTemplateRef<HTMLElement>('leftScrollRef');
 const rightScrollRef = useTemplateRef<HTMLElement>('rightScrollRef');
@@ -379,7 +393,8 @@ refreshAll();
 
 <template>
   <Page auto-content-height>
-    <ShipFormModalDrawer @success="toSelectRow(selectedRow.id)" />
+    <ShipFormModalDrawer @success="toSelectRow(selectedRow?.id || 0)" />
+    <ViewFormModalDrawer />
     <div class="sort-page">
       <!-- 顶部搜索区：与原列表一致 -->
       <div class="sort-search">
@@ -482,7 +497,15 @@ refreshAll();
                   : $t('erp.orderProcess.orderProcess')
               }}
             </span>
-            <span class="sort-pane__actions">
+            <span class="sort-pane__actions" v-if="selectedRow != null">
+              <a-button
+                size="small"
+                :disabled="!selectedRow?.orderNo"
+                :loading="saving"
+                @click="handleView(selectedRow?.orderNo || '')"
+              >
+                {{ $t('common.view') }}
+              </a-button>
               <a-popconfirm
                 v-for="action in currentActions"
                 :key="action.key"

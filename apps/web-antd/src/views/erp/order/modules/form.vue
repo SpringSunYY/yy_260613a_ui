@@ -1,18 +1,25 @@
 <script lang="ts" setup>
 import type { OrderApi } from '#/api/erp/order';
+import type { OrderAuditApi } from '#/api/erp/orderAudit';
 import type { OrderProcessApi } from '#/api/erp/orderProcess';
+import type { OrderProcessHistoryApi } from '#/api/erp/orderProcessHistory';
 
 import { computed, ref } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { useVbenModelDrawer } from '@vben/common-ui';
 
-import { message, Tabs } from 'ant-design-vue';
+import { message, Tabs, Tag } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createOrder, getOrder, updateOrder } from '#/api/erp/order';
+import { getOrderAuditByNo } from '#/api/erp/orderAudit';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
+import { getOrderProcessHistoryByNo } from '#/api/erp/orderProcessHistory';
+import { I18nSelect } from '#/components/i18n/i18n-select';
+import { TimelineLog } from '#/components/timeline-log';
 import { $t } from '#/locales';
+import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
 
 import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
 import { useFormSchema } from '../data';
@@ -98,7 +105,6 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     data.orderDetails = orderDetailFormRef.value?.getData() || [];
     data.orderProcess =
       (await processFormApi.getValues()) as OrderProcessApi.OrderProcess;
-    console.log(data.orderProcess);
     try {
       await (formData.value?.id ? updateOrder(data) : createOrder(data));
       // 关闭并提示
@@ -167,7 +173,17 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         :tab="$t('erp.orderProcess.orderProcess')"
         force-render
       >
-        <ProcessForm ref="processFormRef" />
+        <ProcessForm ref="processFormRef">
+          <template #currentProcess="slotProps">
+            <I18nSelect
+              v-bind="slotProps"
+              :disabled="true"
+              :options="
+                getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string')
+              "
+            />
+          </template>
+        </ProcessForm>
       </Tabs.TabPane>
     </Tabs>
   </ModalDrawer>

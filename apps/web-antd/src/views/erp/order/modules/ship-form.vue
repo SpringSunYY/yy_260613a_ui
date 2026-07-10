@@ -18,7 +18,7 @@ import { useShipFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 const formData = ref<OrderApi.OrderShip>();
-const rowData = ref<OrderApi.Order>();
+const rowData = ref<OrderProcessApi.OrderProcess>();
 const getTitle = computed(() => {
   return `${$t('erp.orderProcess.action.ship')}-${formData.value?.id}`;
 });
@@ -66,7 +66,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     // 加载数据
-    const drawerData = await modalDrawerApi.getData<OrderApi.Order>();
+    const drawerData = modalDrawerApi.getData<OrderProcessApi.OrderProcess>();
     if (!drawerData?.orderNo) {
       return;
     }

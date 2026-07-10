@@ -11,9 +11,21 @@ export namespace OrderAuditApi {
     orderNo?: string; // 订单号
     oldAuditStatus?: string; // 原状态
     auditStatus?: string; // 审核状态
-    auditPerson?: string; // 审核人
-    auditTime?: Dayjs | string; // 审核时间
     auditRemark: string; // 审核意见
+    creator?: string; // 创建人
+    createTime: Dayjs | string;
+  }
+
+  /** 订单审核记录信息 */
+  export interface OrderAuditDetail {
+    id: null | number; // 编号
+    orderNo?: string; // 订单号
+    oldAuditStatus?: string; // 原状态
+    auditStatus?: string; // 审核状态
+    auditRemark: string; // 审核意见
+    creator: string;
+    avatar?: string; // 头像
+    createTime: Dayjs | string;
   }
 }
 
@@ -29,6 +41,13 @@ export function getOrderAuditPage(params: PageParam) {
 export function getOrderAudit(id: number) {
   return requestClient.get<OrderAuditApi.OrderAudit>(
     `/erp/order-audit/get?id=${id}`,
+  );
+}
+
+/** 查询订单审核记录详情 */
+export function getOrderAuditByNo(no: string) {
+  return requestClient.get<OrderAuditApi.OrderAuditDetail[]>(
+    `/erp/order-audit/get/no?no=${no}`,
   );
 }
 

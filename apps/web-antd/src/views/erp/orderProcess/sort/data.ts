@@ -26,6 +26,32 @@ export const RIGHT_EXCLUDED_PROCESSES = ['1', '2'];
 /** 顶部查询表单 schema */
 export function useSearchSchema(): VbenFormSchema[] {
   return [
+    /** 订单号 */
+    {
+      fieldName: 'orderNo',
+      label: $t('erp.orderProcess.field.orderNo'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.orderNo'),
+        ]),
+      },
+    },
+    /** 当前工序 */
+    {
+      fieldName: 'currentProcess',
+      label: $t('erp.orderProcess.field.currentProcess'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        allowClear: true,
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.currentProcess'),
+        ]),
+      },
+    },
     /** 版型 */
     {
       fieldName: 'pattern',
@@ -62,6 +88,31 @@ export function useSearchSchema(): VbenFormSchema[] {
         options: getDictOptions(DICT_TYPE.ERP_SPECIFICATION, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.orderProcess.field.specification'),
+        ]),
+      },
+    },
+    /** 布料 */
+    {
+      fieldName: 'fabric',
+      label: $t('erp.orderProcess.field.fabric'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        allowClear: true,
+        options: getDictOptions(DICT_TYPE.ERP_FABRIC, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.fabric'),
+        ]),
+      },
+    },
+    /** 排版人 */
+    {
+      fieldName: 'layoutPerson',
+      label: $t('erp.orderProcess.field.layoutPerson'),
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.layoutPerson'),
         ]),
       },
     },
@@ -248,7 +299,7 @@ export function useDetailSchema(): VbenFormSchema[] {
         showDescription: false,
         moduleType: 'erp',
       },
-      formItemClass: 'col-span-2',
+      formItemClass: 'col-span-4',
     },
     /** 二维码 */
     {

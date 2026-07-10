@@ -1,27 +1,20 @@
 <script lang="ts" setup>
-import type { OnActionClickParams } from '#/adapter/vxe-table';
 import type { OrderApi } from '#/api/erp/order';
 
-import { computed, h, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
-import { Plus } from '@vben/icons';
-
-import { Button, Card, Input, message, Select } from 'ant-design-vue';
+import { Card, Input } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getOrderDetailListByOrderNo } from '#/api/erp/order';
+import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
 import { DICT_TYPE, getDictOptions } from '#/utils';
 
-import { useOrderDetailGridEditColumns } from '../data';
+import { useOrderDetailGridViewColumns } from '../data';
 
 const props = defineProps<{
   orderNo?: string; // 订单号（主表的关联字段）
-}>();
-
-const emit = defineEmits<{
-  /** 尺码数量汇总更新事件 */
-  (e: 'update:total', total: number): void;
 }>();
 
 /** 尺码字典选项（用于 label 展示） */
@@ -39,22 +32,9 @@ interface SizeStat {
   count: number;
 }
 
-/** 表格操作按钮的回调函数 */
-function onActionClick({
-  code,
-  row,
-}: OnActionClickParams<OrderApi.OrderDetail>) {
-  switch (code) {
-    case 'delete': {
-      onDelete(row);
-      break;
-    }
-  }
-}
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useOrderDetailGridEditColumns(onActionClick),
+    columns: useOrderDetailGridViewColumns(),
     border: true,
     showOverflow: true,
     autoResize: true,
@@ -113,62 +93,6 @@ function refreshSizeStats() {
   sizeStatsVersion.value += 1;
 }
 
-/** 总数变化时通知父组件（用于同步主表 number 字段） */
-watch(
-  () => sizeStats.value.total,
-  (total) => {
-    emit('update:total', total);
-  },
-  { immediate: true },
-);
-
-/** 添加订单明细 */
-const onAdd = async () => {
-  await gridApi.grid.insertAt({} as OrderApi.OrderDetail, -1);
-  refreshSizeStats();
-};
-
-/** 删除订单明细 */
-const onDelete = async (row: OrderApi.OrderDetail) => {
-  await gridApi.grid.remove(row);
-  refreshSizeStats();
-};
-
-/** 提供获取表格数据的方法供父组件调用 */
-defineExpose({
-  getData: (): OrderApi.OrderDetail[] => {
-    const data = gridApi.grid.getData() as OrderApi.OrderDetail[];
-    const removeRecords =
-      gridApi.grid.getRemoveRecords() as OrderApi.OrderDetail[];
-    const insertRecords =
-      gridApi.grid.getInsertRecords() as OrderApi.OrderDetail[];
-    return data
-      .filter((row) => !removeRecords.some((removed) => removed.id === row.id))
-      ?.concat(insertRecords.map((row: any) => ({ ...row, id: undefined })));
-  },
-  /** 校验明细：返回 true 通过；返回 string[] 所有未通过的错误信息 */
-  validate: (): boolean => {
-    // 同时取全量数据 + 当前数据,确保即便有删除/未挂载的行也能覆盖
-    const data =
-      (gridApi.grid.getTableData?.().fullData as OrderApi.OrderDetail[]) ||
-      (gridApi.grid.getData() as OrderApi.OrderDetail[]);
-    const emptyFieldLabels: Record<string, string> = {
-      setQuantity: $t('erp.orderDetail.field.setQuantity'),
-      setSize: $t('erp.orderDetail.field.setSize'),
-    };
-    for (const [i, row] of data.entries()) {
-      for (const [field, label] of Object.entries(emptyFieldLabels)) {
-        const value = (row as any)[field];
-        if (value === undefined || value === null || value === '') {
-          message.warn($t('ui.placeholder.subTableInput', [i + 1, label]));
-          return false;
-        }
-      }
-    }
-    return true;
-  },
-});
-
 /** 监听主表的关联字段的变化，加载对应的子表数据 */
 watch(
   () => props.orderNo,
@@ -216,46 +140,24 @@ watch(
   </div>
   <Grid class="mx-4">
     <template #setName="{ row }">
-      <Input v-model:value="row.setName" />
+      <Input :readonly="true" v-model:value="row.setName" />
     </template>
     <template #setNumber="{ row }">
-      <Input v-model:value="row.setNumber" />
+      <Input :readonly="true" v-model:value="row.setNumber" />
     </template>
     <template #setQuantity="{ row }">
       <a-input-number
         :min="1"
+        :readonly="true"
         v-model:value="row.setQuantity"
         @change="refreshSizeStats()"
       />
     </template>
-    <template #setSize="{ row, column }">
-      <Select
-        v-model:value="row.setSize"
-        class="w-full"
-        @change="refreshSizeStats()"
-      >
-        <Select.Option
-          v-for="option in column.params.options"
-          :key="option.value"
-          :value="option.value"
-        >
-          {{ option.label }}
-        </Select.Option>
-      </Select>
+    <template #setSize="{ row }">
+      <I18nDictTag :type="DICT_TYPE.ERP_SET_SIZE" :value="row.setSize" />
     </template>
     <template #remark="{ row }">
-      <Input v-model:value="row.remark" />
+      <Input :readonly="true" v-model:value="row.remark" />
     </template>
   </Grid>
-  <div class="-mt-4 flex justify-center">
-    <Button
-      :icon="h(Plus)"
-      type="primary"
-      ghost
-      @click="onAdd"
-      v-access:code="['erp:order:create']"
-    >
-      {{ $t('ui.actionTitle.create', [$t('erp.orderDetail.orderDetail')]) }}
-    </Button>
-  </div>
 </template>

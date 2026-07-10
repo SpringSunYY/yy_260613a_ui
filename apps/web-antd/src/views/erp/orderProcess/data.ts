@@ -5,9 +5,16 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 import { useAccess } from '@vben/access';
 import { $t } from '@vben/locales';
 
-import {DICT_TYPE, getDictOptions, getRangePickerDefaultProps, MODULE_TYPE_ENUM} from '#/utils';
+import {
+  DICT_TYPE,
+  ErpOrderCurrentProcess,
+  getDictOptions,
+  getRangePickerDefaultProps,
+  MODULE_TYPE_ENUM,
+} from '#/utils';
 
 const { hasAccessByCodes } = useAccess();
+
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -35,6 +42,7 @@ export function useFormSchema(): VbenFormSchema[] {
         triggerFields: [''],
         show: () => hasAccessByCodes(['erp:order-process:complete']),
       },
+      defaultValue: ErpOrderCurrentProcess.CURRENT_PROCESS_1,
       formItemClass: 'col-span-4',
     },
     /** 订单号 */

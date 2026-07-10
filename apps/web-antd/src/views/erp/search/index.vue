@@ -4,7 +4,7 @@ import type { FileType } from 'ant-design-vue/es/upload/interface';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenModelDrawer } from '@vben/common-ui';
 
 import { Image, message, Upload } from 'ant-design-vue';
 
@@ -13,6 +13,7 @@ import {
   searchOrderVectorByUpload,
 } from '#/api/erp/orderVector';
 import { $t } from '#/locales';
+import FormView from '#/views/erp/order/modules/form-view.vue';
 
 /**
  * 左侧查询图文件（用户上传的本地 File）。
@@ -207,10 +208,24 @@ async function searchOrderImageByIdWithFallback(
 onMounted(() => {
   initFromRoute();
 });
+
+const [ViewFormModalDrawer, viewFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: FormView,
+  destroyOnClose: true,
+  type: 'drawer',
+  externalCloseConfirm: false,
+});
+
+/** 查看订单信息 */
+function handleView(orderNo: string) {
+  if (!orderNo) return;
+  viewFormModalDrawerApi.setData({ orderNo }).open();
+}
 </script>
 
 <template>
   <Page auto-content-height>
+    <ViewFormModalDrawer />
     <div class="flex flex-col gap-4 px-4 pb-2">
       <!-- 顶部：标题 -->
       <header class="flex items-center justify-between">
@@ -328,11 +343,11 @@ onMounted(() => {
             :key="`${lastQueryTime}-${r.id ?? idx}`"
             class="overflow-hidden rounded-md border border-gray-100 shadow-sm transition hover:shadow-md"
           >
-            <div class="flex h-32 items-center justify-center">
+            <div class="flex h-64 items-center justify-center">
               <Image
                 :src="r.imagePath"
                 :preview="{ src: r.imagePath }"
-                class="max-h-32 max-w-full object-contain"
+                class="max-h-64 max-w-full object-contain"
                 fallback="/fallback.png"
               />
             </div>
@@ -347,7 +362,9 @@ onMounted(() => {
                   {{ r.originKey }}
                 </span>
                 <span>
-                  <a-button size="small">{{ $t('common.view') }}</a-button>
+                  <a-button size="small" @click="handleView(r.originKey)">{{
+                    $t('common.view')
+                  }}</a-button>
                 </span>
               </div>
             </div>
