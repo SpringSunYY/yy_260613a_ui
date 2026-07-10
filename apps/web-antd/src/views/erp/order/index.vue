@@ -21,7 +21,7 @@ import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import { $t } from '#/locales';
 import { ErpOrderAuditStatus, ErpOrderCurrentProcess, pickSort } from '#/utils';
 import FormView from '#/views/erp/order/modules/form-view.vue';
-import ShipForm from '#/views/erp/order/modules/ship-form.vue';
+import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import AuditForm from './modules/audit-form.vue';
@@ -285,9 +285,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
                 'erp:order-process:complete',
               ],
               ifShow:
-                row.currentProcess ===
+                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3 &&
+                (row.currentProcess ===
                   ErpOrderCurrentProcess.CURRENT_PROCESS_6 ||
-                row.currentProcess === ErpOrderCurrentProcess.CURRENT_PROCESS_7,
+                  row.currentProcess ===
+                    ErpOrderCurrentProcess.CURRENT_PROCESS_7),
               onClick: handleOrderShip.bind(null, row),
             },
             {

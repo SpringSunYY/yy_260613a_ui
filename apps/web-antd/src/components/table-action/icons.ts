@@ -15,4 +15,5 @@ export const ACTION_ICON = {
   AUDIT: 'lucide:file-check',
   IP: 'fa:map-marker',
   GRANT: 'lucide:user-round-key',
+  SHIP: 'lucide:truck-electric',
 };

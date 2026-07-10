@@ -19,9 +19,9 @@ import {
 } from '#/api/erp/orderProcess';
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
-import { ErpOrderCurrentProcess } from '#/utils';
+import { ErpOrderAuditStatus, ErpOrderCurrentProcess } from '#/utils';
 import FormView from '#/views/erp/order/modules/form-view.vue';
-import ShipForm from '#/views/erp/order/modules/ship-form.vue';
+import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import {
   CARD_PAGE_SIZE_OPTIONS,
@@ -50,7 +50,9 @@ const [SearchForm, searchFormApi] = useVbenForm({
 });
 
 /** 列表查询参数 */
-const queryParams = ref<Record<string, any>>({});
+const queryParams = ref<Record<string, any>>({
+  auditStatus: ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3,
+});
 
 /** 左/右卡片分页与数据 */
 type PaneState = {

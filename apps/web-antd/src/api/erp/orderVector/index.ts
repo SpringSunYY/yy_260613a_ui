@@ -1,5 +1,4 @@
 import type { AxiosRequestConfig, PageParam, PageResult } from '@vben/request';
-import type { Dayjs } from 'dayjs';
 
 import type { InfraFileApi } from '#/api/infra/file';
 
@@ -31,12 +30,17 @@ export namespace OrderVectorApi {
 
 /** 查询订单向量分页 */
 export function getOrderVectorPage(params: PageParam) {
-  return requestClient.get<PageResult<OrderVectorApi.OrderVector>>('/erp/order-vector/page', { params });
+  return requestClient.get<PageResult<OrderVectorApi.OrderVector>>(
+    '/erp/order-vector/page',
+    { params },
+  );
 }
 
 /** 查询订单向量详情 */
 export function getOrderVector(id: number) {
-  return requestClient.get<OrderVectorApi.OrderVector>(`/erp/order-vector/get?id=${id}`);
+  return requestClient.get<OrderVectorApi.OrderVector>(
+    `/erp/order-vector/get?id=${id}`,
+  );
 }
 
 /** 新增订单向量 */
@@ -56,16 +60,17 @@ export function deleteOrderVector(id: number) {
 
 /** 批量删除订单向量 */
 export function deleteOrderVectorList(ids: number[]) {
-  return requestClient.delete(`/erp/order-vector/delete-list?ids=${ids.join(',')}`)
+  return requestClient.delete(
+    `/erp/order-vector/delete-list?ids=${ids.join(',')}`,
+  );
 }
 
 /** 导出订单向量 */
 export function exportOrderVector(params: OrderVectorApi.OrderVector) {
-  return requestClient.download('/erp/order-vector/export-excel',
-          {
-            params,
-            timeout:300_00
-          });
+  return requestClient.download('/erp/order-vector/export-excel', {
+    params,
+    timeout: 30_000,
+  });
 }
 
 /**

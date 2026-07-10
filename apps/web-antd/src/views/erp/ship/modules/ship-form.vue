@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import type { OrderApi } from '#/api/erp/order';
-import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { computed, ref } from 'vue';
 
@@ -10,15 +9,13 @@ import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { getOrderNo, shipOrder } from '#/api/erp/order';
-import { updateProcessToTargetProcess } from '#/api/erp/orderProcess';
 import { $t } from '#/locales';
-import { ErpOrderCurrentProcess } from '#/utils';
 
 import { useShipFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 const formData = ref<OrderApi.OrderShip>();
-const rowData = ref<OrderProcessApi.OrderProcess>();
+const rowData = ref<OrderApi.OrderShip>();
 const getTitle = computed(() => {
   return `${$t('erp.orderProcess.action.ship')}-${formData.value?.id}`;
 });
@@ -47,11 +44,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     const data = (await formApi.getValues()) as OrderApi.Order;
     try {
       // 发货
-      await shipOrder(data);
-      await updateProcessToTargetProcess({
-        ...(rowData.value as unknown as OrderProcessApi.OrderProcess),
-        currentProcess: ErpOrderCurrentProcess.CURRENT_PROCESS_7,
-      });
+      const shipData = { ...rowData.value, ...data } as OrderApi.OrderShip;
+      await shipOrder(shipData);
       // 关闭并提示
       await modalDrawerApi.close();
       emit('success');
@@ -66,7 +60,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     // 加载数据
-    const drawerData = modalDrawerApi.getData<OrderProcessApi.OrderProcess>();
+    const drawerData = modalDrawerApi.getData<OrderApi.OrderShip>();
     if (!drawerData?.orderNo) {
       return;
     }
@@ -77,7 +71,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     }
     // 设置到 values
     rowData.value = drawerData;
-    formData.value = data as OrderApi.OrderShip;
+    formData.value = data as unknown as OrderApi.OrderShip;
     await formApi.setValues(formData.value);
   },
 });
