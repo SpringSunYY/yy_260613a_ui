@@ -74,6 +74,11 @@ export namespace OrderApi {
     workshopRequirements: string; // 车间要求
     remark: string; // 特别备注
   }
+  // 统计
+  export interface OrderStatistics {
+    total: number;
+    name: string;
+  }
 }
 
 /** 查询订单信息分页 */
@@ -98,6 +103,32 @@ export function getOrder(id: number) {
 export function getOrderNo(orderNo: string) {
   return requestClient.get<OrderApi.Order>(
     `/erp/order/get/no?orderNo=${orderNo}`,
+  );
+}
+
+/** 获取订单详细信息-no*/
+export function getOrderDetailNo(orderNo: string) {
+  return requestClient.get<OrderApi.Order>(
+    `/erp/order/get/detail/no?orderNo=${orderNo}`,
+  );
+}
+
+/** 统计*/
+export function getOrderStatistics(params: PageParam) {
+  return requestClient.get<OrderApi.OrderStatistics[]>(
+    '/erp/order/statistics',
+    {
+      params,
+    },
+  );
+}
+// 发货统计
+export function getOrderShipStatistics(params: PageParam) {
+  return requestClient.get<OrderApi.OrderStatistics[]>(
+    '/erp/order/statistics/ship',
+    {
+      params,
+    },
   );
 }
 

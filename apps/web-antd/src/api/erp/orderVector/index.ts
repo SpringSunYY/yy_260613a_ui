@@ -48,6 +48,11 @@ export function createOrderVector(data: OrderVectorApi.OrderVector) {
   return requestClient.post('/erp/order-vector/create', data);
 }
 
+/** 新增订单向量 */
+export function resetOrderVector(data: OrderVectorApi.OrderVector) {
+  return requestClient.post('/erp/order-vector/reset', data);
+}
+
 /** 修改订单向量 */
 export function updateOrderVector(data: OrderVectorApi.OrderVector) {
   return requestClient.put('/erp/order-vector/update', data);

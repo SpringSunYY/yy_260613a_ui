@@ -29,6 +29,7 @@ const handleVisibleChange = (vis: boolean) => {
 
 <template>
   <a-image
+    v-if="imageUrls"
     :preview="{ visible: false }"
     :height="props.height"
     :width="props.width"

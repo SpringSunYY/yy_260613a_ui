@@ -16,4 +16,5 @@ export const ACTION_ICON = {
   IP: 'fa:map-marker',
   GRANT: 'lucide:user-round-key',
   SHIP: 'lucide:truck-electric',
+  PRINT: 'lucide:printer-check',
 };

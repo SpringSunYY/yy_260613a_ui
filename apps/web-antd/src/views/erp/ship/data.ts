@@ -471,6 +471,19 @@ export function useShipFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
+    /** 预计发货时间 */
+    {
+      fieldName: 'exceptShippingTime',
+      label: $t('erp.order.field.exceptShippingTime'),
+      rules: 'required',
+      component: 'DatePicker',
+      componentProps: {
+        disabled: true,
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+    },
     /** 提货方式 */
     {
       fieldName: 'pickupMethod',
@@ -495,14 +508,13 @@ export function useShipFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 预计发货时间 */
+    /** 发货时间 */
     {
-      fieldName: 'exceptShippingTime',
-      label: $t('erp.order.field.exceptShippingTime'),
-      rules: 'required',
+      fieldName: 'shippingTime',
+      label: $t('erp.order.field.shippingTime'),
       component: 'DatePicker',
+      rules: 'required',
       componentProps: {
-        readonly: true,
         showTime: true,
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',

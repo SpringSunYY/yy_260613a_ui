@@ -15,12 +15,21 @@ import {
   deleteOrderList,
   exportOrder,
   getOrderPage,
+  getOrderStatistics,
   submitAuditOrder,
 } from '#/api/erp/order';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
+import { resetOrderVector } from '#/api/erp/orderVector';
+import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
-import { ErpOrderAuditStatus, ErpOrderCurrentProcess, pickSort } from '#/utils';
+import {
+  DICT_TYPE,
+  ErpOrderAuditStatus,
+  ErpOrderCurrentProcess,
+  pickSort,
+} from '#/utils';
 import FormView from '#/views/erp/order/modules/form-view.vue';
+import PrintForm from '#/views/erp/order/modules/print-form.vue';
 import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
@@ -38,6 +47,17 @@ const [ViewFormModalDrawer, viewFormModalDrawerApi] = useVbenModelDrawer({
   type: 'drawer',
   externalCloseConfirm: false,
 });
+
+const [PrintFormModalDrawer, printFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: PrintForm,
+  destroyOnClose: true,
+  type: 'modal',
+  externalCloseConfirm: false,
+});
+/** 打印*/
+function handleOrderPrint(row: OrderApi.Order) {
+  printFormModalDrawerApi.setData(row).open();
+}
 
 /** 发货*/
 const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
@@ -70,6 +90,16 @@ function handleEdit(row: OrderApi.Order) {
 /** 查看订单信息 */
 function handleView(row: OrderApi.Order) {
   viewFormModalDrawerApi.setData(row).open();
+}
+
+const orderResetVectorLoading = ref(false);
+/** 重置向量*/
+async function handleOrderResetVector(row: OrderApi.Order) {
+  if (!row.orderNo) return;
+  orderResetVectorLoading.value = true;
+  await resetOrderVector(row);
+  orderResetVectorLoading.value = false;
+  message.success($t('ui.actionMessage.operationSuccess'));
 }
 
 /** 删除订单信息 */
@@ -152,6 +182,8 @@ async function handleExport() {
   }
 }
 
+const statisticsData = ref<OrderApi.OrderStatistics[]>();
+const totalCount = ref<number>(0);
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -165,6 +197,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async (ctx, formValues) => {
+          // 获取统计
+          getOrderStatistics(formValues).then((res) => {
+            if (!res || res?.length <= 0) return;
+            statisticsData.value = res;
+            res?.map((item) => (totalCount.value += item.total));
+          });
+
           const { page } = ctx || {};
           const { sortBy, sort } = pickSort(ctx);
           return await getOrderPage({
@@ -203,7 +242,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <ViewFormModalDrawer />
     <ShipFormModalDrawer @success="onRefresh" />
     <AuditFormModalDrawer @success="onRefresh" />
-    <Grid :table-title="$t('erp.order.order')">
+    <PrintFormModalDrawer @success="onRefresh" />
+    <Grid>
+      <template #table-title>
+        <div class="inline-flex items-center gap-x-4">
+          <span><a-tag>总计</a-tag>：{{ totalCount }}</span>
+          <span
+            v-for="item in statisticsData"
+            :key="item.name"
+            class="inline-flex items-center"
+          >
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="item.name"
+            />
+            ：<span class="text-primary">{{ item.total }}</span>
+          </span>
+        </div>
+      </template>
+
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -292,6 +349,42 @@ const [Grid, gridApi] = useVbenVxeGrid({
                     ErpOrderCurrentProcess.CURRENT_PROCESS_7),
               onClick: handleOrderShip.bind(null, row),
             },
+            //发货
+            {
+              label: $t('common.print'),
+              type: 'link',
+              icon: ACTION_ICON.PRINT,
+              auth: [
+                'erp.orderProcess.action.ship',
+                'erp:order-process:complete',
+              ],
+              ifShow:
+                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3 &&
+                (row.currentProcess ===
+                  ErpOrderCurrentProcess.CURRENT_PROCESS_6 ||
+                  row.currentProcess ===
+                    ErpOrderCurrentProcess.CURRENT_PROCESS_7),
+              onClick: handleOrderPrint.bind(null, row),
+            },
+            //重置向量
+            {
+              label: $t('erp.orderVector.orderVector'),
+              type: 'link',
+              auth: ['erp:order-vector:create'],
+              loading: orderResetVectorLoading,
+              ifShow:
+                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3 &&
+                (row.currentProcess ===
+                  ErpOrderCurrentProcess.CURRENT_PROCESS_6 ||
+                  row.currentProcess ===
+                    ErpOrderCurrentProcess.CURRENT_PROCESS_7),
+              popConfirm: {
+                title: $t('erp.orderProcess.actionMessage.resetVectorConfirm', [
+                  row.orderNo,
+                ]),
+                confirm: handleOrderResetVector.bind(null, row),
+              },
+            },
             {
               label: $t('common.delete'),
               type: 'link',
@@ -299,7 +392,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order:delete'],
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [
-                  row.id,
+                  row.orderNO,
                   $t('erp.order.order'),
                 ]),
                 confirm: handleDelete.bind(null, row),

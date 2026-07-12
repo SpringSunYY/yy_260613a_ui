@@ -139,6 +139,9 @@ watch(
     </Card>
   </div>
   <Grid class="mx-4">
+    <template #serialNumber="{ rowIndex }">
+      {{ rowIndex + 1 }}
+    </template>
     <template #setName="{ row }">
       <Input :readonly="true" v-model:value="row.setName" />
     </template>

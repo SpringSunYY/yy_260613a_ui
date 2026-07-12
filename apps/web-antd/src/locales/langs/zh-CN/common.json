@@ -59,5 +59,6 @@
   "clear": "清空",
   "remove": "移除",
   "submit": "提交",
-  "approve": "审核"
+  "approve": "审核",
+  "print": "打印"
 }

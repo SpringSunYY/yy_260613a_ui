@@ -46,6 +46,9 @@
       "roller": "完成滚筒",
       "laser": "完成激光",
       "ship": "完成裁缝发货"
+    },
+    "actionMessage": {
+      "resetVectorConfirm": "您确定重置订单{0}向量吗？重置后之前图片向量将无效。"
     }
   }
 }

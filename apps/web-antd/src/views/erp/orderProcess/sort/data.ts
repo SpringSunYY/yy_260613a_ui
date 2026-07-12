@@ -297,7 +297,8 @@ export function useDetailSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         showDescription: false,
-        moduleType: 'erp',
+        moduleType: MODULE_TYPE_ENUM.ERP,
+        maxNumber: 8,
       },
       formItemClass: 'col-span-4',
     },

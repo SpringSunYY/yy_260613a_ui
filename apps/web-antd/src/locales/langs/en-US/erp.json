@@ -46,6 +46,9 @@
       "roller": "Complete Roller",
       "laser": "Complete Laser",
       "ship": "Complete Shipping"
+    },
+    "actionMessage": {
+      "resetVectorConfirm": "Are you sure to reset  the order {0} vector?"
     }
   }
 }

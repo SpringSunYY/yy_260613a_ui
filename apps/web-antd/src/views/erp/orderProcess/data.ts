@@ -201,6 +201,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         moduleType: MODULE_TYPE_ENUM.ERP,
+        maxNumber: 8,
       },
       formItemClass: 'col-span-2',
     },

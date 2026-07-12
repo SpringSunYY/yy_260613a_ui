@@ -19,7 +19,7 @@ import {
   isString,
 } from '@vben/utils';
 
-import { Button, Image, Popconfirm, Switch } from 'ant-design-vue';
+import { Button, Popconfirm, Switch } from 'ant-design-vue';
 
 import { DictTag } from '#/components/dict-tag';
 import CellFileAndImages from '#/components/file-and-images/file-and-images-preview.vue';
@@ -113,6 +113,9 @@ setupVbenVxeTable({
         const { column, row } = params;
         const { props } = _renderOpts;
         const value = row[column.field];
+        if (!value) {
+          return '-';
+        }
         return h(CellImage, {
           src: value,
           height: props?.height,
@@ -130,7 +133,6 @@ setupVbenVxeTable({
         return h(JsonPreview, { value });
       },
     });
-
 
     // 表格配置项可以用 cellRender: { name: 'CellFilePreview' },
     // 支持单个文件URL或 || 分隔的多个URL字符串

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { PageParam } from '@vben/request';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderApi } from '#/api/erp/order';
 
@@ -8,9 +10,14 @@ import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, formatPast2 } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { exportOrder, getShipOrderPage } from '#/api/erp/order';
+import {
+  exportOrder,
+  getOrderShipStatistics,
+  getShipOrderPage,
+} from '#/api/erp/order';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
@@ -76,6 +83,64 @@ async function handleExport() {
   }
 }
 
+const statisticsData = ref<OrderApi.OrderStatistics[]>();
+const totalCount = ref<number>(0);
+const todayStats = ref<OrderApi.OrderStatistics[]>([]);
+const totalToday = ref(0);
+const tomorrowStats = ref<OrderApi.OrderStatistics[]>([]);
+const totalTomorrow = ref(0);
+const dayAfterTomorrowStats = ref<OrderApi.OrderStatistics[]>([]);
+const totalDayAfterTomorrow = ref(0);
+function fetchStatistics(formValues: PageParam) {
+  totalCount.value = 0;
+  todayStats.value = [];
+  tomorrowStats.value = [];
+  dayAfterTomorrowStats.value = [];
+  const fmt = 'YYYY-MM-DD HH:mm:ss';
+  // 规格统计
+  getOrderShipStatistics(formValues).then((res) => {
+    if (!res) return;
+    statisticsData.value = res;
+    res?.forEach((item) => (totalCount.value += item.total));
+  });
+  // 今日待发
+  getOrderShipStatistics({
+    ...formValues,
+    exceptShippingTime: [
+      dayjs().startOf('day').format(fmt),
+      dayjs().endOf('day').format(fmt),
+    ],
+  }).then((res) => {
+    if (!res) return;
+    todayStats.value = res;
+    res?.forEach((item) => (totalToday.value += item.total));
+  });
+  // 明日待发
+  getOrderShipStatistics({
+    ...formValues,
+    exceptShippingTime: [
+      dayjs().add(1, 'day').startOf('day').format(fmt),
+      dayjs().add(1, 'day').endOf('day').format(fmt),
+    ],
+  }).then((res) => {
+    if (!res) return;
+    tomorrowStats.value = res;
+    totalTomorrow.value = res.reduce((acc, cur) => acc + cur.total, 0);
+  });
+  // 后日待发
+  getOrderShipStatistics({
+    ...formValues,
+    exceptShippingTime: [
+      dayjs().add(2, 'day').startOf('day').format(fmt),
+      dayjs().add(2, 'day').endOf('day').format(fmt),
+    ],
+  }).then((res) => {
+    if (!res) return;
+    dayAfterTomorrowStats.value = res;
+    totalDayAfterTomorrow.value = res.reduce((acc, cur) => acc + cur.total, 0);
+  });
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -90,6 +155,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async (ctx, formValues) => {
+          fetchStatistics(formValues);
           const { page } = ctx || {};
           const { sortBy, sort } = pickSort(ctx);
           return await getShipOrderPage({
@@ -149,6 +215,48 @@ function isTimeOut(exceptShippingTime: number): boolean {
     <ViewFormModalDrawer />
     <ShipFormModalDrawer @success="onRefresh" />
     <Grid :table-title="$t('erp.order.order')">
+      <template #table-title>
+        <span class="inline-flex items-center gap-x-2">
+          总计：{{ totalCount }}
+          <template v-for="item in todayStats" :key="item.name">
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="item.name"
+            />
+            ：<span class="text-primary">{{ item.total }}</span>
+          </template>
+        </span>
+        <span class="inline-flex items-center gap-x-2">
+          今日待发：{{ totalToday }}
+          <template v-for="item in todayStats" :key="item.name">
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="item.name"
+            />
+            ：<span class="text-primary">{{ item.total }}</span>
+          </template>
+        </span>
+        <span class="inline-flex items-center gap-x-2">
+          明日待发：{{ totalTomorrow }}
+          <template v-for="item in tomorrowStats" :key="item.name">
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="item.name"
+            />
+            ：<span class="text-primary">{{ item.total }}</span>
+          </template>
+        </span>
+        <span class="inline-flex items-center gap-x-2">
+          后日待发：{{ totalDayAfterTomorrow }}
+          <template v-for="item in dayAfterTomorrowStats" :key="item.name">
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="item.name"
+            />
+            ：<span class="text-primary">{{ item.total }}</span>
+          </template>
+        </span>
+      </template>
       <template #toolbar-tools>
         <TableAction
           :actions="[
