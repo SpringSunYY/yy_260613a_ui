@@ -333,7 +333,10 @@ export function useDetailSchema(): VbenFormSchema[] {
 export type CardField = {
   /** 字典类型：指定后渲染时会用 getDictLabel 转成字典 label */
   dictType?: string;
-  field: keyof OrderProcessApi.OrderProcess;
+  /** 字段名（基于 OrderProcessDetail 类型） */
+  field: keyof OrderProcessApi.OrderProcessDetail;
+  /** 格式化函数标识，如 'formatDateTime' */
+  formatter?: string;
   label: string;
   span?: 1 | 2;
   type?: 'image' | 'text';
@@ -346,6 +349,17 @@ export const LEFT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
     label: $t('erp.orderProcess.field.layoutPerson'),
     span: 2,
   },
+  /** 规格 */
+  {
+    field: 'specification',
+    label: $t('erp.order.field.specification'),
+    dictType: DICT_TYPE.ERP_SPECIFICATION,
+  },
+  /** 数量 */
+  {
+    field: 'number',
+    label: $t('erp.order.field.number'),
+  },
   {
     field: 'pattern',
     label: $t('erp.orderProcess.field.pattern'),
@@ -356,6 +370,13 @@ export const LEFT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
     label: $t('erp.orderProcess.field.fabric'),
     dictType: DICT_TYPE.ERP_FABRIC,
   },
+  /** 下单日期 */
+  {
+    field: 'orderTime',
+    label: $t('erp.order.field.orderTime'),
+    formatter: 'formatDateTime',
+    span: 2,
+  },
 ]);
 
 /** 右侧卡片展示字段 */
@@ -363,6 +384,18 @@ export const RIGHT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
   {
     field: 'layoutPerson',
     label: $t('erp.orderProcess.field.layoutPerson'),
+    span: 2,
+  },
+  /** 规格 */
+  {
+    field: 'specification',
+    label: $t('erp.order.field.specification'),
+    dictType: DICT_TYPE.ERP_SPECIFICATION,
+  },
+  /** 数量 */
+  {
+    field: 'number',
+    label: $t('erp.order.field.number'),
   },
   {
     field: 'pattern',
@@ -394,9 +427,18 @@ export const RIGHT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
     label: $t('erp.orderProcess.field.pocket'),
     dictType: DICT_TYPE.ERP_POCKET,
   },
+  /** 下单日期 */
   {
-    field: 'neckline',
-    label: $t('erp.orderProcess.field.neckline'),
-    dictType: DICT_TYPE.ERP_NECKLINE,
+    field: 'orderTime',
+    label: $t('erp.order.field.orderTime'),
+    formatter: 'formatDateTime',
+    span: 2,
+  },
+  /** 预计发货时间 */
+  {
+    field: 'exceptShippingTime',
+    label: $t('erp.order.field.exceptShippingTime'),
+    formatter: 'formatDateTime',
+    span: 2,
   },
 ]);

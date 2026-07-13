@@ -56,7 +56,8 @@ const [PrintFormModalDrawer, printFormModalDrawerApi] = useVbenModelDrawer({
 });
 /** 打印*/
 function handleOrderPrint(row: OrderApi.Order) {
-  printFormModalDrawerApi.setData(row).open();
+  if (!row.orderNo) return;
+  printFormModalDrawerApi.setData({ orderNo: row.orderNo }).open();
 }
 
 /** 发货*/
@@ -187,6 +188,7 @@ const totalCount = ref<number>(0);
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
+    collapsed: true,
   },
   gridOptions: {
     columns: useGridColumns(),
@@ -243,6 +245,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <ShipFormModalDrawer @success="onRefresh" />
     <AuditFormModalDrawer @success="onRefresh" />
     <PrintFormModalDrawer @success="onRefresh" />
+    <PrintModalDrawer @success="onRefresh" />
     <Grid>
       <template #table-title>
         <div class="inline-flex items-center gap-x-4">

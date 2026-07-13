@@ -143,6 +143,7 @@ function fetchStatistics(formValues: PageParam) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    collapsed: true,
     schema: useGridFormSchema(),
   },
   gridOptions: {

@@ -12,7 +12,7 @@ import { formatDate } from '@vben/utils';
 
 import { Button, Empty, Spin } from 'ant-design-vue';
 
-import { getOrderDetailNo } from '#/api/erp/order';
+import { getOrderDetailNo, printOrder } from '#/api/erp/order';
 import { $t } from '#/locales';
 import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
 
@@ -20,6 +20,7 @@ const emit = defineEmits(['success']);
 
 const userStore = useUserStore();
 
+const orderTitle = ref('');
 const orderDetail = ref<OrderApi.Order>();
 const orderProcess = ref<OrderProcessApi.OrderProcess>();
 const orderDetails = ref<OrderApi.OrderDetail[]>([]);
@@ -119,7 +120,6 @@ function getPrintCss() {
     #orderPrintDiv table.jls-table .cell { height: 24px; }
     #orderPrintDiv table.jls-table .title-cell {
       font-size: 18px;
-      font-weight: 700;
       padding: 4px 0 10px;
     }
     #orderPrintDiv .jls-print {
@@ -131,25 +131,99 @@ function getPrintCss() {
 }
 
 /**
- * v-print 配置（vue3-print-nb）。
- * 库把 #orderPrintDiv 克隆进 iframe 打印，closeCallback 同步触发，
- * emit('success') 退回到"用户点过打印按钮"的语义。
+ * 打印时临时改主窗口 document.title，作为浏览器保存 PDF 的文件名。
+ *
+ * Chromium（Chrome / Edge）在触发 window.print() 后是**异步读取主窗口 title**，
+ * 几秒内路由 / 其他框架可能把它再改回去，于是保存对话框拿到的是错的标题。
+ * 用 MutationObserver + beforeprint/afterprint 三道防线把 title 锁住：
+ *  - beforeprint：开始守，并把当前 title 记下来供还原。
+ *  - MutationObserver：发现 document.title 被改回，就立刻再写一次。
+ *  - afterprint：取消观察、还原原 title、清理定时器。
+ *
+ * iframe 里也写一份 title 是为了兜 Firefox——Firefox 同步读 iframe 自己的 title。
  */
+
+/**
+ * 当前打印用的 iframe。
+ * 库在 callback 期间还挂在 DOM 上，但 id 是 `printArea_${counter}` 自增，
+ * 外部拿不到对应数字，缓存下来给 openCallback 用。
+ */
+let currentPrintIframe: HTMLIFrameElement | null = null;
+let titleGuardCleanup: (() => void) | null = null;
+
+function startTitleGuard(targetTitle: string) {
+  // 已经有遗留的 guard 就先清掉，避免叠加
+  titleGuardCleanup?.();
+
+  const originalTitle = document.title;
+  document.title = targetTitle;
+
+  // MutationObserver：Vue Router 或别的代码可能会改 document.title，
+  // 一旦发现被改就立刻再写一次 target。
+  const observer = new MutationObserver(() => {
+    if (document.title !== targetTitle) {
+      document.title = targetTitle;
+    }
+  });
+  observer.observe(document.querySelector('title') ?? document.head, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+
+  // beforeprint：兜底某些浏览器同步读 title 的场景。
+  const onBeforePrint = () => {
+    if (document.title !== targetTitle) document.title = targetTitle;
+  };
+  // afterprint：浏览器读完 title 后再还原。
+  const onAfterPrint = () => {
+    document.title = originalTitle;
+  };
+  window.addEventListener('beforeprint', onBeforePrint);
+  window.addEventListener('afterprint', onAfterPrint);
+
+  titleGuardCleanup = () => {
+    observer.disconnect();
+    window.removeEventListener('beforeprint', onBeforePrint);
+    window.removeEventListener('afterprint', onAfterPrint);
+    // 3 秒后强制还原（Chrome 异步读 title 大概就是几百 ms，留点余量）
+    window.setTimeout(() => {
+      document.title = originalTitle;
+      titleGuardCleanup = null;
+    }, 3000);
+  };
+}
+
 const printObj = computed(() => {
-  const orderNo = orderDetail.value?.orderNo ?? 'JLS制单';
   return {
     id: '#orderPrintDiv',
-    popTitle: orderNo,
+    popTitle: '',
     standard: 'html5',
     zIndex: 20_002,
     extraHead: getPrintCss(),
     beforeOpenCallback() {
       printing.value = true;
+      // 在库 createPrintWindow() 之后找出 DOM 里最新出现的 printArea_ iframe 缓存下来
+      const iframes = document.querySelectorAll<HTMLIFrameElement>(
+        'iframe[id^="printArea_"]',
+      );
+      currentPrintIframe = iframes[iframes.length - 1] ?? null;
     },
     openCallback() {
-      emit('success');
+      const title =
+        orderTitle.value || `JLS制单-${orderDetail.value?.orderNo ?? ''}`;
+      // Firefox：同步读 iframe 自己的 title
+      const doc = currentPrintIframe?.contentDocument;
+      if (doc) doc.title = title;
+      // Chromium：异步读主窗口的 title，用 guard 守住
+      startTitleGuard(title);
+      // 去更新订单打印
+      printOrder(orderDetail.value?.orderNo!).then((res) => {
+        emit('success');
+      });
     },
     closeCallback() {
+      currentPrintIframe = null;
       printing.value = false;
     },
   };
@@ -360,11 +434,16 @@ async function loadPrintData(orderNo: string) {
   loading.value = true;
   try {
     const order = await getOrderDetailNo(orderNo);
+
     orderDetail.value = order;
     orderProcess.value = order?.orderProcess;
     orderDetails.value = (order?.orderDetails ?? []).filter(
       (row) => row.setSize && Number(row.setQuantity) > 0,
     );
+    orderTitle.value = `JLS制单-${orderDetail.value?.orderNo}-${dictLabel(
+      DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
+      orderDetail.value?.pickupMethod,
+    )}`;
     printTime.value = formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
   } finally {
     loading.value = false;
@@ -415,7 +494,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
               <!-- 标题 -->
               <tr>
                 <th class="cell title-cell" colspan="12">
-                  {{ `JLS制单 - ${orderDetail.orderNo ?? ''}` }}
+                  {{ orderTitle }}
                 </th>
               </tr>
 
@@ -719,7 +798,6 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 /* 标题：与其他单元一致带上边框 */
 #orderPrintDiv .title-cell {
   font-size: 18px;
-  font-weight: 700;
   padding: 4px 0 10px;
 }
 
@@ -865,7 +943,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   /* 纸张上撑满 A4 可用区（屏幕端 max-width 在非 print 块里设） */
   #orderPrintDiv {
     max-width: none;
-    padding: 8mm;
+    padding: 12mm;
   }
 
   /* 打印时：统一用 collapse，所有边框交给 cell */
@@ -881,6 +959,10 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   }
 
   /* 消除 iframe/body/html 默认缝隙 */
-  body, html { margin: 0 !important; padding: 0 !important; }
+  body,
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 }
 </style>

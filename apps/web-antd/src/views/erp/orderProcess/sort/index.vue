@@ -8,12 +8,14 @@ import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
 
+import { formatDateTime } from '@vben/utils';
+
 import { message, Pagination } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
   getOrderProcess,
-  getOrderProcessPage,
+  getOrderProcessSortPage,
   updateOrderProcess,
   updateProcessToTargetProcess,
 } from '#/api/erp/orderProcess';
@@ -56,7 +58,7 @@ const queryParams = ref<Record<string, any>>({
 
 /** 左/右卡片分页与数据 */
 type PaneState = {
-  list: OrderProcessApi.OrderProcess[];
+  list: OrderProcessApi.OrderProcessDetail[];
   loading: boolean;
   pageNo: number;
   pageSize: number;
@@ -96,7 +98,7 @@ const leftScrollRef = useTemplateRef<HTMLElement>('leftScrollRef');
 const rightScrollRef = useTemplateRef<HTMLElement>('rightScrollRef');
 
 /** 选中项（中间详情） */
-const selectedRow = ref<null | OrderProcessApi.OrderProcess>(null);
+const selectedRow = ref<null | OrderProcessApi.OrderProcessDetail>(null);
 
 /** 滚动到顶部 */
 function scrollToTop(el?: HTMLElement | null) {
@@ -108,7 +110,7 @@ function scrollToTop(el?: HTMLElement | null) {
 async function loadLeft() {
   leftPane.loading = true;
   try {
-    const res = await getOrderProcessPage({
+    const res = await getOrderProcessSortPage({
       pageNo: leftPane.pageNo,
       pageSize: leftPane.pageSize,
       ...queryParams.value,
@@ -125,7 +127,7 @@ async function loadLeft() {
 async function loadRight() {
   rightPane.loading = true;
   try {
-    const res = await getOrderProcessPage({
+    const res = await getOrderProcessSortPage({
       pageNo: rightPane.pageNo,
       pageSize: rightPane.pageSize,
       ...queryParams.value,
@@ -188,7 +190,7 @@ async function handleRightPageChange(page: number, pageSize: number) {
 const detailLoading = ref(false);
 
 /** 在某个 pane 的列表里按 id 找出最新一行的引用 */
-function findRowInPane(id: number, list: OrderProcessApi.OrderProcess[]) {
+function findRowInPane(id: number, list: OrderProcessApi.OrderProcessDetail[]) {
   return list.find((it) => it.id === id) ?? null;
 }
 
@@ -200,7 +202,7 @@ function findRowInPane(id: number, list: OrderProcessApi.OrderProcess[]) {
  * - 命中后重新拉详情，保证中间表单拿到最新数据
  */
 async function reselectRow(targetId: number) {
-  let next: null | OrderProcessApi.OrderProcess = findRowInPane(
+  let next: null | OrderProcessApi.OrderProcessDetail = findRowInPane(
     targetId,
     leftPane.list,
   );
@@ -227,7 +229,7 @@ async function reselectRow(targetId: number) {
 }
 
 /** 主动选择某行：详情已由调用方刷新，这里只同步 selectedRow 引用 + 拉详情 */
-async function selectRow(row: OrderProcessApi.OrderProcess) {
+async function selectRow(row: OrderProcessApi.OrderProcessDetail) {
   await reselectRow(row.id as number);
 }
 
@@ -377,15 +379,28 @@ const currentActions = computed(() => {
 });
 
 /** 卡片选中态 */
-const isLeftSelected = (row: OrderProcessApi.OrderProcess) =>
+const isLeftSelected = (row: OrderProcessApi.OrderProcessDetail) =>
   selectedRow.value?.id === row.id;
-const isRightSelected = (row: OrderProcessApi.OrderProcess) =>
+const isRightSelected = (row: OrderProcessApi.OrderProcessDetail) =>
   selectedRow.value?.id === row.id;
 
 /** 卡片字段原值（空安全） */
-function getCardRaw(item: OrderProcessApi.OrderProcess, field: CardField) {
+function getCardRaw(
+  item: OrderProcessApi.OrderProcessDetail,
+  field: CardField,
+) {
   const raw = (item as any)[field.field];
   if (raw === undefined || raw === null || raw === '') return null;
+  return raw;
+}
+
+/** 卡片字段格式化值 */
+function getCardFormatted(item: OrderProcessApi.OrderProcessDetail, field: CardField) {
+  const raw = getCardRaw(item, field);
+  if (raw === null) return null;
+  if (field.formatter === 'formatDateTime') {
+    return formatDateTime(raw);
+  }
   return raw;
 }
 
@@ -433,14 +448,22 @@ refreshAll();
                 :class="{ 'sort-card--active': isLeftSelected(item) }"
                 @click="selectRow(item)"
               >
-                <div class="sort-card__header">
+              <div class="sort-card__header">
                   <span class="sort-card__no">#{{ item.orderNo }}</span>
-                  <I18nDictTag
-                    v-if="item.currentProcess"
-                    type="erp_order_current_process"
-                    :value="item.currentProcess"
-                    class="sort-card__tag"
-                  />
+                  <div class="sort-card__tags">
+                    <I18nDictTag
+                      v-if="item.currentProcess"
+                      type="erp_order_current_process"
+                      :value="item.currentProcess"
+                      class="sort-card__tag"
+                    />
+                    <I18nDictTag
+                      v-if="item.orderStatus"
+                      type="erp_order_status"
+                      :value="item.orderStatus"
+                      class="sort-card__tag sort-card__tag--status"
+                    />
+                  </div>
                 </div>
                 <div class="sort-card__body">
                   <div
@@ -466,6 +489,9 @@ refreshAll();
                         :value="getCardRaw(item, f)"
                       />
                     </div>
+                    <span v-else-if="f.formatter" class="sort-card__value">
+                      {{ getCardFormatted(item, f) ?? '-' }}
+                    </span>
                     <span v-else class="sort-card__value">
                       {{ getCardRaw(item, f) ?? '-' }}
                     </span>
@@ -575,12 +601,20 @@ refreshAll();
               >
                 <div class="sort-card__header">
                   <span class="sort-card__no">#{{ item.orderNo }}</span>
-                  <I18nDictTag
-                    v-if="item.currentProcess"
-                    type="erp_order_current_process"
-                    :value="item.currentProcess"
-                    class="sort-card__tag"
-                  />
+                  <div class="sort-card__tags">
+                    <I18nDictTag
+                      v-if="item.currentProcess"
+                      type="erp_order_current_process"
+                      :value="item.currentProcess"
+                      class="sort-card__tag"
+                    />
+                    <I18nDictTag
+                      v-if="item.orderStatus"
+                      type="erp_order_status"
+                      :value="item.orderStatus"
+                      class="sort-card__tag sort-card__tag--status"
+                    />
+                  </div>
                 </div>
                 <div class="sort-card__body">
                   <div
@@ -606,6 +640,9 @@ refreshAll();
                         :value="getCardRaw(item, f)"
                       />
                     </div>
+                    <span v-else-if="f.formatter" class="sort-card__value">
+                      {{ getCardFormatted(item, f) ?? '-' }}
+                    </span>
                     <span v-else class="sort-card__value">
                       {{ getCardRaw(item, f) ?? '-' }}
                     </span>
@@ -785,11 +822,27 @@ refreshAll();
   font-weight: 600;
   font-size: 13px;
   color: hsl(var(--muted-foreground));
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sort-card__tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  margin-right: -20px;
 }
 
 .sort-card__tag {
   margin: 0;
   flex-shrink: 0;
+}
+
+.sort-card__tag--status {
+  margin-left: 0;
 }
 
 .sort-card__body {

@@ -147,6 +147,11 @@ export function shipOrder(data: OrderApi.OrderShip) {
   return requestClient.put(`/erp/order/ship`, data);
 }
 
+/** 打印订单*/
+export function printOrder(orderNo: string) {
+  return requestClient.put(`/erp/order/print`, { orderNo });
+}
+
 /** 提交审核订单*/
 export function submitAuditOrder(data: OrderApi.Order) {
   return requestClient.post(`/erp/order/submit-audit-order`, data);

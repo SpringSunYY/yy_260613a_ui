@@ -136,6 +136,7 @@ function handleSearch() {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
+    collapsed: true,
   },
   gridOptions: {
     columns: useGridColumns(),
