@@ -7,7 +7,6 @@ import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-
 import { formatDateTime } from '@vben/utils';
 
 import { message, Pagination } from 'ant-design-vue';
@@ -395,7 +394,10 @@ function getCardRaw(
 }
 
 /** 卡片字段格式化值 */
-function getCardFormatted(item: OrderProcessApi.OrderProcessDetail, field: CardField) {
+function getCardFormatted(
+  item: OrderProcessApi.OrderProcessDetail,
+  field: CardField,
+) {
   const raw = getCardRaw(item, field);
   if (raw === null) return null;
   if (field.formatter === 'formatDateTime') {
@@ -448,7 +450,7 @@ refreshAll();
                 :class="{ 'sort-card--active': isLeftSelected(item) }"
                 @click="selectRow(item)"
               >
-              <div class="sort-card__header">
+                <div class="sort-card__header">
                   <span class="sort-card__no">#{{ item.orderNo }}</span>
                   <div class="sort-card__tags">
                     <I18nDictTag
