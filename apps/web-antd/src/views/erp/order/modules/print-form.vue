@@ -70,6 +70,67 @@ const getTitle = computed(() =>
 );
 
 /**
+ * 打印专用 CSS：注入进 vue3-print-nb 的 iframe <head>。
+ * vue3-print-nb 打印时会 clone DOM 进 iframe，但 Vue 的 scoped CSS
+ * 不会跟着过来，所以边框等关键样式必须通过 extraHead 重新注入。
+ */
+function getPrintCss() {
+  return `<style>
+    * { box-sizing: border-box; }
+    body { margin: 0 !important; padding: 0 !important; }
+    html { margin: 0 !important; padding: 0 !important; }
+    #orderPrintDiv {
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 12px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    #orderPrintDiv table.jls-table {
+      width: 100%;
+      border-collapse: collapse !important;
+      border: none !important;
+      outline: none !important;
+      table-layout: fixed;
+    }
+    #orderPrintDiv table.jls-table td,
+    #orderPrintDiv table.jls-table th {
+      border: 1px solid #2f6fb5 !important;
+      padding: 1.5pt 4pt;
+      vertical-align: middle;
+      word-break: break-all;
+      text-align: center;
+    }
+    #orderPrintDiv table.jls-table td.val-area,
+    #orderPrintDiv table.jls-table th.val-area {
+      text-align: left;
+      vertical-align: middle;
+    }
+    #orderPrintDiv table.jls-table .lbl {
+      background: #c9d9ef;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    #orderPrintDiv table.jls-table .lbl-yellow { background: #ffff66; }
+    #orderPrintDiv table.jls-table .lbl-orange { background: #f6c9a3; }
+    #orderPrintDiv table.jls-table .lbl-tall { height: 40px; }
+    #orderPrintDiv table.jls-table .val-red { color: #d40000; font-weight: 600; }
+    #orderPrintDiv table.jls-table .val-fabric { background: #ffff00; font-weight: 700; }
+    #orderPrintDiv table.jls-table .val-total { font-weight: 700; background: #f2f2f2; }
+    #orderPrintDiv table.jls-table .cell { height: 24px; }
+    #orderPrintDiv table.jls-table .title-cell {
+      font-size: 18px;
+      font-weight: 700;
+      padding: 4px 0 10px;
+    }
+    #orderPrintDiv .jls-print {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+  </style>`;
+}
+
+/**
  * v-print 配置（vue3-print-nb）。
  * 库把 #orderPrintDiv 克隆进 iframe 打印，closeCallback 同步触发，
  * emit('success') 退回到"用户点过打印按钮"的语义。
@@ -81,6 +142,7 @@ const printObj = computed(() => {
     popTitle: orderNo,
     standard: 'html5',
     zIndex: 20_002,
+    extraHead: getPrintCss(),
     beforeOpenCallback() {
       printing.value = true;
     },
@@ -625,18 +687,13 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 }
 
 /*
- * 表格边框：box-shadow inset 方案
+ * 表格边框（屏幕端）：border-collapse: separate + outline 补外层。
  *
- * 调研结论（基于 SO 多案例 + Chromium / Firefox 公开 bug 报告）：
- *   - Chrome 的 border-collapse: collapse 在 colspan/rowspan 周边会丢线
- *     （crbug 1201762 "border snapping before layout"），且 1px/2px 在
- *     打印预览里都被 snapping 锁成同一个 hairline 视觉粗细——调数字没用。
- *   - Firefox bug 1775345 同样报告 thin borders 在 print preview 消失。
- *   - 唯一被反复验证可行的 workaround：放弃 collapse + border，
- *     改用 border-collapse: separate + 每格 box-shadow inset 画自己的边。
+ * separate 用于屏幕端：保证屏幕预览正常，格子边框独立画，不受 collapse
+ * colspan/rowspan 冲突规则影响（屏幕端用的是 ::after box-shadow 方案）。
  *
- * box-shadow 是矢量绘制，Chrome PDF 引擎会保留宽度，不受
- * "border snapping" 算法影响。
+ * 打印端（extraHead / @media print）：改用 border-collapse: collapse，
+ * 合并边框，无缝隙，所有边等粗（1px），是真正的"无线"效果。
  */
 #orderPrintDiv table.jls-table {
   width: 100%;
@@ -644,39 +701,20 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   border-spacing: 0;
   table-layout: fixed;
   page-break-inside: auto;
-  /* table 本身不画外框：所有边框由 td/th 的 ::after 统一画，
-   * 避免 Chrome 再次对 table-level border 做子像素取整。 */
-}
-
-/* 12 等分基准列：保留 8.333% × 12 ≈ 100% 的写法。8.333% 与 100%/12 ≈ 8.3333%
- * 视觉差异不到 1px，肉眼无差别；改用百分比而不是 calc(100%/12) 是为了减少依赖。 */
-#orderPrintDiv table.jls-table col {
-  width: 8.33%;
+  outline: 1px solid #2f6fb5; /* 补齐外层边框，视觉与内部 border 同粗 */
 }
 
 #orderPrintDiv td,
 #orderPrintDiv th {
-  /* 不写 border：用 ::after + box-shadow inset 画 4 条边。 */
-  position: relative;
+  border: 1px solid #2f6fb5;
   padding: 1.5pt 4pt;
   min-height: 18pt;
   vertical-align: middle;
   word-break: break-all;
   text-align: center;
-  background-clip: padding-box;
 }
 
-/* 用 ::after 画 1px 的全边框。position: absolute + inset: 0 撑满 padding-box，
- * 再用 box-shadow inset 把 4 条边印到 cell 内部。box-shadow 是矢量，
- * Chrome PDF 引擎能正确渲染，不会被 "border snapping" 拍扁。 */
-#orderPrintDiv td::after,
-#orderPrintDiv th::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px #2f6fb5;
-}
+/* ::after box-shadow 边框方案已移除（改为直接 border，更稳定） */
 
 /* 标题：与其他单元一致带上边框 */
 #orderPrintDiv .title-cell {
@@ -829,5 +867,20 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     max-width: none;
     padding: 8mm;
   }
+
+  /* 打印时：统一用 collapse，所有边框交给 cell */
+  #orderPrintDiv table.jls-table {
+    border-collapse: collapse !important;
+    border: none !important;
+    outline: none !important;
+  }
+
+  #orderPrintDiv table.jls-table td,
+  #orderPrintDiv table.jls-table th {
+    border: 1px solid #2f6fb5 !important;
+  }
+
+  /* 消除 iframe/body/html 默认缝隙 */
+  body, html { margin: 0 !important; padding: 0 !important; }
 }
 </style>
