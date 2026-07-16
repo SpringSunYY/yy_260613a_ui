@@ -191,6 +191,64 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       defaultValue: 0,
     },
+    /** 贷款状态 */
+    {
+      fieldName: 'loanStatus',
+      label: $t('erp.order.field.loanStatus'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.loanStatus'),
+        ]),
+      },
+    },
+    /** 邮费 */
+    {
+      fieldName: 'postage',
+      label: $t('erp.order.field.postage'),
+      rules: 'required',
+      component: 'InputNumber',
+      defaultValue: 0,
+      componentProps: {
+        min: 0,
+        max: 1_000_000,
+        precision: 2,
+        controlsPosition: 'right',
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.postage'),
+        ]),
+      },
+    },
+    /** 邮费状态 */
+    {
+      fieldName: 'postageStatus',
+      label: $t('erp.order.field.postageStatus'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.postageStatus'),
+        ]),
+      },
+    },
+    /** 贷款 */
+    {
+      fieldName: 'loan',
+      label: $t('erp.order.field.loan'),
+      rules: 'required',
+      component: 'InputNumber',
+      defaultValue: 0,
+      componentProps: {
+        min: 0,
+        max: 1_000_000,
+        precision: 2,
+        controlsPosition: 'right',
+        placeholder: $t('ui.placeholder.input', [$t('erp.order.field.loan')]),
+      },
+    },
     /** 提货方式 */
     {
       fieldName: 'pickupMethod',
@@ -370,6 +428,44 @@ export function useGridFormSchema(): VbenFormSchema[] {
         options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.order.field.currentProcess'),
+        ]),
+      },
+    },
+    /** 贷款 */
+    {
+      fieldName: 'loan',
+      label: $t('erp.order.field.loan'),
+      component: 'NumberRange',
+    },
+    /** 贷款状态 */
+    {
+      fieldName: 'loanStatus',
+      label: $t('erp.order.field.loanStatus'),
+      component: 'I18nSelect',
+      componentProps: {
+        allowClear: true,
+        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.loanStatus'),
+        ]),
+      },
+    },
+    /** 邮费 */
+    {
+      fieldName: 'postage',
+      label: $t('erp.order.field.postage'),
+      component: 'NumberRange',
+    },
+    /** 邮费状态 */
+    {
+      fieldName: 'postageStatus',
+      label: $t('erp.order.field.postageStatus'),
+      component: 'I18nSelect',
+      componentProps: {
+        allowClear: true,
+        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.postageStatus'),
         ]),
       },
     },
@@ -641,6 +737,53 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       title: $t('erp.order.field.number'),
       minWidth: 120,
       sortable: true,
+    },
+    /** 贷款 */
+    {
+      field: 'loan',
+      title: $t('erp.order.field.loan'),
+      minWidth: 120,
+      sortable: true,
+    },
+    /** 贷款状态 */
+    {
+      field: 'loanStatus',
+      title: $t('erp.order.field.loanStatus'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_POSTAGE_STATUS },
+      },
+    },
+    /** 邮费 */
+    {
+      field: 'postage',
+      title: $t('erp.order.field.postage'),
+      minWidth: 120,
+      sortable: true,
+    },
+    /** 邮费状态 */
+    {
+      field: 'postageStatus',
+      title: $t('erp.order.field.postageStatus'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_LOAN_STATUS },
+      },
+    },
+    /** 打印图片 */
+    {
+      field: 'printImage',
+      title: $t('erp.order.field.printImage'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 80,
+          height: 80,
+        },
+      },
     },
     /** 提货方式 */
     {

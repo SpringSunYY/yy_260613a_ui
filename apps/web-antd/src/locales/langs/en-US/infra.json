@@ -475,6 +475,7 @@
     "list": "code generation list",
     "menu": "code generation",
     "field": {
+      "search": "search",
       "dataSource": "data source",
       "tableName": "table name",
       "tableComment": "table comment",

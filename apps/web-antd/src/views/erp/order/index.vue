@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { PageParam } from '@vben/request';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderApi } from '#/api/erp/order';
 
@@ -14,7 +16,9 @@ import {
   deleteOrder,
   deleteOrderList,
   exportOrder,
+  getOrderLoanStatistics,
   getOrderPage,
+  getOrderPostageStatistics,
   getOrderStatistics,
   submitAuditOrder,
 } from '#/api/erp/order';
@@ -185,6 +189,32 @@ async function handleExport() {
 
 const statisticsData = ref<OrderApi.OrderStatistics[]>();
 const totalCount = ref<number>(0);
+const loanStatisticsData = ref<OrderApi.OrderStatistics[]>();
+const loanTotalCount = ref<number>(0);
+const postageStatisticsData = ref<OrderApi.OrderStatistics[]>();
+const postageTotalCount = ref<number>(0);
+
+function getStatistics(formValues: PageParam) {
+  // 获取统计
+  getOrderStatistics(formValues).then((res) => {
+    if (!res || res?.length <= 0) return;
+    statisticsData.value = res;
+    res?.map((item) => (totalCount.value += Number(item.total)));
+  });
+  // 获取贷款
+  getOrderLoanStatistics(formValues).then((res) => {
+    if (!res || res?.length <= 0) return;
+    loanStatisticsData.value = res;
+    res?.map((item) => (loanTotalCount.value += Number(item.total)));
+  });
+  //  获取邮费
+  getOrderPostageStatistics(formValues).then((res) => {
+    if (!res || res?.length <= 0) return;
+    postageStatisticsData.value = res;
+    res?.map((item) => (postageTotalCount.value += Number(item.total)));
+  });
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -199,13 +229,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async (ctx, formValues) => {
-          // 获取统计
-          getOrderStatistics(formValues).then((res) => {
-            if (!res || res?.length <= 0) return;
-            statisticsData.value = res;
-            res?.map((item) => (totalCount.value += item.total));
-          });
-
+          getStatistics(formValues);
           const { page } = ctx || {};
           const { sortBy, sort } = pickSort(ctx);
           return await getOrderPage({
@@ -245,22 +269,57 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <ShipFormModalDrawer @success="onRefresh" />
     <AuditFormModalDrawer @success="onRefresh" />
     <PrintFormModalDrawer @success="onRefresh" />
-    <PrintModalDrawer @success="onRefresh" />
     <Grid>
       <template #table-title>
-        <div class="inline-flex items-center gap-x-4">
-          <span><a-tag>总计</a-tag>：{{ totalCount }}</span>
-          <span
-            v-for="item in statisticsData"
-            :key="item.name"
-            class="inline-flex items-center"
-          >
-            <I18nDictTag
-              :type="DICT_TYPE.ERP_SPECIFICATION"
-              :value="item.name"
-            />
-            ：<span class="text-primary">{{ item.total }}</span>
-          </span>
+        <div class="flex flex-col gap-y-2">
+          <div class="flex items-center gap-x-4">
+            <span><a-tag>总计</a-tag>：{{ totalCount }}</span>
+            <span
+              v-for="item in statisticsData"
+              :key="item.name"
+              class="inline-flex items-center"
+            >
+              <I18nDictTag
+                :type="DICT_TYPE.ERP_SPECIFICATION"
+                :value="item.name"
+              />
+              ：<span class="text-primary">{{ item.total }}</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-x-4">
+            <span>
+              <a-tag>贷款总计</a-tag>
+              ：{{ loanTotalCount?.toFixed(2) }}
+            </span>
+            <span
+              v-for="item in loanStatisticsData"
+              :key="item.name"
+              class="inline-flex items-center"
+            >
+              <I18nDictTag
+                :type="DICT_TYPE.ERP_LOAN_STATUS"
+                :value="item.name"
+              />
+              ：<span class="text-primary">{{ item.total }}</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-x-4">
+            <span>
+              <a-tag>邮费总计</a-tag>
+              ：{{ postageTotalCount?.toFixed(2) }}
+            </span>
+            <span
+              v-for="item in postageStatisticsData"
+              :key="item.name"
+              class="inline-flex items-center"
+            >
+              <I18nDictTag
+                :type="DICT_TYPE.ERP_POSTAGE_STATUS"
+                :value="item.name"
+              />
+              ：<span class="text-primary">{{ item.total }}</span>
+            </span>
+          </div>
         </div>
       </template>
 
@@ -361,12 +420,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
                 'erp.orderProcess.action.ship',
                 'erp:order-process:complete',
               ],
-              ifShow:
-                row.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3 &&
-                (row.currentProcess ===
-                  ErpOrderCurrentProcess.CURRENT_PROCESS_6 ||
-                  row.currentProcess ===
-                    ErpOrderCurrentProcess.CURRENT_PROCESS_7),
               onClick: handleOrderPrint.bind(null, row),
             },
             //重置向量

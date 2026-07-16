@@ -247,6 +247,17 @@ export function useGridFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
+    /** 订单状态 */
+    {
+      fieldName: 'orderStatus',
+      label: $t('erp.orderProcess.field.orderStatus'),
+      component: 'I18nRadioGroup',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_STATUS, 'string'),
+        buttonStyle: 'solid',
+        optionType: 'button',
+      },
+    },
     /** 订单号 */
     {
       fieldName: 'orderNo',
@@ -406,6 +417,16 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
       cellRender: {
         name: 'CellI18nDict',
         props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
+      },
+    },
+    /** 订单状态 */
+    {
+      field: 'orderStatus',
+      title: $t('erp.orderProcess.field.orderStatus'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_ORDER_STATUS },
       },
     },
     /** 订单号 */

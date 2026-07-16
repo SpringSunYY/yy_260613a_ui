@@ -121,6 +121,7 @@ catalog:
   h3: ^1.15.3
   happy-dom: ^17.4.6
   html-minifier-terser: ^7.2.0
+  html-to-image: ^1.11.13
   is-ci: ^4.1.0
   json-bigint: ^1.0.0
   jsonc-eslint-parser: ^2.4.0
@@ -216,3 +217,6 @@ catalog:
   bpmn-js-token-simulation: ^0.36.3
   diagram-js: ^12.8.1
   vue3-print-nb: ^0.1.4
+  tinymce: ^8.5.1
+  react: ^18.2.0
+  react-dom: ^18.2.0

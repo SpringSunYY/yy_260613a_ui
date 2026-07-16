@@ -38,6 +38,19 @@ export function useSearchSchema(): VbenFormSchema[] {
         ]),
       },
     },
+    /** 订单状态 */
+    {
+      fieldName: 'orderStatus',
+      label: $t('erp.orderProcess.field.orderStatus'),
+      component: 'I18nSelect',
+      componentProps: {
+        allowClear: true,
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.orderStatus'),
+        ]),
+      },
+    },
     /** 当前工序 */
     {
       fieldName: 'currentProcess',
@@ -117,15 +130,15 @@ export function useSearchSchema(): VbenFormSchema[] {
       },
     },
     /** 创建时间 */
-    {
-      fieldName: 'createTime',
-      label: $t('erp.orderProcess.field.createTime'),
-      component: 'RangePicker',
-      componentProps: {
-        ...getRangePickerDefaultProps(),
-        allowClear: true,
-      },
-    },
+    // {
+    //   fieldName: 'createTime',
+    //   label: $t('erp.orderProcess.field.createTime'),
+    //   component: 'RangePicker',
+    //   componentProps: {
+    //     ...getRangePickerDefaultProps(),
+    //     allowClear: true,
+    //   },
+    // },
   ];
 }
 
@@ -386,47 +399,52 @@ export const RIGHT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
     label: $t('erp.orderProcess.field.layoutPerson'),
     span: 2,
   },
-  /** 规格 */
+  // /** 规格 */
+  // {
+  //   field: 'specification',
+  //   label: $t('erp.order.field.specification'),
+  //   dictType: DICT_TYPE.ERP_SPECIFICATION,
+  // },
+  // /** 数量 */
+  // {
+  //   field: 'number',
+  //   label: $t('erp.order.field.number'),
+  // },
   {
-    field: 'specification',
-    label: $t('erp.order.field.specification'),
-    dictType: DICT_TYPE.ERP_SPECIFICATION,
+    field: 'printImage',
+    label: $t('erp.order.field.printImage'),
+    type: 'image',
   },
-  /** 数量 */
-  {
-    field: 'number',
-    label: $t('erp.order.field.number'),
-  },
-  {
-    field: 'pattern',
-    label: $t('erp.orderProcess.field.pattern'),
-    dictType: DICT_TYPE.ERP_PATTERN,
-  },
-  {
-    field: 'category',
-    label: $t('erp.orderProcess.field.category'),
-    dictType: DICT_TYPE.ERP_CATEGORY,
-  },
-  {
-    field: 'specification',
-    label: $t('erp.orderProcess.field.specification'),
-    dictType: DICT_TYPE.ERP_SPECIFICATION,
-  },
-  {
-    field: 'hasForked',
-    label: $t('erp.orderProcess.field.hasForked'),
-    dictType: DICT_TYPE.ERP_HAS_FORKED,
-  },
-  {
-    field: 'shirtHem',
-    label: $t('erp.orderProcess.field.shirtHem'),
-    dictType: DICT_TYPE.ERP_SHIRT_HEM,
-  },
-  {
-    field: 'pocket',
-    label: $t('erp.orderProcess.field.pocket'),
-    dictType: DICT_TYPE.ERP_POCKET,
-  },
+  // {
+  //   field: 'pattern',
+  //   label: $t('erp.orderProcess.field.pattern'),
+  //   dictType: DICT_TYPE.ERP_PATTERN,
+  // },
+  // {
+  //   field: 'category',
+  //   label: $t('erp.orderProcess.field.category'),
+  //   dictType: DICT_TYPE.ERP_CATEGORY,
+  // },
+  // {
+  //   field: 'specification',
+  //   label: $t('erp.orderProcess.field.specification'),
+  //   dictType: DICT_TYPE.ERP_SPECIFICATION,
+  // },
+  // {
+  //   field: 'hasForked',
+  //   label: $t('erp.orderProcess.field.hasForked'),
+  //   dictType: DICT_TYPE.ERP_HAS_FORKED,
+  // },
+  // {
+  //   field: 'shirtHem',
+  //   label: $t('erp.orderProcess.field.shirtHem'),
+  //   dictType: DICT_TYPE.ERP_SHIRT_HEM,
+  // },
+  // {
+  //   field: 'pocket',
+  //   label: $t('erp.orderProcess.field.pocket'),
+  //   dictType: DICT_TYPE.ERP_POCKET,
+  // },
   /** 下单日期 */
   {
     field: 'orderTime',

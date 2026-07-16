@@ -49,7 +49,8 @@
     "selectRequired": "请选择{0}",
     "processing": "处理中...",
     "updateSuccess": "{0}更新成功",
-    "submitConfirm": "您确定要提交{0}吗？"
+    "submitConfirm": "您确定要提交{0}吗？",
+    "pasteSuccess": "成功粘贴 {0} 条{1}"
   },
   "placeholder": {
     "input": "请输入{0}",
@@ -58,6 +59,9 @@
     "autoGenerate": "保存时自动生成",
     "accountCount": "账号数量{0}个",
     "subTableInput": "请输入第{0}行{1}的值"
+  },
+  "hint": {
+    "excelOperationHint": "支持 Excel 复制粘贴操作（Ctrl+C/V），双击编辑，方向键导航"
   },
   "validate": {
     "email": "请输入正确的邮箱地址"

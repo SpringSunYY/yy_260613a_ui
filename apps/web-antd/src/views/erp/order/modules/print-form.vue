@@ -10,11 +10,17 @@ import { useVbenModelDrawer } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
 import { formatDate } from '@vben/utils';
 
-import { Button, Empty, Spin } from 'ant-design-vue';
+import { Button, Empty, message, Spin } from 'ant-design-vue';
+import { toPng } from 'html-to-image';
 
 import { getOrderDetailNo, printOrder } from '#/api/erp/order';
 import { $t } from '#/locales';
-import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
+import {
+  DICT_TYPE,
+  ErpOrderCurrentProcess,
+  getDictLabel,
+  getDictOptions,
+} from '#/utils';
 
 const emit = defineEmits(['success']);
 
@@ -27,6 +33,9 @@ const orderDetails = ref<OrderApi.OrderDetail[]>([]);
 const loading = ref(false);
 const printTime = ref(formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'));
 const printing = ref(false);
+const exportingImage = ref(false);
+/** 打印触发时的订单号，用于校验打印内容一致性（防止快速切换导致打印串单） */
+let currentPrintingOrderNo: null | string = null;
 
 /** 明细表最少渲染行数（不足补空行，贴近纸质单据样式） */
 const MIN_ROWS = 20;
@@ -208,8 +217,19 @@ const printObj = computed(() => {
         'iframe[id^="printArea_"]',
       );
       currentPrintIframe = iframes[iframes.length - 1] ?? null;
+      // 捕获此刻的订单号，用于 openCallback 校验一致性
+      currentPrintingOrderNo = orderDetail.value?.orderNo ?? null;
     },
     openCallback() {
+      // 防御：打印时校验当前 DOM 数据是否与触发打印时的订单一致
+      if (
+        currentPrintingOrderNo &&
+        orderDetail.value?.orderNo !== currentPrintingOrderNo
+      ) {
+        message.warning('订单已切换，打印已取消');
+        printing.value = false;
+        return;
+      }
       const title =
         orderTitle.value || `JLS制单-${orderDetail.value?.orderNo ?? ''}`;
       // Firefox：同步读 iframe 自己的 title
@@ -225,6 +245,7 @@ const printObj = computed(() => {
     closeCallback() {
       currentPrintIframe = null;
       printing.value = false;
+      currentPrintingOrderNo = null;
     },
   };
 });
@@ -450,6 +471,82 @@ async function loadPrintData(orderNo: string) {
   }
 }
 
+/** 等待单据内图片加载完成，避免导出的 PNG 缺少二维码或款式图。 */
+async function waitForImages(element: HTMLElement) {
+  const images = [...element.querySelectorAll<HTMLImageElement>('img')];
+  await Promise.all(
+    images.map((image) => {
+      if (image.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        image.addEventListener('load', () => resolve(), { once: true });
+        image.addEventListener('error', () => resolve(), { once: true });
+      });
+    }),
+  );
+}
+
+/** 将完整打印区域导出为一张高清 PNG。 */
+async function exportAsImage() {
+  const element = document.querySelector<HTMLElement>('#orderPrintDiv');
+  if (!element || !orderDetail.value || exportingImage.value) return;
+
+  const currentOrderNo = orderDetail.value.orderNo;
+
+  exportingImage.value = true;
+  try {
+    await nextTick();
+    await waitForImages(element);
+    await document.fonts?.ready;
+
+    // 走和 print-form.vue 一致的 toPng 路线（与 use-order-print.ts 对齐）：
+    // 让 html-to-image 自己 clone 节点、自己处理样式；不传 width/height，
+    // 它会从 getBoundingClientRect + scrollHeight 计算画布尺寸。
+    const dataUrl = await toPng(element, {
+      backgroundColor: '#ffffff',
+      pixelRatio: 2,
+      cacheBust: true,
+    });
+
+    if (orderDetail.value?.orderNo !== currentOrderNo) {
+      message.warning('订单已切换，导出已取消');
+      return;
+    }
+
+    const rawFileName =
+      orderTitle.value || `JLS制单-${orderDetail.value.orderNo}`;
+    const fileName = rawFileName.replaceAll(/[<>:"/\\|?*]/g, '-');
+
+    // html-to-image 走 SVG → 浏览器解码 → Canvas → dataURL，
+    // 跨域图片如果污染了 Canvas，toDataURL 会抛 SecurityError；
+    // 用 fetch 转 blob 再 URL.createObjectURL 绕过污染问题。
+    let href: string;
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      href = URL.createObjectURL(blob);
+      setTimeout(() => URL.revokeObjectURL(href), 60_000);
+    } catch {
+      href = dataUrl; // 兜底：跨域不严重时直接用 dataURL
+    }
+
+    const link = document.createElement('a');
+    link.download = `${fileName}.png`;
+    link.href = href;
+    link.click();
+
+    if (orderDetail.value?.orderNo !== currentOrderNo) {
+      message.warning('订单已切换，导出已取消');
+      return;
+    }
+
+    message.success('图片导出成功');
+  } catch (error) {
+    console.error('导出订单图片失败', error);
+    message.error('图片导出失败，请检查款式图是否允许跨域访问');
+  } finally {
+    exportingImage.value = false;
+  }
+}
+
 const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   async onConfirm() {
     await modalDrawerApi.close();
@@ -466,6 +563,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     if (!data || !data.orderNo) return;
     modalDrawerApi.lock();
     try {
+      orderDetail.value = undefined;
+      await nextTick();
       await loadPrintData(data.orderNo);
     } finally {
       modalDrawerApi.unlock();
@@ -662,6 +761,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                       :key="idx"
                       :src="src"
                       class="product-img"
+                      :class="{ 'is-only': orderImages.length === 1 }"
                       :alt="`款式图 ${idx + 1}`"
                     />
                   </div>
@@ -720,10 +820,21 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       printObj 同时通过 defineExpose 暴露给父组件，可通过 ref 直接打印。    -->
     <template #append-footer>
       <Button
+        :disabled="!orderDetail || printing || exportingImage"
+        :loading="exportingImage"
+        @click="exportAsImage"
+      >
+        导出图片
+      </Button>
+      <Button
         type="primary"
-        :disabled="!orderDetail || printing"
+        :disabled="!orderDetail || printing || exportingImage"
         :loading="printing"
         v-print="printObj"
+        v-if="
+          orderDetail?.currentProcess ===
+          ErpOrderCurrentProcess.CURRENT_PROCESS_7
+        "
       >
         {{ $t('common.print') }}
       </Button>
@@ -890,36 +1001,42 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   vertical-align: top;
   padding: 8px;
   page-break-inside: avoid;
-  /* 不写 height：td 由 rowspan 自动拉到 N 行高，
-     .product-imgs 在 td 内 100% 填充即可 */
 }
 
+/*
+ * 两列 grid 布局：html-to-image 走 SVG foreignObject，由浏览器原生渲染，
+ * grid / flex / rowspan / position 都正常，所以可以放回最自然的 grid。
+ *   - grid-template-columns: repeat(2, 1fr) → 每格 width:50%，整齐两列。
+ *   - align-items: stretch 让每个 img 格子占满 td 高度，
+ *     img { width:100%; height:100%; object-fit:contain } 等比缩放进格子，不变形。
+ *   - max-height:100% + overflow:hidden 保证图片不溢出 td。
+ *   - 奇数张时最后一张自然独占一行。
+ */
 #orderPrintDiv .product-imgs {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  justify-items: stretch;
   gap: 8px;
   width: 100%;
   height: 100%;
-  align-items: stretch;
-  justify-items: stretch;
-}
-
-#orderPrintDiv .product-imgs,
-#orderPrintDiv .product-imgs:not(.is-single) {
-  /* 默认两列（多张图时一行两张） */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-/* 单张图：一列、占满整行（"一行一张"） */
-#orderPrintDiv .product-imgs.is-single {
-  grid-template-columns: minmax(0, 1fr);
+  max-height: 100%;
+  overflow: hidden;
 }
 
 #orderPrintDiv .product-img {
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: 0;
   object-fit: contain;
   background: #fff;
+  min-height: 0;
+}
+
+/* 单张图：让那一格横跨两列，图片占满整个宽度 */
+#orderPrintDiv .product-imgs .product-img.is-only {
+  grid-column: 1 / -1;
 }
 
 /* ---------- 打印信息 ---------- */

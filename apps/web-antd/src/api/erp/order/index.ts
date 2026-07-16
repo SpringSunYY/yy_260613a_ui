@@ -1,11 +1,13 @@
 import type { Dayjs } from 'dayjs';
 
-import type { PageParam, PageResult } from '@vben/request';
+import type { AxiosRequestConfig, PageParam, PageResult } from '@vben/request';
 
 import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { requestClient } from '#/api/request';
 
+/** Axios 上传进度事件 */
+export type AxiosProgressEvent = AxiosRequestConfig['onUploadProgress'];
 export namespace OrderApi {
   /** 订单明细信息 */
   export interface OrderDetail {
@@ -43,9 +45,12 @@ export namespace OrderApi {
     printStatus?: string; // 打印状态
     hydration: string; // 补水
     remark: string; // 备注
+    loan: number; // 贷款
+    postage: number; // 邮费
     orderDetails?: OrderDetail[];
     orderProcess?: OrderProcessApi.OrderProcess;
   }
+
   // 发货信息
   export interface OrderShip {
     id: number; // 编号
@@ -74,6 +79,14 @@ export namespace OrderApi {
     workshopRequirements: string; // 车间要求
     remark: string; // 特别备注
   }
+
+  // 上传打印图片
+  /** 上传文件 */
+  export interface OrderUploadPrintImage {
+    file: globalThis.File;
+    orderNo: string;
+  }
+
   // 统计
   export interface OrderStatistics {
     total: number;
@@ -87,6 +100,7 @@ export function getOrderPage(params: PageParam) {
     params,
   });
 }
+
 /** 查询待发货订单信息分页 */
 export function getShipOrderPage(params: PageParam) {
   return requestClient.get<PageResult<OrderApi.Order>>('/erp/order/ship/page', {
@@ -117,18 +131,31 @@ export function getOrderDetailNo(orderNo: string) {
 export function getOrderStatistics(params: PageParam) {
   return requestClient.get<OrderApi.OrderStatistics[]>(
     '/erp/order/statistics',
-    {
-      params,
-    },
+    { params },
   );
 }
+
 // 发货统计
 export function getOrderShipStatistics(params: PageParam) {
   return requestClient.get<OrderApi.OrderStatistics[]>(
     '/erp/order/statistics/ship',
-    {
-      params,
-    },
+    { params },
+  );
+}
+
+// 贷款统计
+export function getOrderLoanStatistics(params: PageParam) {
+  return requestClient.get<OrderApi.OrderStatistics[]>(
+    '/erp/order/statistics/loan',
+    { params },
+  );
+}
+
+// 贷款统计
+export function getOrderPostageStatistics(params: PageParam) {
+  return requestClient.get<OrderApi.OrderStatistics[]>(
+    '/erp/order/statistics/postage',
+    { params },
   );
 }
 
@@ -150,6 +177,18 @@ export function shipOrder(data: OrderApi.OrderShip) {
 /** 打印订单*/
 export function printOrder(orderNo: string) {
   return requestClient.put(`/erp/order/print`, { orderNo });
+}
+
+/** 更新订单打印图片*/
+export function updateOrderPrintImage(
+  data: OrderApi.OrderUploadPrintImage,
+  onUploadProgress?: AxiosProgressEvent,
+) {
+  return requestClient.upload<boolean>(
+    '/erp/order/update/print-image',
+    { ...data },
+    { onUploadProgress },
+  );
 }
 
 /** 提交审核订单*/

@@ -99,14 +99,17 @@ const rightScrollRef = useTemplateRef<HTMLElement>('rightScrollRef');
 /** 选中项（中间详情） */
 const selectedRow = ref<null | OrderProcessApi.OrderProcessDetail>(null);
 
+/** 上一次点击的排版人（用于判断是否需要重新查询左边） */
+const lastSelectedLayoutPerson = ref<null | string>(null);
+
 /** 滚动到顶部 */
 function scrollToTop(el?: HTMLElement | null) {
   if (!el) return;
   el.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/** 加载左侧：currentProcess = 2 */
-async function loadLeft() {
+/** 加载左侧：currentProcess = 2，可选传入排版人条件 */
+async function loadLeft(layoutPerson?: null | string) {
   leftPane.loading = true;
   try {
     const res = await getOrderProcessSortPage({
@@ -114,6 +117,10 @@ async function loadLeft() {
       pageSize: leftPane.pageSize,
       ...queryParams.value,
       currentProcess: LEFT_PROCESS_VALUE,
+      // 如果传入了排版人，优先使用；否则使用 queryParams 中的
+      ...(layoutPerson === undefined
+        ? {}
+        : { layoutPerson: layoutPerson || undefined }),
     });
     leftPane.list = res.list ?? [];
     leftPane.total = Number(res.total ?? 0);
@@ -131,6 +138,7 @@ async function loadRight() {
       pageSize: rightPane.pageSize,
       ...queryParams.value,
       notInCurrentProcesses: RIGHT_EXCLUDED_PROCESSES,
+      queryPrintImage: true,
     });
     rightPane.list = res.list ?? [];
     rightPane.total = Number(res.total ?? 0);
@@ -158,6 +166,8 @@ async function refreshAll() {
 async function handleSearch() {
   const values = await searchFormApi.getValues();
   queryParams.value = values || {};
+  // 重置排版人筛选状态
+  lastSelectedLayoutPerson.value = null;
   await refreshAll();
 }
 
@@ -165,6 +175,8 @@ async function handleSearch() {
 async function handleReset() {
   await searchFormApi.resetForm();
   queryParams.value = {};
+  // 重置排版人筛选状态
+  lastSelectedLayoutPerson.value = null;
   await refreshAll();
 }
 
@@ -216,10 +228,15 @@ async function reselectRow(targetId: number) {
     return;
   }
   selectedRow.value = next;
+  await loadDetail(next.id as number);
+}
+
+/** 加载详情 */
+async function loadDetail(id: number) {
   detailLoading.value = true;
   try {
     await detailFormApi.resetForm();
-    const detail = await getOrderProcess(next.id as number);
+    const detail = await getOrderProcess(id);
     await detailFormApi.setValues(detail);
     detailFormApi.setState({ commonConfig: { disabled: false } });
   } finally {
@@ -227,9 +244,31 @@ async function reselectRow(targetId: number) {
   }
 }
 
-/** 主动选择某行：详情已由调用方刷新，这里只同步 selectedRow 引用 + 拉详情 */
-async function selectRow(row: OrderProcessApi.OrderProcessDetail) {
-  await reselectRow(row.id as number);
+/** 主动选择某行 */
+async function selectRow(
+  row: OrderProcessApi.OrderProcessDetail,
+  fromRight: boolean = false,
+) {
+  // 点击右边卡片时，如果排版人和之前不同，需要重新查询左边
+  if (fromRight && row.layoutPerson !== lastSelectedLayoutPerson.value) {
+    lastSelectedLayoutPerson.value = row.layoutPerson ?? null;
+    leftPane.pageNo = 1;
+    await loadLeft(row.layoutPerson);
+    scrollToTop(leftScrollRef.value);
+    // 左边默认选中第一个
+    if (leftPane.list.length > 0) {
+      const firstRow = leftPane.list[0]!;
+      selectedRow.value = firstRow;
+      await loadDetail(firstRow.id as number);
+    } else {
+      selectedRow.value = null;
+      detailFormApi.setValues({});
+      detailFormApi.setState({ commonConfig: { disabled: true } });
+    }
+  } else if (!fromRight) {
+    // 点击左边卡片，直接选中
+    await reselectRow(row.id as number);
+  }
 }
 
 const [DetailForm, detailFormApi] = useVbenForm({
@@ -599,7 +638,7 @@ refreshAll();
                 :key="`right-${item.id}`"
                 class="sort-card"
                 :class="{ 'sort-card--active': isRightSelected(item) }"
-                @click="selectRow(item)"
+                @click="selectRow(item, true)"
               >
                 <div class="sort-card__header">
                   <span class="sort-card__no">#{{ item.orderNo }}</span>
@@ -623,15 +662,23 @@ refreshAll();
                     v-for="f in RIGHT_CARD_FIELDS"
                     :key="String(f.field)"
                     class="sort-card__row"
-                    :class="`sort-card__row--span-${f.span ?? 1}`"
+                    :class="[
+                      `sort-card__row--span-${f.span ?? 1}`,
+                      {
+                        'sort-card__row--image':
+                          f.type === 'image' && (item as any)[f.field],
+                      },
+                    ]"
                   >
-                    <span class="sort-card__label">{{ f.label }}</span>
+                    <span v-if="f.type !== 'image'" class="sort-card__label">{{
+                      f.label
+                    }}</span>
                     <a-image
                       v-if="f.type === 'image' && (item as any)[f.field]"
                       :src="(item as any)[f.field]"
-                      :width="48"
-                      :height="48"
+                      width="80%"
                       class="sort-card__image"
+                      :preview-mask="false"
                     />
                     <div
                       v-else-if="f.dictType && getCardRaw(item, f) !== null"
@@ -864,6 +911,25 @@ refreshAll();
 
 .sort-card__row--span-2 {
   grid-column: span 2;
+}
+
+.sort-card__row--image {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  grid-column: span 2;
+}
+
+.sort-card__row--image :deep(.ant-image) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sort-card__row--image :deep(.ant-image img) {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: contain;
 }
 
 .sort-card__label {

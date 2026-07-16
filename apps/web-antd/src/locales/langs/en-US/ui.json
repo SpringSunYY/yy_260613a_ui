@@ -49,7 +49,8 @@
     "selectRequired": "Please select {0}",
     "processing": "Processing...",
     "updateSuccess": "{0} updated successfully",
-    "submitConfirm": "Are you sure you want to submit {0}?"
+    "submitConfirm": "Are you sure you want to submit {0}?",
+    "pasteSuccess": "Successfully pasted {0} {1}"
   },
   "placeholder": {
     "input": "Please enter {0}",
@@ -58,6 +59,9 @@
     "autoGenerate": "Auto generated on save",
     "accountCount": "{0} accounts",
     "subTableInput": "Please enter the value {1} on line {0}"
+  },
+  "hint": {
+    "excelOperationHint": "Supports Excel copy-paste (Ctrl+C/V), double-click to edit, arrow keys to navigate"
   },
   "validate": {
     "email": "Please enter a valid email address"

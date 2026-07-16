@@ -489,6 +489,7 @@
     "list": "代码生成列表",
     "menu": "代码生成",
     "field": {
+      "search": "搜索",
       "dataSource": "数据源",
       "tableName": "表名称",
       "tableComment": "表描述",

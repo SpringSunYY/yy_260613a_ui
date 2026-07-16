@@ -158,6 +158,7 @@ enum DICT_TYPE {
   ERP_CATEGORY = 'erp_category',
   ERP_FABRIC = 'erp_fabric',
   ERP_HAS_FORKED = 'erp_has_forked',
+  ERP_LOAN_STATUS = 'erp_loan_status',
   ERP_NECKLINE = 'erp_neckline',
   ERP_ORDER_AUDIT_STATUS = 'erp_order_audit_status',
   ERP_ORDER_CURRENT_PROCESS = 'erp_order_current_process',
@@ -167,11 +168,11 @@ enum DICT_TYPE {
   ERP_ORDER_STATUS = 'erp_order_status',
   ERP_PATTERN = 'erp_pattern',
   ERP_POCKET = 'erp_pocket',
+  ERP_POSTAGE_STATUS = 'erp_postage_status',
   // ========== ERP 模块 ==========
   ERP_SET_SIZE = 'erp_set_size',
   ERP_SHIRT_HEM = 'erp_shirt_hem',
   ERP_SPECIFICATION = 'erp_specification',
-
   // ========== INFRA 模块 ==========
   INFRA_API_ERROR_LOG_PROCESS_STATUS = 'infra_api_error_log_process_status',
   INFRA_AREA_LEVEL = 'infra_area_level', // 地区等级

@@ -57,6 +57,7 @@ export namespace OrderProcessApi {
     shippingTime: Dayjs | string; // 发货时间
     printStatus?: string; // 打印状态
     hydration: string; // 补水
+    printImage: string;
   }
 }
 

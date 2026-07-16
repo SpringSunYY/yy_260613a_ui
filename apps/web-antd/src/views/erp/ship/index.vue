@@ -101,7 +101,7 @@ function fetchStatistics(formValues: PageParam) {
   getOrderShipStatistics(formValues).then((res) => {
     if (!res) return;
     statisticsData.value = res;
-    res?.forEach((item) => (totalCount.value += item.total));
+    res?.forEach((item) => (totalCount.value += Number(item.total)));
   });
   // 今日待发
   getOrderShipStatistics({
@@ -113,7 +113,7 @@ function fetchStatistics(formValues: PageParam) {
   }).then((res) => {
     if (!res) return;
     todayStats.value = res;
-    res?.forEach((item) => (totalToday.value += item.total));
+    res?.forEach((item) => (totalToday.value += Number(item.total)));
   });
   // 明日待发
   getOrderShipStatistics({

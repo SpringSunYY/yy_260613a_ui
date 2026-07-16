@@ -1,27 +1,28 @@
 <script lang="ts" setup>
 import type { OrderApi } from '#/api/erp/order';
-import type { OrderAuditApi } from '#/api/erp/orderAudit';
 import type { OrderProcessApi } from '#/api/erp/orderProcess';
-import type { OrderProcessHistoryApi } from '#/api/erp/orderProcessHistory';
 
 import { computed, ref } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { useVbenModelDrawer } from '@vben/common-ui';
 
-import { message, Tabs, Tag } from 'ant-design-vue';
+import { message, Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import { createOrder, getOrder, updateOrder } from '#/api/erp/order';
-import { getOrderAuditByNo } from '#/api/erp/orderAudit';
+import {
+  createOrder,
+  getOrder,
+  updateOrder,
+  updateOrderPrintImage,
+} from '#/api/erp/order';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
-import { getOrderProcessHistoryByNo } from '#/api/erp/orderProcessHistory';
 import { I18nSelect } from '#/components/i18n/i18n-select';
-import { TimelineLog } from '#/components/timeline-log';
 import { $t } from '#/locales';
-import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
+import { DICT_TYPE, getDictOptions } from '#/utils';
 
 import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
+import { exportOrderPrintImage } from '../composables/use-order-print';
 import { useFormSchema } from '../data';
 import OrderDetailForm from './order-detail-form.vue';
 
@@ -39,6 +40,16 @@ const getTitle = computed(() => {
 /** 子表的表单 */
 const subTabsName = ref('orderDetail');
 const orderDetailFormRef = ref<InstanceType<typeof OrderDetailForm>>();
+
+/** 异步静默导出并上传打印图片，失败仅打日志 */
+async function uploadPrintImage(orderNo: string) {
+  try {
+    const file = await exportOrderPrintImage(orderNo);
+    await updateOrderPrintImage({ file, orderNo });
+  } catch (error) {
+    console.error('打印图片上传失败', error);
+  }
+}
 
 /** 子表尺码合计 -> 写入主表 number 字段 */
 function onOrderDetailTotalChange(total: number) {
@@ -106,11 +117,14 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     data.orderProcess =
       (await processFormApi.getValues()) as OrderProcessApi.OrderProcess;
     try {
-      await (formData.value?.id ? updateOrder(data) : createOrder(data));
+      const isUpdate = !!formData.value?.id;
+      await (isUpdate ? updateOrder(data) : createOrder(data));
       // 关闭并提示
       await modalDrawerApi.close();
       emit('success');
       message.success($t('ui.actionMessage.operationSuccess'));
+      // 异步静默上传打印图片，不阻塞主流程
+      void uploadPrintImage(data.orderNo!);
     } finally {
       modalDrawerApi.unlock();
     }
