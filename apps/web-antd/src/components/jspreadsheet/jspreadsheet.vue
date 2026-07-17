@@ -1,23 +1,18 @@
-/**
- * Jspreadsheet CE 封装组件
- * 用于订单明细等需要 Excel 风格复制粘贴的场景
- *
- * 特性：
- *  - 列数锁定为 props.columns.length，禁止新增/删除列、禁止列拖拽排序
- *  - 通过 dictType 字段在组件内部自动加载字典选项
- *  - 使用 jspreadsheet 原生 dropdown（tableOverflow:true → position:true 自动脱离容器）
- *  - 数量列通过 onbeforechange 校验只接受数字，空值允许
- *  - 使用 jspreadsheet v5 原生的 options.onchange / options.onload 等回调
- */
+<!-- Jspreadsheet CE 封装组件 用于订单明细等需要 Excel 风格复制粘贴的场景
+特性列数锁定为 props.columns.length，禁止新增/删除列、禁止列拖拽排序
+通过 dictType 字段在组件内部自动加载字典选项使用 jspreadsheet 原生
+dropdown（tableOverflow:true → position:true 自动脱离容器）数量列通过
+onbeforechange 校验只接受数字，空值允许 使用 jspreadsheet v5 原生的
+options.onchange / options.onload 等回调 -->
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import jspreadsheet from 'jspreadsheet-ce';
 
+import { getDictOptions } from '#/utils';
+
 import 'jspreadsheet-ce/dist/jspreadsheet.css';
 import 'jsuites/dist/jsuites.css';
-
-import { getDictOptions } from '#/utils';
 
 export interface ColumnDefinition {
   title: string;
@@ -173,8 +168,8 @@ function lockColumns() {
         worksheetInstance.deleteColumn?.(i);
       } catch {}
     }
-  } catch (err) {
-    console.warn('lockColumns failed', err);
+  } catch (error) {
+    console.warn('lockColumns failed', error);
   }
 }
 
@@ -185,7 +180,7 @@ function lockColumns() {
  * - 字符串中只提取数字部分
  * - 其余拒绝（返回空）
  */
-function normalizeNumericInput(value: any): number | '' {
+function normalizeNumericInput(value: any): '' | number {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number' && !Number.isNaN(value)) return value;
   const str = String(value).trim();
@@ -193,7 +188,7 @@ function normalizeNumericInput(value: any): number | '' {
   // 提取首个数字串（含小数点）
   const match = str.match(/-?\d+(\.\d+)?/);
   if (match) {
-    const n = parseFloat(match[0]);
+    const n = Number.parseFloat(match[0]);
     if (!Number.isNaN(n)) return n;
   }
   return '';
@@ -257,10 +252,14 @@ function init() {
       // 列宽自适应：用 ResizeObserver 动态缩放表格填满父容器
       nextTick(() => {
         // 找到 jspreadsheet 根容器（.jss_spreadsheet）
-        const spreadsheetEl = worksheetInstance?.el?.closest('.jss_spreadsheet') as HTMLElement | null;
+        const spreadsheetEl = worksheetInstance?.el?.closest(
+          '.jss_spreadsheet',
+        ) as HTMLElement | null;
         if (spreadsheetEl) {
           // 内部 table 需要 scale
-          const tableEl = spreadsheetEl.querySelector('table') as HTMLElement | null;
+          const tableEl = spreadsheetEl.querySelector(
+            'table',
+          ) as HTMLElement | null;
           if (!tableEl) return;
 
           const observer = new ResizeObserver((entries) => {
@@ -303,7 +302,7 @@ function init() {
       newValue: any,
     ) => {
       if (newValue === undefined || newValue === null) {
-        return '';  // 拒绝 jspreadsheet 内部发出的"幽灵" undefined 值
+        return ''; // 拒绝 jspreadsheet 内部发出的"幽灵" undefined 值
       }
       const cIdx = Number(colIndex);
       if (numericCols.has(cIdx)) {
@@ -378,8 +377,8 @@ function init() {
 
   try {
     jspreadsheet(containerRef.value, options);
-  } catch (err) {
-    console.error('jspreadsheet 初始化失败', err);
+  } catch (error) {
+    console.error('jspreadsheet 初始化失败', error);
   }
 }
 
@@ -501,7 +500,9 @@ defineExpose({
 <style scoped>
 .jspreadsheet-wrapper {
   width: 100%;
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* 完全隐藏顶部工具栏 */

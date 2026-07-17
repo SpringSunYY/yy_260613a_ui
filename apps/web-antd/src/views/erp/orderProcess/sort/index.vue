@@ -15,21 +15,21 @@ import { useVbenForm } from '#/adapter/form';
 import {
   getOrderProcess,
   getOrderProcessSortPage,
-  updateOrderProcess,
+  updateOrderProcessSort,
   updateProcessToTargetProcess,
 } from '#/api/erp/orderProcess';
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
 import { ErpOrderAuditStatus, ErpOrderCurrentProcess } from '#/utils';
+import { uploadOrderPrintImage } from '#/views/erp/order/composables/use-order-print';
 import FormView from '#/views/erp/order/modules/form-view.vue';
+import OrderDetailForm from '#/views/erp/order/modules/order-detail-form.vue';
 import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import {
   CARD_PAGE_SIZE_OPTIONS,
   LEFT_CARD_FIELDS,
-  LEFT_PROCESS_VALUE,
   RIGHT_CARD_FIELDS,
-  RIGHT_EXCLUDED_PROCESSES,
   useDetailSchema,
   useSearchSchema,
 } from './data';
@@ -116,7 +116,6 @@ async function loadLeft(layoutPerson?: null | string) {
       pageNo: leftPane.pageNo,
       pageSize: leftPane.pageSize,
       ...queryParams.value,
-      currentProcess: LEFT_PROCESS_VALUE,
       // 如果传入了排版人，优先使用；否则使用 queryParams 中的
       ...(layoutPerson === undefined
         ? {}
@@ -137,7 +136,6 @@ async function loadRight() {
       pageNo: rightPane.pageNo,
       pageSize: rightPane.pageSize,
       ...queryParams.value,
-      notInCurrentProcesses: RIGHT_EXCLUDED_PROCESSES,
       queryPrintImage: true,
     });
     rightPane.list = res.list ?? [];
@@ -290,23 +288,36 @@ detailFormApi.setState({ commonConfig: { disabled: true } });
 
 /** 保存中间详情 */
 const saving = ref(false);
+
 async function toSelectRow(targetId: number) {
   await Promise.all([loadLeft(), loadRight()]);
   scrollToTop(leftScrollRef.value);
   scrollToTop(rightScrollRef.value);
   await reselectRow(targetId);
 }
+
 async function handleSave() {
   if (!selectedRow.value?.id) return;
   const targetId = selectedRow.value.id;
   const { valid } = await detailFormApi.validate();
   if (!valid) return;
+  // 校验订单明细
+  const detailValid = orderDetailFormRef.value?.validate();
+  if (!detailValid) {
+    return;
+  }
   saving.value = true;
   try {
     const values = await detailFormApi.getValues();
-    await updateOrderProcess(values as OrderProcessApi.OrderProcess);
+    const orderDetails = orderDetailFormRef.value?.getData() || [];
+    await updateOrderProcessSort({
+      ...(values as OrderProcessApi.OrderProcessSort),
+      orderDetails,
+    });
     message.success($t('ui.actionMessage.operationSuccess'));
     await toSelectRow(targetId);
+    // 异步静默上传打印图片，完全不阻塞主线程
+    uploadOrderPrintImage(selectedRow.value.orderNo!);
   } finally {
     saving.value = false;
   }
@@ -317,17 +328,25 @@ async function handleToTargetProcess(targetProcess: string) {
   if (!selectedRow.value?.id) return;
   const { valid } = await detailFormApi.validate();
   if (!valid) return;
+  // 校验订单明细
+  const detailValid = orderDetailFormRef.value?.validate();
+  if (!detailValid) {
+    return;
+  }
   const targetId = selectedRow.value.id;
   saving.value = true;
   try {
-    const values =
-      (await detailFormApi.getValues()) as OrderProcessApi.OrderProcess;
+    const values = await detailFormApi.getValues();
+    const orderDetails = orderDetailFormRef.value?.getData() || [];
     await updateProcessToTargetProcess({
-      ...values,
+      ...(values as OrderProcessApi.OrderProcessSort),
       currentProcess: targetProcess,
+      orderDetails,
     });
     await toSelectRow(targetId);
     message.success($t('ui.actionMessage.operationSuccess'));
+    // 异步静默上传打印图片，完全不阻塞主线程
+    uploadOrderPrintImage(selectedRow.value.orderNo!);
   } finally {
     saving.value = false;
   }
@@ -400,6 +419,7 @@ const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
   destroyOnClose: true,
   type: 'modal',
 });
+
 async function handleOrderShip() {
   if (!selectedRow.value?.id) return;
   const { valid } = await detailFormApi.validate();
@@ -445,6 +465,11 @@ function getCardFormatted(
   return raw;
 }
 
+// 订单明细
+/** 子表的表单 */
+const orderDetailFormRef = ref<InstanceType<typeof OrderDetailForm> | null>(
+  null,
+);
 /** 首次加载 */
 refreshAll();
 </script>
@@ -601,6 +626,7 @@ refreshAll();
                 size="small"
                 :disabled="!selectedRow?.id"
                 :loading="saving"
+                v-if="hasAccessByCodes(['erp:order-process:update'])"
                 @click="handleSave"
               >
                 {{ $t('common.save') }}
@@ -613,7 +639,14 @@ refreshAll();
                 v-if="!detailLoading && !selectedRow"
                 :description="$t('erp.orderProcess.selectRowHint')"
               />
-              <DetailForm v-else class="sort-detail" />
+              <div v-else>
+                <DetailForm class="sort-detail" />
+                <OrderDetailForm
+                  v-if="selectedRow?.orderNo"
+                  ref="orderDetailFormRef"
+                  :order-no="selectedRow.orderNo!"
+                />
+              </div>
             </a-spin>
           </div>
         </div>

@@ -14,6 +14,7 @@ import {
   updateOrderProcess,
 } from '#/api/erp/orderProcess';
 import { $t } from '#/locales';
+import { uploadOrderPrintImage } from '#/views/erp/order/composables/use-order-print';
 
 import { useFormSchema } from '../data';
 
@@ -56,6 +57,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       await modalDrawerApi.close();
       emit('success');
       message.success($t('ui.actionMessage.operationSuccess'));
+      // 异步静默上传打印图片，完全不阻塞主线程
+      uploadOrderPrintImage(data.orderNo!);
     } finally {
       modalDrawerApi.unlock();
     }

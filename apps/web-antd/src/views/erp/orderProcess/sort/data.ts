@@ -7,21 +7,10 @@ import { computed } from 'vue';
 
 import { $t } from '@vben/locales';
 
-import {
-  DICT_TYPE,
-  getDictOptions,
-  getRangePickerDefaultProps,
-  MODULE_TYPE_ENUM,
-} from '#/utils';
+import { DICT_TYPE, getDictOptions, MODULE_TYPE_ENUM } from '#/utils';
 
 /** 翻页：可选择的每页条数（保持最少项，避免换行到第二行） */
 export const CARD_PAGE_SIZE_OPTIONS = ['20', '30', '50', '100', '200'];
-
-/** 左侧工序筛选值：当前工序 = 待排版 */
-export const LEFT_PROCESS_VALUE = '2';
-
-/** 右侧工序筛选值：当前工序不在 [已下单, 待排版] 内 = 排版中或之后 */
-export const RIGHT_EXCLUDED_PROCESSES = ['1', '2'];
 
 /** 顶部查询表单 schema */
 export function useSearchSchema(): VbenFormSchema[] {

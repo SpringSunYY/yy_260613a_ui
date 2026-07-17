@@ -2,13 +2,12 @@
  * 订单打印导出工具
  *
  * 内部渲染出与 `apps/web-antd/src/views/erp/order/modules/print-form.vue` 视觉一致的
- * 一张制单单据，导出成 PNG 并以 File 形式返回。
- * 调用方拿到 File 后通常会调 updateOrderPrintImage 上传到服务器。
+ * 一张制单单据，导出成 PNG 并自动上传到服务器。
  *
- * 使用方式：
+ * 使用方式（完全异步，不阻塞主线程）：
  * ```ts
- * const file = await exportOrderPrintImage(orderNo);
- * await updateOrderPrintImage({ file, orderNo });
+ * // 直接调用，内部自动在下一个事件循环执行，不影响当前操作
+ * uploadOrderPrintImage(orderNo);
  * ```
  */
 import type { Dayjs } from 'dayjs';
@@ -21,7 +20,7 @@ import { formatDate } from '@vben/utils';
 
 import { toPng } from 'html-to-image';
 
-import { getOrderDetailNo } from '#/api/erp/order';
+import { getOrderDetailNo, updateOrderPrintImage } from '#/api/erp/order';
 import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
 
 const PRINT_CONTAINER_ID = 'orderPrintDiv';
@@ -547,4 +546,30 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
   } finally {
     container.remove();
   }
+}
+
+/**
+ * 生成打印图片 File 对象（内部使用）
+ */
+async function generatePrintImageFile(orderNo: string): Promise<File> {
+  return exportOrderPrintImage(orderNo);
+}
+
+/**
+ * 异步导出并上传订单打印图片，完全不阻塞主线程。
+ *
+ * 内部流程：导出 PNG → 上传到服务器，失败仅打日志。
+ * 通过 setTimeout(0) 推迟到下一个事件循环执行，确保调用时立即返回。
+ *
+ * @param orderNo 订单号
+ */
+export function uploadOrderPrintImage(orderNo: string): void {
+  setTimeout(async () => {
+    try {
+      const file = await generatePrintImageFile(orderNo);
+      await updateOrderPrintImage({ file, orderNo });
+    } catch (error) {
+      console.error('打印图片上传失败', error);
+    }
+  }, 0);
 }

@@ -14,7 +14,6 @@ import {
   createOrder,
   getOrder,
   updateOrder,
-  updateOrderPrintImage,
 } from '#/api/erp/order';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import { I18nSelect } from '#/components/i18n/i18n-select';
@@ -22,7 +21,7 @@ import { $t } from '#/locales';
 import { DICT_TYPE, getDictOptions } from '#/utils';
 
 import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
-import { exportOrderPrintImage } from '../composables/use-order-print';
+import { uploadOrderPrintImage } from '../composables/use-order-print';
 import { useFormSchema } from '../data';
 import OrderDetailForm from './order-detail-form.vue';
 
@@ -40,16 +39,7 @@ const getTitle = computed(() => {
 /** 子表的表单 */
 const subTabsName = ref('orderDetail');
 const orderDetailFormRef = ref<InstanceType<typeof OrderDetailForm>>();
-
-/** 异步静默导出并上传打印图片，失败仅打日志 */
-async function uploadPrintImage(orderNo: string) {
-  try {
-    const file = await exportOrderPrintImage(orderNo);
-    await updateOrderPrintImage({ file, orderNo });
-  } catch (error) {
-    console.error('打印图片上传失败', error);
-  }
-}
+const orderNo = ref('');
 
 /** 子表尺码合计 -> 写入主表 number 字段 */
 function onOrderDetailTotalChange(total: number) {
@@ -123,8 +113,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       await modalDrawerApi.close();
       emit('success');
       message.success($t('ui.actionMessage.operationSuccess'));
-      // 异步静默上传打印图片，不阻塞主流程
-      void uploadPrintImage(data.orderNo!);
+      // 异步静默上传打印图片，完全不阻塞主线程
+      uploadOrderPrintImage(data.orderNo!);
     } finally {
       modalDrawerApi.unlock();
     }
@@ -135,7 +125,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       return;
     }
     // 加载数据
-    let data = modalDrawerApi.getData<OrderApi.Order>();
+    let data = modalDrawerApi.getData<OrderApi.Order & { isCopy?: boolean }>();
+    const isCopy = !!data?.isCopy;
     if (!data) {
       return;
     }
@@ -152,6 +143,33 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       getOrderProcessByOrderNo(data.orderNo).then((res) => {
         processFormApi.setValues(res);
       });
+      orderNo.value = data.orderNo;
+    }
+    if (isCopy) {
+      // 复制模式：保留订单明细，清空以下字段
+      const copyData = {
+        ...data,
+        id: undefined,
+        orderNo: undefined,
+        orderTime: undefined,
+        exceptShippingTime: undefined,
+        shippingNo: undefined,
+        hydration: undefined,
+        shippingTime: undefined,
+        // 清空订单明细中的 orderNo
+        orderDetails: data.orderDetails?.map((item) => ({
+          ...item,
+          id: undefined,
+          orderNo: undefined,
+        })),
+        // 清空订单工序中的 orderNo
+        orderProcess: data.orderProcess
+          ? { ...data.orderProcess, orderNo: undefined }
+          : undefined,
+      } as unknown as OrderApi.Order;
+      formData.value = copyData;
+      await formApi.setValues(copyData);
+      return;
     }
     // 设置到 values
     formData.value = data;
@@ -177,7 +195,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       >
         <OrderDetailForm
           ref="orderDetailFormRef"
-          :order-no="formData?.orderNo"
+          :order-no="orderNo"
           @update:total="onOrderDetailTotalChange"
         />
       </Tabs.TabPane>

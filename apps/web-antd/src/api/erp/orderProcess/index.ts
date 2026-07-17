@@ -2,6 +2,8 @@ import type { Dayjs } from 'dayjs';
 
 import type { PageParam, PageResult } from '@vben/request';
 
+import type { OrderApi } from '#/api/erp/order';
+
 import { requestClient } from '#/api/request';
 
 export namespace OrderProcessApi {
@@ -24,6 +26,27 @@ export namespace OrderProcessApi {
     packagingRequirements: string; // 包装要求
     workshopRequirements: string; // 车间要求
     remark: string; // 特别备注
+  }
+  /** 订单工序-待排序信息 */
+  export interface OrderProcessSort {
+    id: number; // 编号
+    currentProcess?: string; // 当前工序
+    orderNo?: string; // 订单号
+    layoutPerson: string; // 排版人
+    orderImage: string; // 图片
+    qrCode: string; // 二维码
+    pattern: string; // 版型
+    fabric?: string; // 布料
+    category?: string; // 品类
+    specification?: string; // 规格
+    hasForked?: string; // 开叉与否
+    shirtHem?: string; // 衫脚
+    pocket?: string; // 口袋
+    neckline?: string; // 领口
+    packagingRequirements: string; // 包装要求
+    workshopRequirements: string; // 车间要求
+    remark: string; // 特别备注
+    orderDetails?: OrderApi.OrderDetail[];
   }
 
   export interface OrderProcessDetail {
@@ -100,10 +123,14 @@ export function createOrderProcess(data: OrderProcessApi.OrderProcess) {
 export function updateOrderProcess(data: OrderProcessApi.OrderProcess) {
   return requestClient.put('/erp/order-process/update', data);
 }
+/** 修改订单工序-待排序 */
+export function updateOrderProcessSort(data: OrderProcessApi.OrderProcessSort) {
+  return requestClient.put('/erp/order-process/update/sort', data);
+}
 
-/** 更新订单工序 */
+/** 推进订单工序 */
 export function updateProcessToTargetProcess(
-  data: OrderProcessApi.OrderProcess,
+  data: OrderProcessApi.OrderProcessSort,
 ) {
   return requestClient.put('/erp/order-process/update/process', data);
 }

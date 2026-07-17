@@ -16,6 +16,7 @@ import {
   deleteOrder,
   deleteOrderList,
   exportOrder,
+  getOrder,
   getOrderLoanStatistics,
   getOrderPage,
   getOrderPostageStatistics,
@@ -90,6 +91,19 @@ function handleCreate() {
 /** 编辑订单信息 */
 function handleEdit(row: OrderApi.Order) {
   formModalDrawerApi.setData(row).open();
+}
+
+/** 复制订单信息（用于快捷新增） */
+async function handleCopy(row: OrderApi.Order) {
+  // 获取完整数据
+  const data = await getOrder(row.id);
+  // 打开新增表单，传递数据和复制标志
+  formModalDrawerApi
+    .setData({
+      ...data,
+      isCopy: true, // 复制标志
+    })
+    .open();
 }
 
 /** 查看订单信息 */
@@ -199,19 +213,22 @@ function getStatistics(formValues: PageParam) {
   getOrderStatistics(formValues).then((res) => {
     if (!res || res?.length <= 0) return;
     statisticsData.value = res;
-    res?.map((item) => (totalCount.value += Number(item.total)));
+    totalCount.value = 0;
+    res.forEach((item) => (totalCount.value += Number(item.total)));
   });
   // 获取贷款
   getOrderLoanStatistics(formValues).then((res) => {
     if (!res || res?.length <= 0) return;
     loanStatisticsData.value = res;
-    res?.map((item) => (loanTotalCount.value += Number(item.total)));
+    loanTotalCount.value = 0;
+    res.forEach((item) => (loanTotalCount.value += Number(item.total)));
   });
   //  获取邮费
   getOrderPostageStatistics(formValues).then((res) => {
     if (!res || res?.length <= 0) return;
     postageStatisticsData.value = res;
-    res?.map((item) => (postageTotalCount.value += Number(item.total)));
+    postageTotalCount.value = 0;
+    res.forEach((item) => (postageTotalCount.value += Number(item.total)));
   });
 }
 
@@ -440,6 +457,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
                 ]),
                 confirm: handleOrderResetVector.bind(null, row),
               },
+            },
+            {
+              label: $t('common.copy'),
+              type: 'link',
+              icon: ACTION_ICON.COPY,
+              auth: ['erp:order:create'],
+              onClick: handleCopy.bind(null, row),
             },
             {
               label: $t('common.delete'),

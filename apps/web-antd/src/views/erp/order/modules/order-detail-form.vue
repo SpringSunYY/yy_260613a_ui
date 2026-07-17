@@ -6,7 +6,7 @@ import type { OrderApi } from '#/api/erp/order';
  */
 import type { JspreadsheetInstance } from '#/components/jspreadsheet';
 
-import { computed, h, ref, watch } from 'vue';
+import { h, ref, watch } from 'vue';
 
 import { Plus } from '@vben/icons';
 
@@ -37,29 +37,24 @@ const QTY_COL_INDEX = 3;
 const columns = [
   {
     title: $t('erp.orderDetail.field.setName'),
-    width: 200,
     type: 'text' as const,
   },
   {
     title: $t('erp.orderDetail.field.setNumber'),
-    width: 160,
     type: 'text' as const,
   },
   {
     title: $t('erp.orderDetail.field.setSize'),
-    width: 140,
     type: 'dropdown' as const,
     /** 通过字典类型让 jspreadsheet 内部自动加载下拉项 */
     dictType: DICT_TYPE.ERP_SET_SIZE,
   },
   {
     title: $t('erp.orderDetail.field.setQuantity'),
-    width: 140,
     type: 'numeric' as const,
   },
   {
     title: $t('erp.orderDetail.field.remark'),
-    width: 200,
     type: 'text' as const,
   },
 ];
@@ -81,9 +76,6 @@ const isJspreadsheetReady = ref(false);
 /** 当前数据（用于统计） */
 const currentData = ref<any[][]>([]);
 
-/** 触发统计刷新的版本号（数据变化时自增） */
-const sizeStatsVersion = ref(0);
-
 /** 尺码统计条目 */
 interface SizeStat {
   value: string;
@@ -95,7 +87,7 @@ interface SizeStat {
  * 规范化一行数据，补齐列数（防止列数不一致导致校验错位）
  */
 function normalizeRow(row: any[] | undefined, length: number): any[] {
-  const result: any[] = new Array(length).fill('');
+  const result: any[] = Array.from({ length });
   if (row) {
     for (let i = 0; i < length; i++) {
       result[i] = row[i] ?? '';
@@ -127,11 +119,10 @@ function isCellEmpty(v: any): boolean {
   );
 }
 
-/** 按尺码分组的数量汇总 */
-const sizeStats = computed<{ list: SizeStat[]; total: number }>(() => {
-  // 显式订阅版本号，外部触发更新时强制重新计算
-  void sizeStatsVersion.value;
-
+const totalNumber = ref(0);
+const sizeStats = ref([] as SizeStat[]);
+/** 触发统计重算 */
+function refreshSizeStats() {
   const map = new Map<string, number>();
 
   // 跳过表头行（第0行），从第1行开始解析数据
@@ -158,24 +149,10 @@ const sizeStats = computed<{ list: SizeStat[]; total: number }>(() => {
       a.value.localeCompare(b.value, 'zh-Hans-CN', { numeric: true }),
     );
 
-  const total = list.reduce((sum, item) => sum + item.count, 0);
-
-  return { list, total };
-});
-
-/** 触发统计重算 */
-function refreshSizeStats() {
-  sizeStatsVersion.value += 1;
+  totalNumber.value = list.reduce((sum, item) => sum + item.count, 0);
+  sizeStats.value = list;
+  emit('update:total', totalNumber.value);
 }
-
-/** 总数变化时通知父组件（用于同步主表 number 字段） */
-watch(
-  () => sizeStats.value.total,
-  (total) => {
-    emit('update:total', total);
-  },
-  { immediate: true },
-);
 
 /** 数据变化回调：jspreadsheet 实时推送最新数据 */
 function handleChange(_instance: JspreadsheetInstance, data: any[][]) {
@@ -212,36 +189,6 @@ function onAdd() {
     spreadsheetRef.value.insertRow();
     refreshSizeStats();
   }
-}
-
-/**
- * 把当前表格数据序列化为 Excel 友好的 Tab 分隔文本
- */
-function serializeTableToClipboard(): string {
-  const data = currentData.value;
-  const lines: string[] = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!row) continue;
-
-    if (isEmptyRow(row)) continue;
-
-    const sizeLabel = isCellEmpty(row[SIZE_COL_INDEX])
-      ? ''
-      : (sizeLabelMap.get(String(row[SIZE_COL_INDEX])) ??
-        String(row[SIZE_COL_INDEX]));
-    lines.push(
-      [
-        row[0] ?? '',
-        row[1] ?? '',
-        sizeLabel,
-        row[QTY_COL_INDEX] ?? '',
-        row[4] ?? '',
-      ].join('\t'),
-    );
-  }
-  return lines.join('\n');
 }
 
 /**
@@ -365,7 +312,7 @@ defineExpose({
 
 <template>
   <!-- 尺码统计卡片 - 只要有非空数据行就显示 -->
-  <div v-if="sizeStats.list.length > 0" class="mx-4 mb-2">
+  <div v-if="sizeStats.length > 0" class="mx-4 mb-2">
     <Card size="small" class="size-stats-card">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
         <span class="text-sm font-medium">
@@ -373,7 +320,7 @@ defineExpose({
         </span>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span
-            v-for="item in sizeStats.list"
+            v-for="item in sizeStats"
             :key="item.value"
             class="border-border bg-background inline-flex items-center rounded-md border px-2 py-0.5 text-sm"
           >
@@ -386,7 +333,7 @@ defineExpose({
             {{ $t('erp.orderDetail.field.setQuantity') }}：
           </span>
           <span class="text-primary text-base font-semibold tabular-nums">
-            {{ sizeStats.total }}
+            {{ totalNumber }}
           </span>
         </span>
       </div>

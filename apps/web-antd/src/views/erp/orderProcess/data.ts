@@ -251,11 +251,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'orderStatus',
       label: $t('erp.orderProcess.field.orderStatus'),
-      component: 'I18nRadioGroup',
+      component: 'I18nSelect',
       componentProps: {
         options: getDictOptions(DICT_TYPE.ERP_ORDER_STATUS, 'string'),
-        buttonStyle: 'solid',
-        optionType: 'button',
       },
     },
     /** 订单号 */
