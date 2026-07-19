@@ -53,6 +53,11 @@ interface AuthenticationProps {
   showThirdPartyLogin?: boolean;
 
   /**
+   * @zh_CN 是否显示文档
+   */
+  showDocLink?: boolean;
+
+  /**
    * @zh_CN 登录框子标题
    */
   subTitle?: string;

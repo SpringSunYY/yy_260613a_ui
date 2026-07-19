@@ -101,7 +101,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: $t('common.detail'),
               type: 'link',
               icon: ACTION_ICON.VIEW,
-              auth: ['system:login-log:search'],
+              auth: ['system:login-log:query'],
               onClick: handleDetail.bind(null, row),
             },
           ]"

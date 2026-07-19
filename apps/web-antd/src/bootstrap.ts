@@ -1,7 +1,5 @@
 import { createApp, watchEffect } from 'vue';
 import VueDOMPurifyHTML from 'vue-dompurify-html';
-// @ts-expect-error - vue3-print-nb 没有官方类型声明
-import print from 'vue3-print-nb';
 
 import { registerAccessDirective } from '@vben/access';
 import { registerLoadingDirective } from '@vben/common-ui/es/loading';
@@ -11,6 +9,8 @@ import '@vben/styles';
 import '@vben/styles/antd';
 
 import { useTitle } from '@vueuse/core';
+// @ts-expect-error - vue3-print-nb 没有官方类型声明
+import print from 'vue3-print-nb';
 
 import { $t, getDefaultLocaleFromBackend, setupI18n } from '#/locales';
 import { setupFormCreate } from '#/plugins/form-create';

@@ -50,8 +50,8 @@ interface WorkbenchQuickNavItem {
 
 export type {
   AnalysisOverviewItem,
-  WorkbenchProjectItem,
   WorkbenchPoemItem,
+  WorkbenchProjectItem,
   WorkbenchQuickNavItem,
   WorkbenchTodoItem,
   WorkbenchTrendItem,
