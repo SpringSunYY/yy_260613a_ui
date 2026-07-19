@@ -170,6 +170,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
+    },
+    cellConfig: {
       height: 80,
     },
     toolbarConfig: {

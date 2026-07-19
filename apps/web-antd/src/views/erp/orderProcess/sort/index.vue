@@ -7,6 +7,7 @@ import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 import { formatDateTime } from '@vben/utils';
 
 import { message, Pagination } from 'ant-design-vue';
@@ -28,8 +29,8 @@ import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import {
   CARD_PAGE_SIZE_OPTIONS,
-  LEFT_CARD_FIELDS,
-  RIGHT_CARD_FIELDS,
+  RIGHT_CARD_FIELDS_FULL,
+  RIGHT_CARD_FIELDS_SIMPLE,
   useDetailSchema,
   useSearchSchema,
 } from './data';
@@ -48,14 +49,25 @@ const [SearchForm, searchFormApi] = useVbenForm({
   wrapperClass: 'grid-cols-4',
   schema: useSearchSchema(),
   showDefaultActions: false,
+  collapsed: true,
+  showCollapseButton: true,
 });
+
+/** 搜索区域是否折叠 */
+const searchCollapsed = ref(true);
+
+/** 切换搜索区域折叠状态 */
+function toggleSearchCollapsed() {
+  searchCollapsed.value = !searchCollapsed.value;
+  searchFormApi.setState({ collapsed: searchCollapsed.value });
+}
 
 /** 列表查询参数 */
 const queryParams = ref<Record<string, any>>({
   auditStatus: ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3,
 });
 
-/** 左/右卡片分页与数据 */
+/** 右侧卡片分页与数据 */
 type PaneState = {
   list: OrderProcessApi.OrderProcessDetail[];
   loading: boolean;
@@ -63,14 +75,6 @@ type PaneState = {
   pageSize: number;
   total: number;
 };
-
-const leftPane = reactive<PaneState>({
-  list: [],
-  total: 0,
-  loading: false,
-  pageNo: 1,
-  pageSize: Number(CARD_PAGE_SIZE_OPTIONS[0]),
-});
 
 const rightPane = reactive<PaneState>({
   list: [],
@@ -93,39 +97,15 @@ function handleView(orderNo: string) {
   viewFormModalDrawerApi.setData({ orderNo }).open();
 }
 
-const leftScrollRef = useTemplateRef<HTMLElement>('leftScrollRef');
 const rightScrollRef = useTemplateRef<HTMLElement>('rightScrollRef');
 
 /** 选中项（中间详情） */
 const selectedRow = ref<null | OrderProcessApi.OrderProcessDetail>(null);
 
-/** 上一次点击的排版人（用于判断是否需要重新查询左边） */
-const lastSelectedLayoutPerson = ref<null | string>(null);
-
 /** 滚动到顶部 */
 function scrollToTop(el?: HTMLElement | null) {
   if (!el) return;
   el.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/** 加载左侧：currentProcess = 2，可选传入排版人条件 */
-async function loadLeft(layoutPerson?: null | string) {
-  leftPane.loading = true;
-  try {
-    const res = await getOrderProcessSortPage({
-      pageNo: leftPane.pageNo,
-      pageSize: leftPane.pageSize,
-      ...queryParams.value,
-      // 如果传入了排版人，优先使用；否则使用 queryParams 中的
-      ...(layoutPerson === undefined
-        ? {}
-        : { layoutPerson: layoutPerson || undefined }),
-    });
-    leftPane.list = res.list ?? [];
-    leftPane.total = Number(res.total ?? 0);
-  } finally {
-    leftPane.loading = false;
-  }
 }
 
 /** 加载右侧：currentProcess NOT IN (1, 2) */
@@ -146,10 +126,8 @@ async function loadRight() {
 }
 
 async function refreshAll() {
-  leftPane.pageNo = 1;
   rightPane.pageNo = 1;
-  await Promise.all([loadLeft(), loadRight()]);
-  scrollToTop(leftScrollRef.value);
+  await loadRight();
   scrollToTop(rightScrollRef.value);
   if (selectedRow.value?.id) {
     await reselectRow(selectedRow.value.id);
@@ -164,8 +142,6 @@ async function refreshAll() {
 async function handleSearch() {
   const values = await searchFormApi.getValues();
   queryParams.value = values || {};
-  // 重置排版人筛选状态
-  lastSelectedLayoutPerson.value = null;
   await refreshAll();
 }
 
@@ -173,18 +149,7 @@ async function handleSearch() {
 async function handleReset() {
   await searchFormApi.resetForm();
   queryParams.value = {};
-  // 重置排版人筛选状态
-  lastSelectedLayoutPerson.value = null;
   await refreshAll();
-}
-
-/** 分页变化 */
-async function handleLeftPageChange(page: number, pageSize: number) {
-  leftPane.pageNo = page;
-  leftPane.pageSize = pageSize;
-  await loadLeft();
-  await nextTick();
-  scrollToTop(leftScrollRef.value);
 }
 
 async function handleRightPageChange(page: number, pageSize: number) {
@@ -204,22 +169,12 @@ function findRowInPane(id: number, list: OrderProcessApi.OrderProcessDetail[]) {
 }
 
 /**
- * 刷新左右两侧后，按 id 重新定位当前选中项
- * - 命中左侧：selectedRow 指向 leftPane.list 里那一行
- * - 命中右侧：同理
- * - 推进工序后会自然发生跨 pane 切换
- * - 命中后重新拉详情，保证中间表单拿到最新数据
+ * 刷新后，按 id 重新定位当前选中项
+ * 命中后重新拉详情，保证中间表单拿到最新数据
  */
 async function reselectRow(targetId: number) {
-  let next: null | OrderProcessApi.OrderProcessDetail = findRowInPane(
-    targetId,
-    leftPane.list,
-  );
+  const next = findRowInPane(targetId, rightPane.list);
   if (!next) {
-    next = findRowInPane(targetId, rightPane.list);
-  }
-  if (!next) {
-    // 理论上保存/推进后仍可能因为过滤条件被排除掉
     selectedRow.value = null;
     detailFormApi.setValues({});
     detailFormApi.setState({ commonConfig: { disabled: true } });
@@ -242,31 +197,14 @@ async function loadDetail(id: number) {
   }
 }
 
-/** 主动选择某行 */
-async function selectRow(
-  row: OrderProcessApi.OrderProcessDetail,
-  fromRight: boolean = false,
-) {
-  // 点击右边卡片时，如果排版人和之前不同，需要重新查询左边
-  if (fromRight && row.layoutPerson !== lastSelectedLayoutPerson.value) {
-    lastSelectedLayoutPerson.value = row.layoutPerson ?? null;
-    leftPane.pageNo = 1;
-    await loadLeft(row.layoutPerson);
-    scrollToTop(leftScrollRef.value);
-    // 左边默认选中第一个
-    if (leftPane.list.length > 0) {
-      const firstRow = leftPane.list[0]!;
-      selectedRow.value = firstRow;
-      await loadDetail(firstRow.id as number);
-    } else {
-      selectedRow.value = null;
-      detailFormApi.setValues({});
-      detailFormApi.setState({ commonConfig: { disabled: true } });
-    }
-  } else if (!fromRight) {
-    // 点击左边卡片，直接选中
-    await reselectRow(row.id as number);
+/** 选中卡片并加载详情 */
+async function selectRow(row: OrderProcessApi.OrderProcessDetail) {
+  // 点击已选中的卡片不再重复请求后端
+  if (selectedRow.value?.id === row.id) {
+    return;
   }
+  selectedRow.value = row;
+  await loadDetail(row.id as number);
 }
 
 const [DetailForm, detailFormApi] = useVbenForm({
@@ -290,8 +228,7 @@ detailFormApi.setState({ commonConfig: { disabled: true } });
 const saving = ref(false);
 
 async function toSelectRow(targetId: number) {
-  await Promise.all([loadLeft(), loadRight()]);
-  scrollToTop(leftScrollRef.value);
+  await loadRight();
   scrollToTop(rightScrollRef.value);
   await reselectRow(targetId);
 }
@@ -299,6 +236,7 @@ async function toSelectRow(targetId: number) {
 async function handleSave() {
   if (!selectedRow.value?.id) return;
   const targetId = selectedRow.value.id;
+  const orderNo = selectedRow.value.orderNo;
   const { valid } = await detailFormApi.validate();
   if (!valid) return;
   // 校验订单明细
@@ -317,7 +255,7 @@ async function handleSave() {
     message.success($t('ui.actionMessage.operationSuccess'));
     await toSelectRow(targetId);
     // 异步静默上传打印图片，完全不阻塞主线程
-    uploadOrderPrintImage(selectedRow.value.orderNo!);
+    if (orderNo) uploadOrderPrintImage(orderNo);
   } finally {
     saving.value = false;
   }
@@ -334,6 +272,7 @@ async function handleToTargetProcess(targetProcess: string) {
     return;
   }
   const targetId = selectedRow.value.id;
+  const orderNo = selectedRow.value.orderNo;
   saving.value = true;
   try {
     const values = await detailFormApi.getValues();
@@ -346,7 +285,7 @@ async function handleToTargetProcess(targetProcess: string) {
     await toSelectRow(targetId);
     message.success($t('ui.actionMessage.operationSuccess'));
     // 异步静默上传打印图片，完全不阻塞主线程
-    uploadOrderPrintImage(selectedRow.value.orderNo!);
+    if (orderNo) uploadOrderPrintImage(orderNo);
   } finally {
     saving.value = false;
   }
@@ -437,9 +376,7 @@ const currentActions = computed(() => {
 });
 
 /** 卡片选中态 */
-const isLeftSelected = (row: OrderProcessApi.OrderProcessDetail) =>
-  selectedRow.value?.id === row.id;
-const isRightSelected = (row: OrderProcessApi.OrderProcessDetail) =>
+const isCardSelected = (row: OrderProcessApi.OrderProcessDetail) =>
   selectedRow.value?.id === row.id;
 
 /** 卡片字段原值（空安全） */
@@ -479,9 +416,14 @@ refreshAll();
     <ShipFormModalDrawer @success="toSelectRow(selectedRow?.id || 0)" />
     <ViewFormModalDrawer />
     <div class="sort-page">
-      <!-- 顶部搜索区：与原列表一致 -->
-      <div class="sort-search">
-        <SearchForm />
+      <!-- 顶部搜索区 -->
+      <div
+        class="sort-search"
+        :class="{ 'sort-search--collapsed': searchCollapsed }"
+      >
+        <div class="sort-search__form">
+          <SearchForm />
+        </div>
         <div class="sort-search__actions">
           <a-button type="primary" @click="handleSearch">
             {{ $t('common.search') }}
@@ -489,99 +431,30 @@ refreshAll();
           <a-button @click="handleReset">
             {{ $t('common.reset') }}
           </a-button>
+          <a-button
+            class="sort-search__collapse"
+            @click="toggleSearchCollapsed"
+          >
+            {{
+              searchCollapsed
+                ? $t('ui.common.expand')
+                : $t('ui.common.collapse')
+            }}
+            <IconifyIcon
+              :icon="
+                searchCollapsed
+                  ? 'ant-design:down-outlined'
+                  : 'ant-design:up-outlined'
+              "
+              class="sort-search__collapse-icon"
+            />
+          </a-button>
         </div>
       </div>
 
-      <!-- 主体三栏布局 -->
+      <!-- 主体两栏布局 -->
       <div class="sort-body">
-        <!-- 左侧卡片 -->
-        <div class="sort-pane">
-          <div class="sort-pane__head">
-            <span class="sort-pane__title">
-              {{ $t('erp.orderProcess.pane.pendingTitle') }}
-            </span>
-            <span class="sort-pane__count">
-              {{ leftPane.total }}
-            </span>
-          </div>
-          <div ref="leftScrollRef" class="sort-pane__scroll">
-            <a-spin :spinning="leftPane.loading" class="sort-pane__spin">
-              <a-empty v-if="!leftPane.loading && leftPane.list.length === 0" />
-              <div
-                v-for="item in leftPane.list"
-                :key="`left-${item.id}`"
-                class="sort-card"
-                :class="{ 'sort-card--active': isLeftSelected(item) }"
-                @click="selectRow(item)"
-              >
-                <div class="sort-card__header">
-                  <span class="sort-card__no">#{{ item.orderNo }}</span>
-                  <div class="sort-card__tags">
-                    <I18nDictTag
-                      v-if="item.currentProcess"
-                      type="erp_order_current_process"
-                      :value="item.currentProcess"
-                      class="sort-card__tag"
-                    />
-                    <I18nDictTag
-                      v-if="item.orderStatus"
-                      type="erp_order_status"
-                      :value="item.orderStatus"
-                      class="sort-card__tag sort-card__tag--status"
-                    />
-                  </div>
-                </div>
-                <div class="sort-card__body">
-                  <div
-                    v-for="f in LEFT_CARD_FIELDS"
-                    :key="String(f.field)"
-                    class="sort-card__row"
-                    :class="`sort-card__row--span-${f.span ?? 1}`"
-                  >
-                    <span class="sort-card__label">{{ f.label }}</span>
-                    <a-image
-                      v-if="f.type === 'image' && (item as any)[f.field]"
-                      :src="(item as any)[f.field]"
-                      :width="48"
-                      :height="48"
-                      class="sort-card__image"
-                    />
-                    <div
-                      v-else-if="f.dictType && getCardRaw(item, f) !== null"
-                      class="sort-card__value sort-card__value--dict"
-                    >
-                      <I18nDictTag
-                        :type="f.dictType"
-                        :value="getCardRaw(item, f)"
-                      />
-                    </div>
-                    <span v-else-if="f.formatter" class="sort-card__value">
-                      {{ getCardFormatted(item, f) ?? '-' }}
-                    </span>
-                    <span v-else class="sort-card__value">
-                      {{ getCardRaw(item, f) ?? '-' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </a-spin>
-          </div>
-          <div v-if="leftPane.total > 0" class="sort-pane__pager">
-            <Pagination
-              :current="leftPane.pageNo"
-              :page-size="leftPane.pageSize"
-              :total="leftPane.total"
-              :page-size-options="CARD_PAGE_SIZE_OPTIONS"
-              :show-quick-jumper="false"
-              show-size-changer
-              show-less-items
-              size="small"
-              @change="handleLeftPageChange"
-            />
-          </div>
-        </div>
-
-        <!-- 中间详情 -->
+        <!-- 左侧详情 -->
         <div class="sort-pane sort-pane--center">
           <div class="sort-pane__head">
             <span class="sort-pane__title">
@@ -651,11 +524,11 @@ refreshAll();
           </div>
         </div>
 
-        <!-- 右侧卡片 -->
+        <!-- 右侧待排版卡片 -->
         <div class="sort-pane">
           <div class="sort-pane__head">
             <span class="sort-pane__title">
-              {{ $t('erp.orderProcess.pane.layoutTitle') }}
+              {{ $t('erp.orderProcess.pane.pendingTitle') }}
             </span>
             <span class="sort-pane__count">
               {{ rightPane.total }}
@@ -670,8 +543,8 @@ refreshAll();
                 v-for="item in rightPane.list"
                 :key="`right-${item.id}`"
                 class="sort-card"
-                :class="{ 'sort-card--active': isRightSelected(item) }"
-                @click="selectRow(item, true)"
+                :class="{ 'sort-card--active': isCardSelected(item) }"
+                @click="selectRow(item)"
               >
                 <div class="sort-card__header">
                   <span class="sort-card__no">#{{ item.orderNo }}</span>
@@ -690,31 +563,55 @@ refreshAll();
                     />
                   </div>
                 </div>
-                <div class="sort-card__body">
-                  <div
-                    v-for="f in RIGHT_CARD_FIELDS"
-                    :key="String(f.field)"
-                    class="sort-card__row"
-                    :class="[
-                      `sort-card__row--span-${f.span ?? 1}`,
-                      {
-                        'sort-card__row--image':
-                          f.type === 'image' && (item as any)[f.field],
-                      },
-                    ]"
-                  >
-                    <span v-if="f.type !== 'image'" class="sort-card__label">{{
-                      f.label
-                    }}</span>
+                <!-- 图片在左，核心内容在右 -->
+                <div class="sort-card__main">
+                  <div v-if="item.printImage" class="sort-card__image-wrap">
                     <a-image
-                      v-if="f.type === 'image' && (item as any)[f.field]"
-                      :src="(item as any)[f.field]"
-                      width="80%"
+                      :src="item.printImage"
                       class="sort-card__image"
                       :preview-mask="false"
                     />
+                  </div>
+                  <div class="sort-card__body sort-card__body--simple">
                     <div
-                      v-else-if="f.dictType && getCardRaw(item, f) !== null"
+                      v-for="f in RIGHT_CARD_FIELDS_SIMPLE"
+                      :key="String(f.field)"
+                      class="sort-card__row"
+                    >
+                      <span class="sort-card__label">
+                        {{ f.label }}
+                      </span>
+                      <div
+                        v-if="f.dictType && getCardRaw(item, f) !== null"
+                        class="sort-card__value sort-card__value--dict"
+                      >
+                        <I18nDictTag
+                          :type="f.dictType"
+                          :value="getCardRaw(item, f)"
+                        />
+                      </div>
+                      <span v-else-if="f.formatter" class="sort-card__value">
+                        {{ getCardFormatted(item, f) ?? '-' }}
+                      </span>
+                      <span v-else class="sort-card__value">
+                        {{ getCardRaw(item, f) ?? '-' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 卡片底部完整内容 -->
+                <div class="sort-card__body sort-card__body--full">
+                  <div
+                    v-for="f in RIGHT_CARD_FIELDS_FULL"
+                    :key="String(f.field)"
+                    class="sort-card__row"
+                    :class="[`sort-card__row--span-${f.span ?? 1}`]"
+                  >
+                    <span class="sort-card__label">
+                      {{ f.label }}
+                    </span>
+                    <div
+                      v-if="f.dictType && getCardRaw(item, f) !== null"
                       class="sort-card__value sort-card__value--dict"
                     >
                       <I18nDictTag
@@ -770,19 +667,52 @@ refreshAll();
   padding: 12px 16px;
   box-shadow: 0 1px 4px hsl(var(--foreground) / 0.04);
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sort-search--collapsed {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-search--collapsed .sort-search__form {
+  flex: 1;
+  min-width: 0;
+}
+
+.sort-search__form :deep(.grid) {
+  align-items: center;
 }
 
 .sort-search__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.sort-search--collapsed .sort-search__actions {
+  padding-top: 0;
+}
+
+.sort-search__collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-search__collapse-icon {
+  font-size: 12px;
 }
 
 .sort-body {
   display: grid;
-  /* 左右各 20%，中间 60%，不超出页面宽度 */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 2.5fr) minmax(0, 1.15fr);
+  /* 左侧详情右侧待排版卡片*/
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
   gap: 12px;
   flex: 1;
   width: 100%;
@@ -927,11 +857,64 @@ refreshAll();
   margin-left: 0;
 }
 
-.sort-card__body {
+/* 图片在左，核心内容在右的布局 */
+.sort-card__main {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.sort-card__image-wrap {
+  flex-shrink: 0;
+  width: 120px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  overflow: hidden;
+}
+
+.sort-card__image-wrap .sort-card__image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* 核心内容区域（图片右侧）- 每个字段占一行 */
+.sort-card__body--simple {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.sort-card__body--simple .sort-card__row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 卡片底部完整内容区域 */
+.sort-card__body--full {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 14px;
-  row-gap: 10px;
+  row-gap: 8px;
+  flex: 1;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed hsl(var(--border));
 }
 
 .sort-card__row {
@@ -942,14 +925,7 @@ refreshAll();
   min-width: 0;
 }
 
-.sort-card__row--span-2 {
-  grid-column: span 2;
-}
-
-.sort-card__row--image {
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.sort-card__body--full .sort-card__row--span-2 {
   grid-column: span 2;
 }
 

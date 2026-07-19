@@ -40,6 +40,17 @@ export function useSearchSchema(): VbenFormSchema[] {
         ]),
       },
     },
+    /** 排版人 */
+    {
+      fieldName: 'layoutPerson',
+      label: $t('erp.orderProcess.field.layoutPerson'),
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.layoutPerson'),
+        ]),
+      },
+    },
     /** 当前工序 */
     {
       fieldName: 'currentProcess',
@@ -104,17 +115,6 @@ export function useSearchSchema(): VbenFormSchema[] {
         options: getDictOptions(DICT_TYPE.ERP_FABRIC, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.orderProcess.field.fabric'),
-        ]),
-      },
-    },
-    /** 排版人 */
-    {
-      fieldName: 'layoutPerson',
-      label: $t('erp.orderProcess.field.layoutPerson'),
-      component: 'Input',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.layoutPerson'),
         ]),
       },
     },
@@ -344,96 +344,42 @@ export type CardField = {
   type?: 'image' | 'text';
 };
 
-/** 左侧卡片展示字段 */
-export const LEFT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
-  {
-    field: 'layoutPerson',
-    label: $t('erp.orderProcess.field.layoutPerson'),
-    span: 2,
-  },
-  /** 规格 */
-  {
-    field: 'specification',
-    label: $t('erp.order.field.specification'),
-    dictType: DICT_TYPE.ERP_SPECIFICATION,
-  },
-  /** 数量 */
-  {
-    field: 'number',
-    label: $t('erp.order.field.number'),
-  },
-  {
-    field: 'pattern',
-    label: $t('erp.orderProcess.field.pattern'),
-    dictType: DICT_TYPE.ERP_PATTERN,
-  },
-  {
-    field: 'fabric',
-    label: $t('erp.orderProcess.field.fabric'),
-    dictType: DICT_TYPE.ERP_FABRIC,
-  },
-  /** 下单日期 */
-  {
-    field: 'orderTime',
-    label: $t('erp.order.field.orderTime'),
-    formatter: 'formatDateTime',
-    span: 2,
-  },
-]);
+/** 右侧卡片展示字段 - 简版模式（图片右侧核心字段，label 在左 value 在右，无 span 概念） */
+export const RIGHT_CARD_FIELDS_SIMPLE: ComputedRef<CardField[]> = computed(
+  () => [
+    {
+      field: 'layoutPerson',
+      label: $t('erp.orderProcess.field.layoutPerson'),
+      span: 2,
+    },
+    /** 版型 */
+    {
+      field: 'pattern',
+      label: $t('erp.orderProcess.field.pattern'),
+      dictType: DICT_TYPE.ERP_PATTERN,
+    },
+    /** 布料 */
+    {
+      field: 'fabric',
+      label: $t('erp.orderProcess.field.fabric'),
+      dictType: DICT_TYPE.ERP_FABRIC,
+    },
+    /** 规格 */
+    {
+      field: 'specification',
+      label: $t('erp.order.field.specification'),
+      dictType: DICT_TYPE.ERP_SPECIFICATION,
+    },
+    /** 数量 */
+    {
+      field: 'number',
+      label: $t('erp.order.field.number'),
+    },
+  ],
+);
 
-/** 右侧卡片展示字段 */
-export const RIGHT_CARD_FIELDS: ComputedRef<CardField[]> = computed(() => [
-  {
-    field: 'layoutPerson',
-    label: $t('erp.orderProcess.field.layoutPerson'),
-    span: 2,
-  },
-  // /** 规格 */
-  // {
-  //   field: 'specification',
-  //   label: $t('erp.order.field.specification'),
-  //   dictType: DICT_TYPE.ERP_SPECIFICATION,
-  // },
-  // /** 数量 */
-  // {
-  //   field: 'number',
-  //   label: $t('erp.order.field.number'),
-  // },
-  {
-    field: 'printImage',
-    label: $t('erp.order.field.printImage'),
-    type: 'image',
-  },
-  // {
-  //   field: 'pattern',
-  //   label: $t('erp.orderProcess.field.pattern'),
-  //   dictType: DICT_TYPE.ERP_PATTERN,
-  // },
-  // {
-  //   field: 'category',
-  //   label: $t('erp.orderProcess.field.category'),
-  //   dictType: DICT_TYPE.ERP_CATEGORY,
-  // },
-  // {
-  //   field: 'specification',
-  //   label: $t('erp.orderProcess.field.specification'),
-  //   dictType: DICT_TYPE.ERP_SPECIFICATION,
-  // },
-  // {
-  //   field: 'hasForked',
-  //   label: $t('erp.orderProcess.field.hasForked'),
-  //   dictType: DICT_TYPE.ERP_HAS_FORKED,
-  // },
-  // {
-  //   field: 'shirtHem',
-  //   label: $t('erp.orderProcess.field.shirtHem'),
-  //   dictType: DICT_TYPE.ERP_SHIRT_HEM,
-  // },
-  // {
-  //   field: 'pocket',
-  //   label: $t('erp.orderProcess.field.pocket'),
-  //   dictType: DICT_TYPE.ERP_POCKET,
-  // },
+/** 右侧卡片展示字段 - 完整模式（卡片底部完整字段，支持 span: 1 或 span: 2） */
+export const RIGHT_CARD_FIELDS_FULL: ComputedRef<CardField[]> = computed(() => [
   /** 下单日期 */
   {
     field: 'orderTime',

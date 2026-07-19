@@ -63,6 +63,7 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'layoutPerson',
       label: $t('erp.orderProcess.field.layoutPerson'),
       component: 'Input',
+      rules: 'required',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.orderProcess.field.layoutPerson'),
