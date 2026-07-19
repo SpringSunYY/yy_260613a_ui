@@ -170,7 +170,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
-      isHover: true,
+      height: 80,
     },
     toolbarConfig: {
       refresh: { code: 'query' },
@@ -298,6 +298,9 @@ function isTimeOut(exceptShippingTime: number): boolean {
           ]"
         />
       </template>
+      <template #serialNumber="{ rowIndex }">
+        {{ rowIndex + 1 }}
+      </template>
       <template #orderStatus="{ row }">
         <div>
           <div>
@@ -313,6 +316,17 @@ function isTimeOut(exceptShippingTime: number): boolean {
           >
             {{ parseExceptShippingTime(row.exceptShippingTime) }}
           </div>
+        </div>
+      </template>
+      <template #specification="{ row }">
+        <div class="flex items-center">
+          <div>
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="row.specification"
+            />
+          </div>
+          <div>{{ row.number }}套</div>
         </div>
       </template>
     </Grid>

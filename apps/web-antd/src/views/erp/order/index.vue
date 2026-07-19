@@ -7,7 +7,7 @@ import type { OrderApi } from '#/api/erp/order';
 import { ref } from 'vue';
 
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, formatTime, isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
@@ -260,7 +260,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
-      isHover: true,
+      height: 80,
     },
     toolbarConfig: {
       refresh: { code: 'query' },
@@ -472,7 +472,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order:delete'],
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [
-                  row.orderNO,
+                  row.orderNo,
                   $t('erp.order.order'),
                 ]),
                 confirm: handleDelete.bind(null, row),
@@ -480,6 +480,33 @@ const [Grid, gridApi] = useVbenVxeGrid({
             },
           ]"
         />
+      </template>
+      <template #serialNumber="{ rowIndex }">
+        {{ rowIndex + 1 }}
+      </template>
+      <template #orderStatus="{ row }">
+        <div>
+          <div>
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_ORDER_STATUS"
+              :value="row.orderStatus"
+            />
+          </div>
+          <div>
+            {{ formatTime(row.exceptShippingTime, 'yyyy-MM-dd') }}
+          </div>
+        </div>
+      </template>
+      <template #specification="{ row }">
+        <div class="flex items-center">
+          <div>
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="row.specification"
+            />
+          </div>
+          <div>{{ row.number }}套</div>
+        </div>
       </template>
     </Grid>
   </Page>

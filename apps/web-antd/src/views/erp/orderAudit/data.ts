@@ -126,11 +126,18 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useGridColumns(): VxeTableGridOptions<OrderAuditApi.OrderAudit>['columns'] {
   return [
     { type: 'checkbox', width: 40 },
+    {
+      field: 'serialNumber',
+      width: 50,
+      title: $t('erp.orderDetail.field.serialNumber'),
+      slots: { default: 'serialNumber' },
+    },
     /** 编号 */
     {
       field: 'id',
       title: $t('erp.orderAudit.field.id'),
       minWidth: 120,
+      visible: false,
     },
     /** 订单号 */
     {

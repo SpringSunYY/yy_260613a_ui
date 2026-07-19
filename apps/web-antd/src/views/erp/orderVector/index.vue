@@ -160,7 +160,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
-      isHover: true,
+      height: 80,
     },
     toolbarConfig: {
       refresh: { code: 'query' },

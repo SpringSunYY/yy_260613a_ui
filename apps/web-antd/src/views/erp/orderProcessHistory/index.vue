@@ -137,7 +137,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
-      isHover: true,
     },
     toolbarConfig: {
       refresh: { code: 'query' },
@@ -197,7 +196,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
         />
       </template>
-      <template #actions="{ row }">
+      <template #actions="{ row, rowIndex }">
         <TableAction
           :actions="[
             {
@@ -215,7 +214,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order-process-history:delete'],
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [
-                  row.id,
+                  rowIndex + 1,
                   $t('erp.orderProcessHistory.orderProcessHistory'),
                 ]),
                 confirm: handleDelete.bind(null, row),
@@ -223,6 +222,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
             },
           ]"
         />
+      </template>
+      <template #serialNumber="{ rowIndex }">
+        {{ rowIndex + 1 }}
       </template>
     </Grid>
   </Page>

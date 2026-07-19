@@ -189,6 +189,12 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns'] {
   return [
     { type: 'checkbox', width: 40 },
+    {
+      field: 'serialNumber',
+      width: 50,
+      title: $t('erp.orderDetail.field.serialNumber'),
+      slots: { default: 'serialNumber' },
+    },
     /** 编号 */
     {
       field: 'id',
@@ -201,93 +207,26 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'name',
       title: $t('erp.order.field.name'),
       minWidth: 120,
+      visible: false,
     },
     /** 订单号 */
     {
       field: 'orderNo',
       title: $t('erp.order.field.orderNo'),
-      minWidth: 120,
+      minWidth: 150,
     },
-    /** 下单日期 */
+    /** 补水 */
     {
-      field: 'orderTime',
-      title: $t('erp.order.field.orderTime'),
+      field: 'hydration',
+      title: $t('erp.order.field.hydration'),
       minWidth: 120,
-      sortable: true,
-      formatter: 'formatDateTime',
-    },
-    /** 预计发货时间 */
-    {
-      field: 'exceptShippingTime',
-      title: $t('erp.order.field.exceptShippingTime'),
-      minWidth: 120,
-      sortable: true,
-      formatter: 'formatDateTime',
-      visible: true,
-    },
-    /** 订单来源 */
-    {
-      field: 'orderResource',
-      title: $t('erp.order.field.orderResource'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_RESOURCE },
-      },
-    },
-    /** 订单状态 */
-    {
-      field: 'orderStatus',
-      title: $t('erp.order.field.orderStatus'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_STATUS },
-      },
-      slots: { default: 'orderStatus' },
-    },
-    /** 当前工序 */
-    {
-      field: 'currentProcess',
-      title: $t('erp.order.field.currentProcess'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
-      },
+      visible: false,
     },
     /** 客户 */
     {
       field: 'customer',
       title: $t('erp.order.field.customer'),
       minWidth: 120,
-    },
-    /** 图片 */
-    {
-      field: 'orderImage',
-      title: $t('erp.order.field.orderImage'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellImage',
-        props: {
-          width: 80,
-          height: 80,
-        },
-      },
-    },
-    /** 二维码 */
-    {
-      field: 'qrCode',
-      title: $t('erp.order.field.qrCode'),
-      minWidth: 120,
-      visible: false,
-      cellRender: {
-        name: 'CellImage',
-        props: {
-          width: 80,
-          height: 80,
-        },
-      },
     },
     /** 规格 */
     {
@@ -299,32 +238,26 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
         props: { type: DICT_TYPE.ERP_SPECIFICATION },
       },
     },
-    /** 版型 */
+    /** 订单状态 */
     {
-      field: 'pattern',
-      title: $t('erp.order.field.pattern'),
+      field: 'orderStatus',
+      title: $t('erp.order.field.orderStatus'),
+      minWidth: 150,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_ORDER_STATUS },
+      },
+      slots: { default: 'orderStatus' },
+    },
+    /** 订单来源 */
+    {
+      field: 'orderResource',
+      title: $t('erp.order.field.orderResource'),
       minWidth: 120,
       cellRender: {
         name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_PATTERN },
+        props: { type: DICT_TYPE.ERP_ORDER_RESOURCE },
       },
-    },
-    /** 布料 */
-    {
-      field: 'fabric',
-      title: $t('erp.order.field.fabric'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_FABRIC },
-      },
-    },
-    /** 数量 */
-    {
-      field: 'number',
-      title: $t('erp.order.field.number'),
-      minWidth: 120,
-      sortable: true,
     },
     /** 提货方式 */
     {
@@ -343,33 +276,125 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       minWidth: 120,
       visible: false,
     },
-    /** 发货订单 */
+    /** 当前工序 */
     {
-      field: 'shippingNo',
-      title: $t('erp.order.field.shippingNo'),
+      field: 'currentProcess',
+      title: $t('erp.order.field.currentProcess'),
       minWidth: 120,
-      visible: false,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
+      },
     },
-    /** 发货时间 */
+    /** 图片 */
     {
-      field: 'shippingTime',
-      title: $t('erp.order.field.shippingTime'),
+      field: 'orderImage',
+      title: $t('erp.order.field.orderImage'),
       minWidth: 120,
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 80,
+          height: 80,
+        },
+      },
+    },
+    /** 打印图片 */
+    {
+      field: 'printImage',
+      title: $t('erp.order.field.printImage'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 80,
+          height: 80,
+        },
+      },
+    },
+    /** 预计发货时间 */
+    {
+      field: 'exceptShippingTime',
+      title: $t('erp.order.field.exceptShippingTime'),
+      minWidth: 150,
       sortable: true,
       formatter: 'formatDateTime',
-      visible: false,
     },
-    /** 补水 */
+    /** 下单日期 */
     {
-      field: 'hydration',
-      title: $t('erp.order.field.hydration'),
-      minWidth: 120,
+      field: 'orderTime',
+      title: $t('erp.order.field.orderTime'),
+      minWidth: 150,
+      visible: false,
+      sortable: true,
+      formatter: 'formatDateTime',
     },
+    /** 二维码 */
+    {
+      field: 'qrCode',
+      title: $t('erp.order.field.qrCode'),
+      minWidth: 120,
+      visible: false,
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 80,
+          height: 80,
+        },
+      },
+    },
+    /** 版型 */
+    {
+      field: 'pattern',
+      title: $t('erp.order.field.pattern'),
+      minWidth: 120,
+      visible: false,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_PATTERN },
+      },
+    },
+    /** 布料 */
+    {
+      field: 'fabric',
+      title: $t('erp.order.field.fabric'),
+      minWidth: 120,
+      visible: false,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_FABRIC },
+      },
+    },
+    /** 数量 */
+    {
+      field: 'number',
+      title: $t('erp.order.field.number'),
+      minWidth: 120,
+      visible: false,
+      sortable: true,
+    },
+    /** 发货订单 */
+    // {
+    //   field: 'shippingNo',
+    //   title: $t('erp.order.field.shippingNo'),
+    //   minWidth: 150,
+    //   visible: false,
+    // },
+    /** 发货时间 */
+    // {
+    //   field: 'shippingTime',
+    //   title: $t('erp.order.field.shippingTime'),
+    //   minWidth: 150,
+    //   sortable: true,
+    //   formatter: 'formatDateTime',
+    //   visible: false,
+    // },
     /** 备注 */
     {
       field: 'remark',
       title: $t('erp.order.field.remark'),
       minWidth: 120,
+      visible: false,
     },
     /** 创建人*/
     {
@@ -382,7 +407,8 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
     {
       field: 'createTime',
       title: $t('erp.order.field.createTime'),
-      minWidth: 120,
+      minWidth: 150,
+      visible: false,
       sortable: true,
       formatter: 'formatDateTime',
     },

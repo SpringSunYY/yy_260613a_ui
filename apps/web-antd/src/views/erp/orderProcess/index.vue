@@ -134,7 +134,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
-      isHover: true,
+      height: 80,
     },
     toolbarConfig: {
       refresh: { code: 'query' },
@@ -220,6 +220,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
             },
           ]"
         />
+      </template>
+      <template #serialNumber="{ rowIndex }">
+        {{ rowIndex + 1 }}
       </template>
     </Grid>
   </Page>
