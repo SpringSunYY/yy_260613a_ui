@@ -30,7 +30,7 @@ const MIN_ROWS = 20;
 const TABLE_ROW_PX = 24;
 const STATUS_ROWS_BEFORE_IMG = 3;
 const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
-const IMG_PANEL_COLSPAN = 5;
+const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
 const IMG_GRID_GAP = 8;
@@ -44,6 +44,8 @@ const IMG_GRID_GAP = 8;
 function getPrintCss(): string {
   return `
 * { box-sizing: border-box; }
+/* 关键：避免 vue3-print-nb / iframe 误判为"无限页"（SO 71849004） */
+html, body { margin: 0 !important; padding: 0 !important; height: auto !important; }
 #${PRINT_CONTAINER_ID} {
   font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
@@ -112,6 +114,11 @@ function getPrintCss(): string {
   width: 100px;
   height: 100px;
   object-fit: contain;
+}
+/* 尺码统计：红色加粗 */
+#${PRINT_CONTAINER_ID} .jls-stat-text {
+  color: #d40000;
+  font-weight: 700;
 }
 #${PRINT_CONTAINER_ID} .img-panel {
   vertical-align: top;
@@ -278,7 +285,7 @@ function buildHtmlBody(
   ];
 
   const requiredImageRows = Math.ceil(imgHeightPx / TABLE_ROW_PX);
-  const base = Math.max(personList.length, sizeRows.length, MIN_ROWS);
+  const base = Math.max(personList.length, MIN_ROWS);
   const needForImages = requiredImageRows + STATUS_ROWS_BEFORE_IMG;
   const rowCount = Math.max(base, needForImages);
   const rowIndexes = Array.from({ length: rowCount }, (_, i) => i);
@@ -299,7 +306,7 @@ function buildHtmlBody(
   ];
   const statusClasses = ['status-normal', 'status-mid', 'status-neck'];
 
-  // 与 print-form.vue 模板里左侧 5 列 + 尺码汇总 2 列完全一致
+  // 与 print-form.vue 模板里左侧 6 列（明细新增"数量"列）保持一致
   const detailRowsHtml = rowIndexes
     .map((i) => {
       const leftCells = `
@@ -307,26 +314,23 @@ function buildHtmlBody(
         <td class="cell val" colspan="1">${personList[i]?.name ?? ''}</td>
         <td class="cell val" colspan="1">${personList[i]?.number ?? ''}</td>
         <td class="cell val" colspan="1">${personList[i]?.size ?? ''}</td>
+        <td class="cell val" colspan="1">${validDetails[i]?.setQuantity ?? ''}</td>
         <td class="cell val" colspan="1">${personList[i]?.remark ?? ''}</td>`;
-      const sizeCls = sizeRows[i]?.isTotal ? ' val-total' : '';
-      const sizeCell = `
-        <td class="cell val${sizeCls}" colspan="1">${sizeRows[i]?.label ?? ''}</td>
-        <td class="cell val${sizeCls}" colspan="1">${sizeRows[i] ? sizeRows[i].qty : ''}</td>`;
 
       if (i < STATUS_ROWS_BEFORE_IMG) {
         const statusHtml = `
           <td class="cell val status-cell ${statusClasses[i]}" colspan="2">${statusLabels[i] ?? ''}</td>`;
-        return `<tr>${leftCells}${sizeCell}${statusHtml}</tr>`;
+        return `<tr>${leftCells}${statusHtml}</tr>`;
       }
       if (i === STATUS_ROWS_BEFORE_IMG) {
-        return `<tr>${leftCells}${sizeCell}
-          <td class="cell img-panel" colspan="5" rowspan="${rowCount - STATUS_ROWS_BEFORE_IMG}" style="height:${imgPanelHeight}">
+        return `<tr>${leftCells}
+          <td class="cell img-panel" colspan="6" rowspan="${rowCount - STATUS_ROWS_BEFORE_IMG}" style="height:${imgPanelHeight}">
             <div class="product-imgs${orderImages.length === 1 ? ' is-single' : ''}">${imgsHtml}</div>
           </td>
         </tr>`;
       }
-      // i > STATUS_ROWS_BEFORE_IMG：右侧 5 列已被款式图 rowspan 覆盖
-      return `<tr>${leftCells}${sizeCell}</tr>`;
+      // i > STATUS_ROWS_BEFORE_IMG：右侧 6 列已被款式图 rowspan 覆盖
+      return `<tr>${leftCells}</tr>`;
     })
     .join('');
 
@@ -381,15 +385,23 @@ function buildHtmlBody(
       </tr>
 
       <tr>
+        <th class="cell lbl" colspan="1">尺码统计</th>
+        <td class="cell val val-area jls-stat-text" colspan="11">${
+          sizeRows.length > 0
+            ? sizeRows.map((s) => `${s.label}-${s.qty}`).join('、')
+            : ''
+        }</td>
+      </tr>
+
+      <tr>
         <th class="cell lbl" colspan="1">序号</th>
         <th class="cell lbl" colspan="1">名字</th>
         <th class="cell lbl" colspan="1">号码</th>
         <th class="cell lbl" colspan="1">尺码</th>
-        <th class="cell lbl" colspan="1">备注</th>
-        <th class="cell lbl" colspan="1">尺码</th>
         <th class="cell lbl" colspan="1">数量</th>
+        <th class="cell lbl" colspan="1">备注</th>
         <th class="cell lbl" colspan="2">订单状态</th>
-        <td class="cell qr-cell" colspan="3" rowspan="4">${qrCodeUrl ? `<img src="${qrCodeUrl}" class="qr-img" alt="订单二维码" />` : ''}</td>
+        <td class="cell qr-cell" colspan="4" rowspan="4">${qrCodeUrl ? `<img src="${qrCodeUrl}" class="qr-img" alt="订单二维码" />` : ''}</td>
       </tr>
       ${detailRowsHtml}
 
@@ -519,10 +531,15 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
     //   html-to-image 自己 clone → SVG foreignObject → 浏览器原生渲染，
     //   grid/flex/rowspan/position 全支持，且避免 html2canvas 那种"rowspan 把后续
     //   行遮掉"的旧 bug。width/height 让它从 scrollHeight/scrollWidth 量真实尺寸。
+    //   这里保持 pixelRatio:2 出图清晰，不要压图——上传的图片要让客户看得清。
     const dataUrl = await toPng(element, {
       backgroundColor: '#ffffff',
-      pixelRatio: 2,
-      cacheBust: true,
+      pixelRatio: 3,
+      cacheBust: false,
+      style: {
+        transform: 'none',
+        transformOrigin: 'top left',
+      },
     });
 
     const safeTitle = title.replaceAll(/[<>:"/\\|?*]/g, '-');

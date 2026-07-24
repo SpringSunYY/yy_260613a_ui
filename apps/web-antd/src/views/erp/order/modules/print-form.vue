@@ -48,8 +48,8 @@ const MIN_ROWS = 20;
  * 所以这里直接用固定值，避免布局抖动时重复计算。
  */
 const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
-/** 主表共 12 等分列；款式图列 colspan = 5 */
-const IMG_PANEL_COLSPAN = 5;
+/** 主表共 12 等分列；款式图列 colspan = 6（覆盖状态 2 + 二维码 4） */
+const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 /** 款式图列内部 padding + 2 列网格 gap */
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
@@ -89,12 +89,15 @@ function getPrintCss() {
     * { box-sizing: border-box; }
     body { margin: 0 !important; padding: 0 !important; }
     html { margin: 0 !important; padding: 0 !important; }
+    /* 关键：强制整个文档自适应高度，避免 vue3-print-nb 误判为"32k 页" */
+    html, body { height: auto !important; }
     #orderPrintDiv {
       font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
       font-size: 12px;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
+    /* 表格行高锁住，避免被图列带飞 + 浏览器反复 layout */
     #orderPrintDiv table.jls-table {
       width: 100%;
       border-collapse: collapse !important;
@@ -131,6 +134,11 @@ function getPrintCss() {
       font-size: 18px;
       padding: 4px 0 10px;
     }
+    /* 尺码统计：彩色加粗（即使额外 <style> 没注入，inline class 也兜底） */
+    #orderPrintDiv .jls-stat-text {
+      color: #d40000;
+      font-weight: 700;
+    }
     #orderPrintDiv .jls-print {
       max-width: 700px;
       margin: 0 auto;
@@ -159,7 +167,28 @@ function getPrintCss() {
  */
 let currentPrintIframe: HTMLIFrameElement | null = null;
 let titleGuardCleanup: (() => void) | null = null;
+/**
+ * beforeOpenCallback 把 <img> 原 src 记下来，等关抽屉时（onOpenChange false）
+ * 统一还原回去。**不**在 closeCallback 里还原——用户在预览框出来后经常
+ * 点打印/取消多次，每次关都还原 → 下次开又要把 src 设回 dataURL 触发
+ * 浏览器重新解码 RGBA，体感是"关卡 + 再开卡"。
+ */
+let pendingOriginalMap: Map<HTMLImageElement, string> | null = null;
 
+/**
+ * 把打印文件名作为 document.title 守住，防止 Vue Router / 其他代码
+ * 在 chrome 异步读 title 的窗口内把它改掉。
+ *
+ * ⚠️ 重要：早期实现用 MutationObserver 在回调里写回 title，**Chrome 110+
+ * 会把"赋相同字符串"也当作 mutation 触发回调**，形成自激死循环——
+ * 栈展开时把所有 DOM 节点都打包到 GC root，几秒内 chrome 进程就能涨到 17GB。
+ *
+ * 现在的实现用"disconnect 包裹写入" + "写入标记位"两重防御：
+ *   1) 进入 observer 回调时，先检查 title 是不是被外部代码改的（不是自己改的），
+ *      才决定是否写回。
+ *   2) 写回之前 disconnect observer，写完再 observe，**绝不会"自激"**。
+ *   3) afterprint / 3s 后 cleanup 一定 disconnect + remove listener。
+ */
 function startTitleGuard(targetTitle: string) {
   // 已经有遗留的 guard 就先清掉，避免叠加
   titleGuardCleanup?.();
@@ -167,29 +196,72 @@ function startTitleGuard(targetTitle: string) {
   const originalTitle = document.title;
   document.title = targetTitle;
 
-  // MutationObserver：Vue Router 或别的代码可能会改 document.title，
-  // 一旦发现被改就立刻再写一次 target。
+  // 标记：observer 回调内被调时，如果是"我们自己刚写完的"就跳过。
+  // 注意：必须用普通变量，不能挂 document.title 上（写完 title 立刻被还原太危险）。
+  let isSelfWrite = false;
+
+  // 只盯 <title> 节点本身（subtree:false），不要盯整个 head，
+  // 否则 head 里任何节点变化都会触发回调。
+  const titleEl = document.querySelector('title');
+  const observeTarget = titleEl ?? document.head;
+
   const observer = new MutationObserver(() => {
-    if (document.title !== targetTitle) {
+    // 防御 1：自己刚写完的，跳过
+    if (isSelfWrite) return;
+    // 防御 2：title 已经是 target（写完但没等到 observer 收尾）跳过
+    if (document.title === targetTitle) return;
+    // 防御 3：title 已经被还原回 originalTitle（说明 print 已经结束），跳过
+    if (document.title === originalTitle) return;
+
+    // 写入前 disconnect 自身，**这是真正断掉自激循环的关键**——
+    // 写完 document.title 不再触发任何 observer 回调。
+    isSelfWrite = true;
+    observer.disconnect();
+    try {
       document.title = targetTitle;
+    } finally {
+      // 一帧后再 observe，避开本次写入的副作用
+      requestAnimationFrame(() => {
+        isSelfWrite = false;
+        observer.observe(observeTarget, {
+          childList: true,
+          characterData: true,
+          subtree: false,
+        });
+      });
     }
   });
-  observer.observe(document.querySelector('title') ?? document.head, {
+  observer.observe(observeTarget, {
     childList: true,
     characterData: true,
-    subtree: true,
+    subtree: false,
   });
 
   // beforeprint：兜底某些浏览器同步读 title 的场景。
   const onBeforePrint = () => {
-    if (document.title !== targetTitle) document.title = targetTitle;
+    if (document.title !== targetTitle) {
+      isSelfWrite = true;
+      observer.disconnect();
+      try {
+        document.title = targetTitle;
+      } finally {
+        requestAnimationFrame(() => {
+          isSelfWrite = false;
+          observer.observe(observeTarget, {
+            childList: true,
+            characterData: true,
+            subtree: false,
+          });
+        });
+      }
+    }
   };
-  // afterprint：浏览器读完 title 后再还原。
+  // afterprint：浏览器读完 title 后再还原 + 彻底清理。
   const onAfterPrint = () => {
     document.title = originalTitle;
   };
-  window.addEventListener('beforeprint', onBeforePrint);
-  window.addEventListener('afterprint', onAfterPrint);
+  window.addEventListener('beforeprint', onBeforePrint, { once: true });
+  window.addEventListener('afterprint', onAfterPrint, { once: true });
 
   titleGuardCleanup = () => {
     observer.disconnect();
@@ -197,6 +269,8 @@ function startTitleGuard(targetTitle: string) {
     window.removeEventListener('afterprint', onAfterPrint);
     // 3 秒后强制还原（Chrome 异步读 title 大概就是几百 ms，留点余量）
     window.setTimeout(() => {
+      // 防止"清理期间又被别的代码改回"的副作用：直接 disconnect
+      observer.disconnect();
       document.title = originalTitle;
       titleGuardCleanup = null;
     }, 3000);
@@ -210,15 +284,30 @@ const printObj = computed(() => {
     standard: 'html5',
     zIndex: 20_002,
     extraHead: getPrintCss(),
+    /**
+     * 在库 createPrintWindow() 之后、实际打印前调一次。
+     *
+     * 注意：用户点击瞬间 loading 已经在 @click 监听器里亮起（见 handlePrintClick），
+     * 这里只做"命中缓存替换 src"——纯字符串 O(N)，不调 canvas，**绝不卡**。
+     *
+     * PDF 路径内存爆炸修复（用户实测 17GB）：<img> 拿到的已经是 800px JPEG dataURL，
+     * vue3-print-nb cloneNode(true) → 写进 iframe.document → 浏览器渲染预览 →
+     * 序列化 PDF 的整个链路，**4K 原图不再被解码为 RGBA 位图**。
+     */
     beforeOpenCallback() {
-      printing.value = true;
-      // 在库 createPrintWindow() 之后找出 DOM 里最新出现的 printArea_ iframe 缓存下来
       const iframes = document.querySelectorAll<HTMLIFrameElement>(
         'iframe[id^="printArea_"]',
       );
       currentPrintIframe = iframes[iframes.length - 1] ?? null;
-      // 捕获此刻的订单号，用于 openCallback 校验一致性
       currentPrintingOrderNo = orderDetail.value?.orderNo ?? null;
+
+      const printEl = document.querySelector<HTMLElement>('#orderPrintDiv');
+      if (printEl) {
+        // 命中缓存替换 src（同步、O(N)、不调 canvas）。
+        // originalMap 用闭包变量存，**不**挂在 iframe 节点上——因为现在
+        // closeCallback 不会立刻还原，所以等不到下一次打印时再覆盖也无所谓。
+        pendingOriginalMap = applyPrintImageCache(printEl);
+      }
     },
     openCallback() {
       // 防御：打印时校验当前 DOM 数据是否与触发打印时的订单一致
@@ -237,21 +326,62 @@ const printObj = computed(() => {
       if (doc) doc.title = title;
       // Chromium：异步读主窗口的 title，用 guard 守住
       startTitleGuard(title);
-      // 去更新订单打印
-      printOrder(orderDetail.value?.orderNo!).then((res) => {
-        emit('success');
-      });
+      // 去更新订单打印。失败仅打日志，不影响打印流程；
+      // success 推到下个 tick，避免任何潜在的同步递归（父组件 onSuccess
+      // 不应阻塞到 iframe.document.write 完成后才返回）。
+      printOrder(orderDetail.value?.orderNo!)
+        .catch((error) => {
+          console.warn('[print] printOrder failed', error);
+        })
+        .finally(() => {
+          Promise.resolve().then(() => emit('success'));
+        });
     },
     closeCallback() {
-      currentPrintIframe = null;
+      // 关闭预览框（用户点打印/取消）**绝不**还原 src、**绝不**删 iframe。
+      //
+      // 理由（用户反馈）：用户在预览框出来后经常点打印/取消多次，
+      // 或者关掉预览再立刻再开 → 如果每次关闭都还原 src，下一轮
+      // applyPrintImageCache 又要同步设 8 张图 dataURL → 浏览器重新
+      // 解码 RGBA → "重新点击打印也会卡"。
+      //
+      // 现在的语义：
+      //   - 打开预览框：applyPrintImageCache 把 src → dataURL
+      //   - 关闭预览框：什么都不做，dataURL 保留在 DOM 上
+      //   - 再开预览框：applyPrintImageCache 扫描所有 <img>，
+      //     dataURL 被 isCachableImgSrc(dataURL) === false 全部跳过 → 零开销
+      //   - 关抽屉：onOpenChange(false) 统一还原 src + 删 iframe
+
+      // a) 关 loading —— 用户最在意的"按钮恢复可点"
       printing.value = false;
       currentPrintingOrderNo = null;
+
+      // b) 立刻清理 title guard —— 关预览后 Vue Router / 其他代码会改
+      //    document.title，挂在上面的 MutationObserver 会在 3s setTimeout
+      //    兜底清理前持续触发；这里立即 disconnect 就把那段抖动掐掉。
+      titleGuardCleanup?.();
+      titleGuardCleanup = null;
     },
   };
 });
 
 /** 暴露给父组件 */
 defineExpose({ printObj });
+
+/**
+ * 用户点"打印"按钮的瞬间触发：立刻把 loading 置 true，让用户视觉上
+ * 看到反馈。vue3-print-nb 的 v-print 指令在 click 之后才进入
+ * beforeOpenCallback → cloneNode → iframe.document.write → window.print()，
+ * 整个链路在用户感知里就是"我点完了，loading 应该亮"。
+ *
+ * 但 v-print 的 callback（beforeOpenCallback 等）**比 @click 晚一个 tick**
+ * 才到；我们这里在 @click 里同步设 loading.value = true，Vue 立刻 schedule
+ * render，下一帧前 button 的 :loading="printing" 已经为 true → loading 转圈
+ * 出现远早于 vue3-print-nb 完成 iframe 写入。
+ */
+function onPrintClick() {
+  printing.value = true;
+}
 
 /** 日期格式化 */
 function formatDateValue(value: Dayjs | number | string | undefined) {
@@ -353,7 +483,26 @@ watch(
   orderImages,
   () => {
     // DOM 已 patch、img 元素已挂上 → 再计算。
-    void nextTick(() => recomputeImgsHeight());
+    void nextTick(() => {
+      recomputeImgsHeight();
+      // 抽屉打开后立刻让图加载；图加载完后 nextTick 内 <img>.complete === true，
+      // 在 requestIdleCallback 空闲窗口里**后台预热**压缩缓存。
+      // 用户点打印时直接命中缓存，毫秒级完成压图，**不卡顿**。
+      const printEl = document.querySelector<HTMLElement>('#orderPrintDiv');
+      if (!printEl) return;
+      const ric = (window as any).requestIdleCallback as
+        | ((cb: () => void) => number)
+        | undefined;
+      if (ric) {
+        ric(() => {
+          void prewarmDownsampleCache(printEl);
+        });
+      } else {
+        setTimeout(() => {
+          void prewarmDownsampleCache(printEl);
+        }, 0);
+      }
+    });
   },
   { immediate: true },
 );
@@ -437,11 +586,7 @@ const requiredImageRows = computed(() =>
   Math.ceil(productImgsHeightPx.value / TABLE_ROW_PX),
 );
 const rowCount = computed(() => {
-  const base = Math.max(
-    personList.value.length,
-    sizeRows.value.length,
-    MIN_ROWS,
-  );
+  const base = Math.max(personList.value.length, MIN_ROWS);
   // 图列至少需要 N 行，加上前面 3 行状态行 → 总行数最少 N + 3
   const needForImages = requiredImageRows.value + STATUS_ROWS_BEFORE_IMG;
   return Math.max(base, needForImages);
@@ -485,20 +630,172 @@ async function waitForImages(element: HTMLElement) {
   );
 }
 
-/** 导出图片专用：只补 width / max-width，让屏幕外容器的 layout 跟打印纸一致。
-
- * 不要在这里重复抄整个 <style> 块——原 CSS 已经定义完整，
- * 只是 #orderPrintDiv 的 max-width: 900px 在 drawer 里会被压窄，
- * html-to-image 拿到的是被压窄的宽度，所以图列被截掉。
- * 这里只覆盖宽度，CSS 全部沿用原 <style> 块的规则。
+/**
+ * 导出图片专用：原 DOM 的样式已由 jls-print 等全局规则覆盖好，
+ * 这里只是占位 hook——目前不需要再覆写任何 CSS。
+ *
+ * 早期版本曾在这里给 .product-img / .qr-img 加 max-height: 600px
+ * 限制 4K 原图，但这条规则对**导出图片画质是反效果**——
+ * 它直接压低款式图清晰度。导出图片走 cloneNode + html-to-image，
+ * 单图清晰度由克隆体尺寸 + pixelRatio 决定，**不要再压图**。
  */
-function getExportImageCss() {
-  return `
-#orderPrintDiv {
-  width: 700px !important;
-  max-width: 700px !important;
+
+/** 一次性缓存：只取"非 CSS 变量"的属性名，传给 toPng 跳过 CSS 变量拷贝 */
+let cachedNonCustomPropNames: null | string[] = null;
+function getNonCustomPropNames() {
+  if (cachedNonCustomPropNames) return cachedNonCustomPropNames;
+  const names: string[] = [];
+  const style = getComputedStyle(document.documentElement);
+  for (let i = 0; i < style.length; i++) {
+    const name = style.item(i);
+    if (name.startsWith('--')) continue;
+    names.push(name);
+  }
+  cachedNonCustomPropNames = names;
+  return names;
 }
-`;
+
+/** 单边最大像素（宽或高）。款式图渲染到 700px 容器内最多占用 6/12 = 350px，
+ * 缩到 800px 还有 2× 余量，足够 A4 打印清晰；4K 原图缩到这里
+ * 单张可控制在 200KB 以内，内存占用 ≈ 800×800×4 = 2.5MB。 */
+const IMG_DOWNSAMPLE_MAX = 800;
+/** 输出 JPEG 质量。0.85 视觉差异微小，体积比 PNG 小 1/3。 */
+const IMG_DOWNSAMPLE_QUALITY = 0.85;
+
+/**
+ * 图片压缩缓存：原图 src → 800px JPEG dataURL。
+ *
+ * 用途：在抽屉打开、款式图加载完毕后**后台预热**；点打印时直接命中缓存，
+ * cloneNode 写入 iframe 时拿到的就是 dataURL 短串，浏览器不再做 RGBA 解码，
+ * 这正是之前 17GB 内存爆炸的修复核心。
+ *
+ * 为什么不直接改 <img>.src（变成 dataURL）显示给用户看：
+ *   - 用户屏幕上要看的还是原图清晰度。
+ *   - 只在打印路径**临时**替换 src，打印结束 (closeCallback) 再还原，
+ *     这样屏幕显示 / 打印预览 / 导出图片 三条路径各自拿各自的资源，互不污染。
+ *
+ * 缓存粒度：按原始 src 字符串做 key。如果同一订单里同 src 出现多次（不可能），
+ * 也只压缩一次。
+ */
+const downsampleCache = new Map<string, string>();
+/** 同一订单反复打印 / 切单再回来时，复用上一次压好的 dataURL。 */
+let lastOrderCacheKey = '';
+
+function getOrderCacheKey(): string {
+  // 用款式图 URL 串作 fingerprint，足以区分订单
+  return orderImages.value.join('|');
+}
+
+function isCachableImgSrc(src: string): boolean {
+  if (!src) return false;
+  // 已经是 inline dataURL 的不能再压
+  if (src.startsWith('data:')) return false;
+  // blob: 也跳过（通常浏览器内部使用，不会有大图）
+  if (src.startsWith('blob:')) return false;
+  return true;
+}
+
+/**
+ * 单张图：离线缩放到 IMG_DOWNSAMPLE_MAX 像素内，返回 JPEG dataURL。
+ * 失败（CORS 污染 canvas 等）返回原 src，调用方照常把它写进缓存 = 原图。
+ */
+function buildDownsampledDataUrl(img: HTMLImageElement): string {
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+  if (w === 0 || h === 0) return img.src;
+  if (w <= IMG_DOWNSAMPLE_MAX && h <= IMG_DOWNSAMPLE_MAX) return img.src;
+
+  const scale = Math.min(IMG_DOWNSAMPLE_MAX / w, IMG_DOWNSAMPLE_MAX / h, 1);
+  const newW = Math.max(1, Math.round(w * scale));
+  const newH = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = newW;
+  canvas.height = newH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return img.src;
+
+  try {
+    ctx.drawImage(img, 0, 0, newW, newH);
+    return canvas.toDataURL('image/jpeg', IMG_DOWNSAMPLE_QUALITY);
+  } catch {
+    return img.src;
+  }
+}
+
+/**
+ * 后台预热压缩缓存：扫 root 下所有 <img>，把没缓存的塞进 Map。
+ *
+ * 调用时机：订单数据加载完成 + nextTick 后用 requestIdleCallback 推一帧，
+ * 让 UI 优先渲染；不会阻塞主线程。
+ *
+ * 返回一个 Promise——外部可以选择 await 它（一般不 await）。
+ */
+async function prewarmDownsampleCache(root: HTMLElement): Promise<void> {
+  const imgs = [...root.querySelectorAll<HTMLImageElement>('img')];
+  if (imgs.length === 0) return;
+
+  const newKey = getOrderCacheKey();
+  const orderChanged = newKey !== lastOrderCacheKey;
+  if (orderChanged) {
+    // 切单 / 关抽屉后回来：旧缓存里可能含失效图（图片 URL 在 OSS 上理论上永不过期，
+    // 但保守起见订单切换时清空一次）。
+    downsampleCache.clear();
+    lastOrderCacheKey = newKey;
+  }
+
+  const tasks: Promise<void>[] = [];
+  for (const img of imgs) {
+    const src = img.src;
+    if (!isCachableImgSrc(src)) continue;
+    if (downsampleCache.has(src)) continue;
+    if (!img.complete || img.naturalWidth === 0) {
+      // 图还没加载完，跳过这一张；下次 watch 触发时会再试一次。
+      continue;
+    }
+
+    // 单张压图本身是同步 CPU 密集（toDataURL 是同步），但单张一般 <200ms；
+    // 把它丢到 setTimeout(0) 里让本帧先返回，多张图串行分散到多个 tick，
+    // 不会卡死点击响应。
+    tasks.push(
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          const dataUrl = buildDownsampledDataUrl(img);
+          downsampleCache.set(src, dataUrl);
+          resolve();
+        }, 0);
+      }),
+    );
+  }
+  await Promise.all(tasks);
+}
+
+/**
+ * 把缓存命中、且需要压缩的 <img> 的 src 替换成 800px JPEG dataURL。
+ *
+ * 同步、O(N)、不调任何 canvas API——纯 DOM 字符串替换，**绝对不卡**。
+ * 这才是真正解决"点击打印时同步压图卡顿"的修复点。
+ *
+ * 同时返回 originalMap 给 closeCallback 用：把 src 还原回去。
+ */
+function applyPrintImageCache(
+  root: HTMLElement,
+): Map<HTMLImageElement, string> {
+  const originalMap = new Map<HTMLImageElement, string>();
+  const imgs = [...root.querySelectorAll<HTMLImageElement>('img')];
+  for (const img of imgs) {
+    const src = img.src;
+    if (!isCachableImgSrc(src)) continue;
+
+    const cached = downsampleCache.get(src);
+    if (!cached) continue;
+    if (cached === src) continue; // 没真压过（小图），原 src 显示即可
+
+    originalMap.set(img, src);
+    img.src = cached;
+    img.dataset.printDowned = '1';
+  }
+  return originalMap;
 }
 
 /** 将完整打印区域导出为一张高清 PNG。
@@ -509,6 +806,9 @@ function getExportImageCss() {
  * 解决：把 #orderPrintDiv 克隆到屏幕外固定 700px 容器里再截图。
  * 款式图列高度 / rowspan 沿用文件里已有的 productImgsHeightPx / rowCount
  * （已经是按 700px 基准算好的），不在这里再算一遍。
+ *
+ * 注意：导出图片要保持高清（pixelRatio:2），不要在这里压图。
+ * 打印 PDF 的内存爆炸问题另有解——见 printObj 的 beforeOpenCallback。
  */
 async function exportAsImage() {
   const sourceEl = document.querySelector<HTMLElement>('#orderPrintDiv');
@@ -520,9 +820,8 @@ async function exportAsImage() {
   const offScreenContainer = document.createElement('div');
   offScreenContainer.style.cssText =
     'position:fixed;left:-99999px;top:0;width:700px;z-index:-1;pointer-events:none;background:#fff;';
-  const styleEl = document.createElement('style');
-  styleEl.textContent = getExportImageCss();
-  offScreenContainer.append(styleEl);
+  // 不再注入额外 <style> 覆写 —— 早期版本里有 max-height: 600px 这类规则
+  // 反而压低了导出图清晰度。原 DOM 自身样式由 .jls-print 等全局规则覆盖好。
 
   const clonedEl = sourceEl.cloneNode(true) as HTMLElement;
   offScreenContainer.append(clonedEl);
@@ -534,9 +833,23 @@ async function exportAsImage() {
 
     const dataUrl = await toPng(clonedEl, {
       backgroundColor: '#ffffff',
-      pixelRatio: 2,
-      cacheBust: true,
+      // pixelRatio:3 → 实际画布 700×3 = 2100px 宽，比之前 2 倍再高 50%。
+      // 不要在这里写 canvasWidth —— 显式设 canvasWidth 会让 h2i 创建比克隆体
+      // 宽得多的画布，**右侧 1400px 是空画布**（虽然 backgroundColor 是白色，
+      // 但 h2i 在某些版本里 backgroundColor 与 width/canvasWidth 错配时
+      // 不会真正铺满背景，会留灰色），导致导出图出现"右边一长条灰色背景"。
+      // 让 h2i 自己按 width × pixelRatio 算画布 = 2100px，完全匹配克隆体
+      // 实际渲染宽度，无空白区。
+      pixelRatio: 3,
+      cacheBust: false,
+      includeStyleProperties: getNonCustomPropNames(),
       width: 700,
+      style: {
+        transform: 'none',
+        transformOrigin: 'top left',
+      },
+      // 字体完整嵌入，不让 toDataURL 阶段丢字（保证中文不糊）
+      skipFonts: false,
     });
 
     if (orderDetail.value?.orderNo !== currentOrderNo) {
@@ -587,9 +900,36 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   },
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
+      // 抽屉关闭：把当前所有被压过的 <img> src 还原回原 URL。
+      // 这是**唯一**做"还原 + 删 iframe"的时机——关预览框不还原（避免下次
+      // 再开时 applyPrintImageCache 重新同步设 8 张 dataURL 又触发解码卡顿）。
+      // 此时抽屉正在关 → 用户不会再看 #orderPrintDiv → 8 张图同时解码
+      // **视觉上无感知**，反而省得在预览框关闭的"立刻"卡。
+      if (pendingOriginalMap && pendingOriginalMap.size > 0) {
+        for (const [img, src] of pendingOriginalMap) {
+          if (img.isConnected) {
+            img.src = src;
+            delete img.dataset.printDowned;
+          }
+        }
+        pendingOriginalMap = null;
+      }
+
+      // vue3-print-nb 不一定清 printArea iframe——关抽屉时一起清掉
+      if (currentPrintIframe?.parentNode) {
+        currentPrintIframe.remove();
+      }
+      currentPrintIframe = null;
+      currentPrintingOrderNo = null;
+
       orderDetail.value = undefined;
       orderProcess.value = undefined;
       orderDetails.value = [];
+      // 抽屉关闭：清空预热缓存，避免下次打开另一个订单时命中旧 dataURL
+      // （理论上一张订单的所有款式图 URL 在 OSS 上永不过期，但保守起见
+      // 关抽屉就清，让切换订单时重新预热一次，逻辑也更可预测）
+      downsampleCache.clear();
+      lastOrderCacheKey = '';
       return;
     }
     const data = modalDrawerApi.getData<OrderApi.Order>();
@@ -713,19 +1053,28 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 </td>
               </tr>
 
-              <!-- 明细表头：序号|名字|号码|尺码|备注 | 尺码|数量 | 订单状态 | 二维码(右) -->
+              <!-- 尺码统计：一行内展示 尺码-数量、尺码-数量 ... 总计-N -->
+              <tr>
+                <th class="cell lbl" colspan="1">尺码统计</th>
+                <td class="cell val val-area jls-stat-text" colspan="11">
+                  <template v-if="sizeRows.length > 0">
+                    {{ sizeRows.map((s) => `${s.label}-${s.qty}`).join('、') }}
+                  </template>
+                </td>
+              </tr>
+
+              <!-- 明细表头：序号|名字|号码|尺码|数量|备注 | 订单状态 | 二维码(右) -->
               <tr>
                 <th class="cell lbl" colspan="1">序号</th>
                 <th class="cell lbl" colspan="1">名字</th>
                 <th class="cell lbl" colspan="1">号码</th>
                 <th class="cell lbl" colspan="1">尺码</th>
-                <th class="cell lbl" colspan="1">备注</th>
-                <th class="cell lbl" colspan="1">尺码</th>
                 <th class="cell lbl" colspan="1">数量</th>
+                <th class="cell lbl" colspan="1">备注</th>
                 <th class="cell lbl" colspan="2">订单状态</th>
 
                 <!-- 二维码：紧贴订单状态右边，向下合并 表头 + 3 个状态行 = 4 行 -->
-                <td class="cell qr-cell" colspan="3" rowspan="4">
+                <td class="cell qr-cell" colspan="4" rowspan="4">
                   <img
                     v-if="qrCode"
                     :src="qrCode"
@@ -748,23 +1097,10 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   {{ personList[i]?.size ?? '' }}
                 </td>
                 <td class="cell val" colspan="1">
+                  {{ orderDetails[i]?.setQuantity ?? '' }}
+                </td>
+                <td class="cell val" colspan="1">
                   {{ personList[i]?.remark ?? '' }}
-                </td>
-
-                <!-- 尺码汇总列 -->
-                <td
-                  class="cell val"
-                  colspan="1"
-                  :class="{ 'val-total': sizeRows[i]?.isTotal }"
-                >
-                  {{ sizeRows[i]?.label ?? '' }}
-                </td>
-                <td
-                  class="cell val"
-                  colspan="1"
-                  :class="{ 'val-total': sizeRows[i]?.isTotal }"
-                >
-                  {{ sizeRows[i] ? sizeRows[i].qty : '' }}
                 </td>
 
                 <!-- 前 3 行：订单状态色块（二维码由表头行 rowspan 覆盖在右侧） -->
@@ -781,7 +1117,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 <td
                   v-else-if="i === 3"
                   class="cell img-panel"
-                  colspan="5"
+                  colspan="6"
                   :rowspan="rowCount - 3"
                   :style="{ height: `${(rowCount - 3) * TABLE_ROW_PX}px` }"
                 >
@@ -799,7 +1135,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                     />
                   </div>
                 </td>
-                <!-- i > 3 的行：右侧 5 列已被款式图 rowspan 覆盖，无需渲染 -->
+                <!-- i > 3 的行：右侧 6 列已被款式图 rowspan 覆盖，无需渲染 -->
               </tr>
 
               <!-- 底部：包装要求 / 地址 / 补水 -->
@@ -863,6 +1199,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         type="primary"
         :disabled="!orderDetail || printing || exportingImage"
         :loading="printing"
+        @click="onPrintClick"
         v-print="printObj"
         v-if="
           orderDetail?.currentProcess ===
@@ -1077,7 +1414,6 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   display: flex;
   justify-content: flex-end;
   gap: 16px;
-  margin-top: 8px;
   font-size: 12px;
 }
 
@@ -1114,5 +1450,11 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     margin: 0 !important;
     padding: 0 !important;
   }
+}
+
+/* ---------- 尺码统计：红色加粗 ---------- */
+#orderPrintDiv .jls-stat-text {
+  color: #d40000;
+  font-weight: 700;
 }
 </style>
