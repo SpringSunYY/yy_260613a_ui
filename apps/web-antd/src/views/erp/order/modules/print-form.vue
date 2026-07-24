@@ -485,26 +485,58 @@ async function waitForImages(element: HTMLElement) {
   );
 }
 
-/** 将完整打印区域导出为一张高清 PNG。 */
+/** 导出图片专用：只补 width / max-width，让屏幕外容器的 layout 跟打印纸一致。
+
+ * 不要在这里重复抄整个 <style> 块——原 CSS 已经定义完整，
+ * 只是 #orderPrintDiv 的 max-width: 900px 在 drawer 里会被压窄，
+ * html-to-image 拿到的是被压窄的宽度，所以图列被截掉。
+ * 这里只覆盖宽度，CSS 全部沿用原 <style> 块的规则。
+ */
+function getExportImageCss() {
+  return `
+#orderPrintDiv {
+  width: 700px !important;
+  max-width: 700px !important;
+}
+`;
+}
+
+/** 将完整打印区域导出为一张高清 PNG。
+
+ * 关键修复：drawer 里的 #orderPrintDiv 宽度受抽屉视口约束（max-width: 900px
+ * 在 w-[75%] 抽屉里实际只能拿到 ~570px），html-to-image 拿到的画布宽度被压窄，
+ * 表格右侧（款式图列 + 二维码列）被切掉。
+ * 解决：把 #orderPrintDiv 克隆到屏幕外固定 700px 容器里再截图。
+ * 款式图列高度 / rowspan 沿用文件里已有的 productImgsHeightPx / rowCount
+ * （已经是按 700px 基准算好的），不在这里再算一遍。
+ */
 async function exportAsImage() {
-  const element = document.querySelector<HTMLElement>('#orderPrintDiv');
-  if (!element || !orderDetail.value || exportingImage.value) return;
+  const sourceEl = document.querySelector<HTMLElement>('#orderPrintDiv');
+  if (!sourceEl || !orderDetail.value || exportingImage.value) return;
 
   const currentOrderNo = orderDetail.value.orderNo;
 
   exportingImage.value = true;
+  const offScreenContainer = document.createElement('div');
+  offScreenContainer.style.cssText =
+    'position:fixed;left:-99999px;top:0;width:700px;z-index:-1;pointer-events:none;background:#fff;';
+  const styleEl = document.createElement('style');
+  styleEl.textContent = getExportImageCss();
+  offScreenContainer.append(styleEl);
+
+  const clonedEl = sourceEl.cloneNode(true) as HTMLElement;
+  offScreenContainer.append(clonedEl);
+  document.body.append(offScreenContainer);
+
   try {
-    await nextTick();
-    await waitForImages(element);
+    await waitForImages(clonedEl);
     await document.fonts?.ready;
 
-    // 走和 print-form.vue 一致的 toPng 路线（与 use-order-print.ts 对齐）：
-    // 让 html-to-image 自己 clone 节点、自己处理样式；不传 width/height，
-    // 它会从 getBoundingClientRect + scrollHeight 计算画布尺寸。
-    const dataUrl = await toPng(element, {
+    const dataUrl = await toPng(clonedEl, {
       backgroundColor: '#ffffff',
       pixelRatio: 2,
       cacheBust: true,
+      width: 700,
     });
 
     if (orderDetail.value?.orderNo !== currentOrderNo) {
@@ -543,6 +575,7 @@ async function exportAsImage() {
     console.error('导出订单图片失败', error);
     message.error('图片导出失败，请检查款式图是否允许跨域访问');
   } finally {
+    offScreenContainer.remove();
     exportingImage.value = false;
   }
 }
@@ -813,7 +846,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       用 #append-footer 而不是 #footer：vben 的 ModalDrawer 包装会把同名 slot
       当作 boolean prop `footer` 透传，触发 "Expected Boolean, got Function" warn。
       append-footer / center-footer / prepend-footer 不与任何 prop 同名，能正常走插槽。
-      这里的 #append-footer 与抽屉自身的 cancel 按��并存，所以无需手写取消按钮。
+      这里的 #append-footer 与抽屉自身的 cancel 按并存，所以无需手写取消按钮。
 
         打印：v-print 指令 → vue3-print-nb 自动 cloneNode(#orderPrintDiv) 进 iframe 打印。
       popTitle 决定 PDF 文件名；loading 状态由库 beforeOpenCallback / closeCallback 推动。
