@@ -627,12 +627,6 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       title: $t('erp.order.field.orderNo'),
       minWidth: 120,
     },
-    /** 补水 */
-    {
-      field: 'hydration',
-      title: $t('erp.order.field.hydration'),
-      minWidth: 120,
-    },
     /** 客户 */
     {
       field: 'customer',
@@ -644,10 +638,10 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'specification',
       title: $t('erp.order.field.specification'),
       minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_SPECIFICATION },
-      },
+      // cellRender: {
+      //   name: 'CellI18nDict',
+      //   props: { type: DICT_TYPE.ERP_SPECIFICATION },
+      // },
       slots: { default: 'specification' },
     },
     /** 布料 */
@@ -665,10 +659,10 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'orderStatus',
       title: $t('erp.order.field.orderStatus'),
       minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_STATUS },
-      },
+      // cellRender: {
+      //   name: 'CellI18nDict',
+      //   props: { type: DICT_TYPE.ERP_ORDER_STATUS },
+      // },
       slots: { default: 'orderStatus' },
     },
     /** 发货地址 */
@@ -741,6 +735,23 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
         name: 'CellI18nDict',
         props: { type: DICT_TYPE.ERP_ORDER_PRINT_STATUS },
       },
+    },
+    /** 提货方式 */
+    {
+      field: 'pickupMethod',
+      title: $t('erp.order.field.pickupMethod'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_ORDER_PICKUP_METHOD },
+      },
+    },
+    /** 补水 */
+    {
+      field: 'hydration',
+      title: $t('erp.order.field.hydration'),
+      minWidth: 120,
+      visible: false,
     },
     /** 订单来源 */
     {
@@ -833,17 +844,6 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       cellRender: {
         name: 'CellI18nDict',
         props: { type: DICT_TYPE.ERP_LOAN_STATUS },
-      },
-    },
-    /** 提货方式 */
-    {
-      field: 'pickupMethod',
-      title: $t('erp.order.field.pickupMethod'),
-      visible: false,
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_PICKUP_METHOD },
       },
     },
     /** 预计发货时间 */

@@ -5,7 +5,7 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 import { ref } from 'vue';
 
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, formatTime, isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
@@ -16,8 +16,9 @@ import {
   exportOrderProcess,
   getOrderProcessPage,
 } from '#/api/erp/orderProcess';
+import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
-import { pickSort } from '#/utils';
+import { DICT_TYPE, pickSort } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -225,6 +226,30 @@ const [Grid, gridApi] = useVbenVxeGrid({
       </template>
       <template #serialNumber="{ rowIndex }">
         {{ rowIndex + 1 }}
+      </template>
+      <template #orderStatus="{ row }">
+        <div>
+          <div>
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_ORDER_STATUS"
+              :value="row.orderStatus"
+            />
+          </div>
+          <div>
+            {{ formatTime(row.exceptShippingTime, 'yyyy-MM-dd') }}
+          </div>
+        </div>
+      </template>
+      <template #specification="{ row }">
+        <div class="flex items-center">
+          <div>
+            <I18nDictTag
+              :type="DICT_TYPE.ERP_SPECIFICATION"
+              :value="row.specification"
+            />
+          </div>
+          <div>{{ row.number }}套</div>
+        </div>
       </template>
     </Grid>
   </Page>

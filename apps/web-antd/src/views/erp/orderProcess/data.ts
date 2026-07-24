@@ -270,17 +270,17 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     /** 排版人 */
-    {
-      fieldName: 'layoutPerson',
-      label: $t('erp.orderProcess.field.layoutPerson'),
-      component: 'Input',
-      componentProps: {
-        allowClear: true,
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.layoutPerson'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'layoutPerson',
+    //   label: $t('erp.orderProcess.field.layoutPerson'),
+    //   component: 'Input',
+    //   componentProps: {
+    //     allowClear: true,
+    //     placeholder: $t('ui.placeholder.input', [
+    //       $t('erp.orderProcess.field.layoutPerson'),
+    //     ]),
+    //   },
+    // },
     /** 版型 */
     {
       fieldName: 'pattern',
@@ -308,83 +308,83 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     /** 品类 */
-    {
-      fieldName: 'category',
-      label: $t('erp.orderProcess.field.category'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_CATEGORY, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.category'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'category',
+    //   label: $t('erp.orderProcess.field.category'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_CATEGORY, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.category'),
+    //     ]),
+    //   },
+    // },
     /** 规格 */
-    {
-      fieldName: 'specification',
-      label: $t('erp.orderProcess.field.specification'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_SPECIFICATION, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.specification'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'specification',
+    //   label: $t('erp.orderProcess.field.specification'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_SPECIFICATION, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.specification'),
+    //     ]),
+    //   },
+    // },
     /** 开叉与否 */
-    {
-      fieldName: 'hasForked',
-      label: $t('erp.orderProcess.field.hasForked'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_HAS_FORKED, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.hasForked'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'hasForked',
+    //   label: $t('erp.orderProcess.field.hasForked'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_HAS_FORKED, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.hasForked'),
+    //     ]),
+    //   },
+    // },
     /** 衫脚 */
-    {
-      fieldName: 'shirtHem',
-      label: $t('erp.orderProcess.field.shirtHem'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_SHIRT_HEM, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.shirtHem'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'shirtHem',
+    //   label: $t('erp.orderProcess.field.shirtHem'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_SHIRT_HEM, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.shirtHem'),
+    //     ]),
+    //   },
+    // },
     /** 口袋 */
-    {
-      fieldName: 'pocket',
-      label: $t('erp.orderProcess.field.pocket'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_POCKET, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.pocket'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'pocket',
+    //   label: $t('erp.orderProcess.field.pocket'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_POCKET, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.pocket'),
+    //     ]),
+    //   },
+    // },
     /** 领口 */
-    {
-      fieldName: 'neckline',
-      label: $t('erp.orderProcess.field.neckline'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_NECKLINE, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.neckline'),
-        ]),
-      },
-    },
+    // {
+    //   fieldName: 'neckline',
+    //   label: $t('erp.orderProcess.field.neckline'),
+    //   component: 'I18nSelect',
+    //   componentProps: {
+    //     allowClear: true,
+    //     options: getDictOptions(DICT_TYPE.ERP_NECKLINE, 'string'),
+    //     placeholder: $t('ui.placeholder.select', [
+    //       $t('erp.orderProcess.field.neckline'),
+    //     ]),
+    //   },
+    // },
     /** 创建时间 */
     {
       fieldName: 'createTime',
@@ -409,11 +409,58 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
       slots: { default: 'serialNumber' },
     },
     /** 编号 */
+    // {
+    //   field: 'id',
+    //   title: $t('erp.orderProcess.field.id'),
+    //   minWidth: 120,
+    //   visible: false,
+    // },
+    /** 订单号 */
     {
-      field: 'id',
-      title: $t('erp.orderProcess.field.id'),
+      field: 'orderNo',
+      title: $t('erp.orderProcess.field.orderNo'),
       minWidth: 120,
-      visible: false,
+    },
+    /** 打印图片 */
+    {
+      field: 'printImage',
+      title: $t('erp.order.field.printImage'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 80,
+          height: 80,
+        },
+      },
+    },
+    /** 客户 */
+    {
+      field: 'customer',
+      title: $t('erp.order.field.customer'),
+      minWidth: 120,
+    },
+    /** 规格 */
+    {
+      field: 'specification',
+      title: $t('erp.order.field.specification'),
+      minWidth: 120,
+      cellRender: {
+        name: 'CellI18nDict',
+        props: { type: DICT_TYPE.ERP_SPECIFICATION },
+      },
+      slots: { default: 'specification' },
+    },
+    /** 订单状态 */
+    {
+      field: 'orderStatus',
+      title: $t('erp.order.field.orderStatus'),
+      minWidth: 120,
+      // cellRender: {
+      //   name: 'CellI18nDict',
+      //   props: { type: DICT_TYPE.ERP_ORDER_STATUS },
+      // },
+      slots: { default: 'orderStatus' },
     },
     /** 当前工序 */
     {
@@ -425,53 +472,29 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
         props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
       },
     },
-    /** 订单状态 */
+    /** 创建时间 */
     {
-      field: 'orderStatus',
-      title: $t('erp.orderProcess.field.orderStatus'),
+      field: 'createTime',
+      title: $t('erp.orderProcess.field.createTime'),
+      minWidth: 120,
+      sortable: true,
+      formatter: 'formatDateTime',
+    },
+    /** 提货方式 */
+    {
+      field: 'pickupMethod',
+      title: $t('erp.order.field.pickupMethod'),
       minWidth: 120,
       cellRender: {
         name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_STATUS },
+        props: { type: DICT_TYPE.ERP_ORDER_PICKUP_METHOD },
       },
     },
-    /** 订单号 */
     {
-      field: 'orderNo',
-      title: $t('erp.orderProcess.field.orderNo'),
+      field: 'shippingAddress',
+      title: $t('erp.order.field.shippingAddress'),
       minWidth: 120,
-    },
-    /** 排版人 */
-    {
-      field: 'layoutPerson',
-      title: $t('erp.orderProcess.field.layoutPerson'),
-      minWidth: 120,
-    },
-    /** 图片 */
-    {
-      field: 'orderImage',
-      title: $t('erp.orderProcess.field.orderImage'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellImage',
-        props: {
-          width: 80,
-          height: 80,
-        },
-      },
-    },
-    /** 二维码 */
-    {
-      field: 'qrCode',
-      title: $t('erp.orderProcess.field.qrCode'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellImage',
-        props: {
-          width: 80,
-          height: 80,
-        },
-      },
+      visible: false,
     },
     /** 版型 */
     {
@@ -493,99 +516,123 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
         props: { type: DICT_TYPE.ERP_FABRIC },
       },
     },
+    /** 排版人 */
+    // {
+    //   field: 'layoutPerson',
+    //   title: $t('erp.orderProcess.field.layoutPerson'),
+    //   minWidth: 120,
+    // },
+    /** 图片 */
+    // {
+    //   field: 'orderImage',
+    //   title: $t('erp.orderProcess.field.orderImage'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellImage',
+    //     props: {
+    //       width: 80,
+    //       height: 80,
+    //     },
+    //   },
+    // },
+    /** 二维码 */
+    // {
+    //   field: 'qrCode',
+    //   title: $t('erp.orderProcess.field.qrCode'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellImage',
+    //     props: {
+    //       width: 80,
+    //       height: 80,
+    //     },
+    //   },
+    // },
     /** 品类 */
-    {
-      field: 'category',
-      title: $t('erp.orderProcess.field.category'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_CATEGORY },
-      },
-    },
+    // {
+    //   field: 'category',
+    //   title: $t('erp.orderProcess.field.category'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_CATEGORY },
+    //   },
+    // },
     /** 规格 */
-    {
-      field: 'specification',
-      title: $t('erp.orderProcess.field.specification'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_SPECIFICATION },
-      },
-    },
+    // {
+    //   field: 'specification',
+    //   title: $t('erp.orderProcess.field.specification'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_SPECIFICATION },
+    //   },
+    // },
     /** 开叉与否 */
-    {
-      field: 'hasForked',
-      title: $t('erp.orderProcess.field.hasForked'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_HAS_FORKED },
-      },
-    },
+    // {
+    //   field: 'hasForked',
+    //   title: $t('erp.orderProcess.field.hasForked'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_HAS_FORKED },
+    //   },
+    // },
     /** 衫脚 */
-    {
-      field: 'shirtHem',
-      title: $t('erp.orderProcess.field.shirtHem'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_SHIRT_HEM },
-      },
-    },
+    // {
+    //   field: 'shirtHem',
+    //   title: $t('erp.orderProcess.field.shirtHem'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_SHIRT_HEM },
+    //   },
+    // },
     /** 口袋 */
-    {
-      field: 'pocket',
-      title: $t('erp.orderProcess.field.pocket'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_POCKET },
-      },
-    },
+    // {
+    //   field: 'pocket',
+    //   title: $t('erp.orderProcess.field.pocket'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_POCKET },
+    //   },
+    // },
     /** 领口 */
-    {
-      field: 'neckline',
-      title: $t('erp.orderProcess.field.neckline'),
-      minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_NECKLINE },
-      },
-    },
+    // {
+    //   field: 'neckline',
+    //   title: $t('erp.orderProcess.field.neckline'),
+    //   minWidth: 120,
+    //   cellRender: {
+    //     name: 'CellI18nDict',
+    //     props: { type: DICT_TYPE.ERP_NECKLINE },
+    //   },
+    // },
     /** 包装要求 */
-    {
-      field: 'packagingRequirements',
-      title: $t('erp.orderProcess.field.packagingRequirements'),
-      minWidth: 120,
-    },
+    // {
+    //   field: 'packagingRequirements',
+    //   title: $t('erp.orderProcess.field.packagingRequirements'),
+    //   minWidth: 120,
+    // },
     /** 车间要求 */
-    {
-      field: 'workshopRequirements',
-      title: $t('erp.orderProcess.field.workshopRequirements'),
-      minWidth: 120,
-    },
+    // {
+    //   field: 'workshopRequirements',
+    //   title: $t('erp.orderProcess.field.workshopRequirements'),
+    //   minWidth: 120,
+    // },
     /** 特别备注 */
-    {
-      field: 'remark',
-      title: $t('erp.orderProcess.field.remark'),
-      minWidth: 120,
-    },
+    // {
+    //   field: 'remark',
+    //   title: $t('erp.orderProcess.field.remark'),
+    //   minWidth: 120,
+    // },
     /** 创建人*/
-    {
-      field: 'creator',
-      title: $t('erp.orderProcess.field.creator'),
-      minWidth: 120,
-      visible: false,
-    },
-    /** 创建时间 */
-    {
-      field: 'createTime',
-      title: $t('erp.orderProcess.field.createTime'),
-      minWidth: 120,
-      sortable: true,
-      formatter: 'formatDateTime',
-    },
+    // {
+    //   field: 'creator',
+    //   title: $t('erp.orderProcess.field.creator'),
+    //   minWidth: 120,
+    //   visible: false,
+    // },
     {
       title: $t('common.operation'),
       width: 200,
