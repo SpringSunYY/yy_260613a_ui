@@ -158,7 +158,11 @@
     "minSizeMultiple": "Only upload files no smaller than {0}MB!",
     "maxNumber": "Only upload up to {0} files",
     "uploadSuccess": "Upload successfully",
-    "fileUpload": "File Upload"
+    "fileUpload": "File Upload",
+    "pasteHint": "Paste image here to upload",
+    "pasteUploading": "Uploading pasted image…",
+    "pasteNotFile": "The clipboard content is not a file / image",
+    "pasteBusy": "Upload is in progress, please wait"
   },
   "cropper": {
     "selectImage": "Select Image",

@@ -35,7 +35,7 @@ import { I18nSelectToString } from '#/components/i18n/i18n-select-to-string';
 import { NumberRange } from '#/components/number-range';
 import { SelectToString } from '#/components/select-to-string';
 import { Tinymce as RichTextarea } from '#/components/tinymce';
-import { FileUpload, ImageUpload } from '#/components/upload';
+import { FileUpload, ImageUpload, InputUpload } from '#/components/upload';
 
 const AutoComplete = defineAsyncComponent(
   () => import('ant-design-vue/es/auto-complete'),
@@ -273,6 +273,7 @@ async function initComponentAdapter() {
     FilePreview,
     FileUpload,
     ImageUpload,
+    InputUpload,
   };
 
   // 将组件注册到全局共享状态中

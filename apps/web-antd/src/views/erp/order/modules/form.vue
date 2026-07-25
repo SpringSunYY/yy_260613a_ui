@@ -10,19 +10,14 @@ import { useVbenModelDrawer } from '@vben/common-ui';
 import { message, Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import {
-  createOrder,
-  getOrder,
-  updateOrder,
-} from '#/api/erp/order';
+import { createOrder, getOrder, updateOrder } from '#/api/erp/order';
 import { getOrderProcessByOrderNo } from '#/api/erp/orderProcess';
 import { I18nSelect } from '#/components/i18n/i18n-select';
 import { $t } from '#/locales';
 import { DICT_TYPE, getDictOptions } from '#/utils';
 
-import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
 import { uploadOrderPrintImage } from '../composables/use-order-print';
-import { useFormSchema } from '../data';
+import { useFormSchema, useProcessFormSchema } from '../data';
 import OrderDetailForm from './order-detail-form.vue';
 
 const emit = defineEmits(['success']);

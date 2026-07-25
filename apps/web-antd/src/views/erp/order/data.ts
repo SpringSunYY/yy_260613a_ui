@@ -8,8 +8,10 @@ import { $t } from '@vben/locales';
 import {
   DICT_TYPE,
   ErpOrderAuditStatus,
+  ErpOrderCurrentProcess,
   getDictOptions,
   getRangePickerDefaultProps,
+  MODULE_TYPE_ENUM,
 } from '#/utils';
 
 const { hasAccessByCodes } = useAccess();
@@ -198,39 +200,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       component: 'I18nSelect',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.loanStatus'),
-        ]),
-      },
-    },
-    /** 邮费 */
-    {
-      fieldName: 'postage',
-      label: $t('erp.order.field.postage'),
-      rules: 'required',
-      component: 'InputNumber',
-      defaultValue: 0,
-      componentProps: {
-        min: 0,
-        max: 1_000_000,
-        precision: 2,
-        controlsPosition: 'right',
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.order.field.postage'),
-        ]),
-      },
-    },
-    /** 邮费状态 */
-    {
-      fieldName: 'postageStatus',
-      label: $t('erp.order.field.postageStatus'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
         options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
         placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.postageStatus'),
+          $t('erp.order.field.loanStatus'),
         ]),
       },
     },
@@ -259,6 +231,35 @@ export function useFormSchema(): VbenFormSchema[] {
         options: getDictOptions(DICT_TYPE.ERP_ORDER_PICKUP_METHOD, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.order.field.pickupMethod'),
+        ]),
+      },
+    },
+    /** 邮费状态 */
+    {
+      fieldName: 'postageStatus',
+      label: $t('erp.order.field.postageStatus'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.postageStatus'),
+        ]),
+      },
+    },
+    /** 邮费 */
+    {
+      fieldName: 'postage',
+      label: $t('erp.order.field.postage'),
+      component: 'InputNumber',
+      defaultValue: 0,
+      componentProps: {
+        min: 0,
+        max: 1_000_000,
+        precision: 2,
+        controlsPosition: 'right',
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.postage'),
         ]),
       },
     },
@@ -324,12 +325,13 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'hydration',
       label: $t('erp.order.field.hydration'),
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [
           $t('erp.order.field.hydration'),
         ]),
       },
+      formItemClass: 'col-span-3',
     },
     /** 备注 */
     {
@@ -1072,6 +1074,224 @@ export function useAuditFormSchema(): VbenFormSchema[] {
           $t('erp.orderAudit.field.auditRemark'),
         ]),
       },
+    },
+  ];
+}
+
+/** 新增/修改的表单 */
+export function useProcessFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      fieldName: 'id',
+      component: 'Input',
+      dependencies: {
+        triggerFields: [''],
+        show: () => false,
+      },
+    },
+    /** 当前工序 */
+    {
+      fieldName: 'currentProcess',
+      label: $t('erp.orderProcess.field.currentProcess'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.currentProcess'),
+        ]),
+      },
+      dependencies: {
+        triggerFields: [''],
+        show: () => hasAccessByCodes(['erp:order-process:complete']),
+      },
+      defaultValue: ErpOrderCurrentProcess.CURRENT_PROCESS_1,
+      formItemClass: 'col-span-4',
+    },
+    /** 订单号 */
+    {
+      fieldName: 'orderNo',
+      label: $t('erp.orderProcess.field.orderNo'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.orderNo'),
+        ]),
+        readonly: true,
+      },
+    },
+    /** 排版人 */
+    // {
+    //   fieldName: 'layoutPerson',
+    //   label: $t('erp.orderProcess.field.layoutPerson'),
+    //   component: 'Input',
+    //   rules: 'required',
+    //   componentProps: {
+    //     placeholder: $t('ui.placeholder.input', [
+    //       $t('erp.orderProcess.field.layoutPerson'),
+    //     ]),
+    //   },
+    // },
+    /** 版型 */
+    {
+      fieldName: 'pattern',
+      label: $t('erp.orderProcess.field.pattern'),
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_PATTERN, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.pattern'),
+        ]),
+      },
+    },
+    /** 布料 */
+    {
+      fieldName: 'fabric',
+      label: $t('erp.orderProcess.field.fabric'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_FABRIC, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.fabric'),
+        ]),
+      },
+    },
+    /** 品类 */
+    {
+      fieldName: 'category',
+      label: $t('erp.orderProcess.field.category'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_CATEGORY, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.category'),
+        ]),
+      },
+    },
+    /** 规格 */
+    {
+      fieldName: 'specification',
+      label: $t('erp.orderProcess.field.specification'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_SPECIFICATION, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.specification'),
+        ]),
+      },
+    },
+    /** 开叉与否 */
+    {
+      fieldName: 'hasForked',
+      label: $t('erp.orderProcess.field.hasForked'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_HAS_FORKED, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.hasForked'),
+        ]),
+      },
+    },
+    /** 衫脚 */
+    {
+      fieldName: 'shirtHem',
+      label: $t('erp.orderProcess.field.shirtHem'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_SHIRT_HEM, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.shirtHem'),
+        ]),
+      },
+    },
+    /** 口袋 */
+    {
+      fieldName: 'pocket',
+      label: $t('erp.orderProcess.field.pocket'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_POCKET, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.pocket'),
+        ]),
+      },
+    },
+    /** 领口 */
+    {
+      fieldName: 'neckline',
+      label: $t('erp.orderProcess.field.neckline'),
+      rules: 'required',
+      component: 'I18nSelect',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.ERP_NECKLINE, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.neckline'),
+        ]),
+      },
+    },
+    /** 包装要求 */
+    {
+      fieldName: 'packagingRequirements',
+      label: $t('erp.orderProcess.field.packagingRequirements'),
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.packagingRequirements'),
+        ]),
+      },
+    },
+    /** 车间要求 */
+    {
+      fieldName: 'workshopRequirements',
+      label: $t('erp.orderProcess.field.workshopRequirements'),
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.workshopRequirements'),
+        ]),
+      },
+    },
+    /** 图片 */
+    {
+      fieldName: 'orderImage',
+      label: $t('erp.orderProcess.field.orderImage'),
+      component: 'ImageUpload',
+      componentProps: {
+        enablePaste: true,
+        moduleType: MODULE_TYPE_ENUM.ERP,
+        maxNumber: 8,
+      },
+      formItemClass: 'col-span-2',
+    },
+    /** 二维码 */
+    {
+      fieldName: 'qrCode',
+      label: $t('erp.orderProcess.field.qrCode'),
+      component: 'ImageUpload',
+      componentProps: {
+        moduleType: MODULE_TYPE_ENUM.ERP,
+        maxNumber: 1,
+      },
+      formItemClass: 'col-span-2',
+    },
+    /** 特别备注 */
+    {
+      fieldName: 'remark',
+      label: $t('erp.orderProcess.field.remark'),
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.remark'),
+        ]),
+      },
+      formItemClass: 'col-span-4',
     },
   ];
 }

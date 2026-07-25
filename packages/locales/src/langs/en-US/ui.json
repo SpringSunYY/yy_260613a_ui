@@ -129,7 +129,12 @@
     "minSize": "A single file must be at least {0}MB",
     "minSizeMultiple": "File size must be at least {0}MB!",
     "uploadTip": "Upload files up to {0}MB{1}{2}, up to {3}",
-    "uploadTipImage": "Upload images up to {0}MB in {1} format, up to {2}"
+    "uploadTipImage": "Upload images up to {0}MB in {1} format, up to {2}",
+    "pasteHint": "Paste image here to upload",
+    "pasteUploading": "Uploading pasted image…",
+    "pasteNotFile": "The clipboard content is not a file / image",
+    "pasteBusy": "Upload is in progress, please wait",
+    "pasteSuccess": "Successfully uploaded {0} images"
   },
   "cropper": {
     "selectImage": "Select Image",

@@ -129,7 +129,12 @@
     "minSize": "单个文件不小于{0}MB",
     "minSizeMultiple": "文件大小不能小于{0}MB!",
     "uploadTip": "请上传不超过{0}MB{1}的文件{2}，最多{3}个",
-    "uploadTipImage": "请上传不超过{0}MB的{1}格式图片，最多{2}张"
+    "uploadTipImage": "请上传不超过{0}MB的{1}格式图片，最多{2}张",
+    "pasteHint": "请在此处粘贴上传图片",
+    "pasteUploading": "正在上传粘贴的图片…",
+    "pasteNotFile": "当前粘贴内容不是文件 / 图片",
+    "pasteBusy": "上传正在处理中，请稍后再粘贴",
+    "pasteSuccess": "成功上传 {0} 张图片"
   },
   "cropper": {
     "selectImage": "选择图片",
