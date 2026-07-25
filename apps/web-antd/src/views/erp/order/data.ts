@@ -627,7 +627,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
     {
       field: 'orderNo',
       title: $t('erp.order.field.orderNo'),
-      minWidth: 120,
+      minWidth: 60,
     },
     /** 客户 */
     {

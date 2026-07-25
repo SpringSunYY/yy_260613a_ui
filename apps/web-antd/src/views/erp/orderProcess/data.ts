@@ -494,7 +494,6 @@ export function useGridColumns(): VxeTableGridOptions<OrderProcessApi.OrderProce
       field: 'shippingAddress',
       title: $t('erp.order.field.shippingAddress'),
       minWidth: 120,
-      visible: false,
     },
     /** 版型 */
     {

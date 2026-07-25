@@ -48,6 +48,7 @@
       "ship": "Complete Shipping"
     },
     "actionMessage": {
+      "advanceConfirm": "Are you sure to submit order process for order {0}?",
       "resetVectorConfirm": "Are you sure to reset  the order {0} vector?"
     }
   }

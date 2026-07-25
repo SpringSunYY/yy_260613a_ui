@@ -142,7 +142,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderVectorApi.OrderVector
     },
     {
       title: $t('common.operation'),
-      width: 200,
+      width: 250,
       fixed: 'right',
       slots: { default: 'actions' },
     },

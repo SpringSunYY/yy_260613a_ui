@@ -301,6 +301,7 @@ export function useDetailSchema(): VbenFormSchema[] {
         showDescription: false,
         moduleType: MODULE_TYPE_ENUM.ERP,
         maxNumber: 8,
+        disabled: true,
       },
       formItemClass: 'col-span-4',
     },
@@ -314,6 +315,7 @@ export function useDetailSchema(): VbenFormSchema[] {
         showDescription: false,
         maxNumber: 1,
         moduleType: MODULE_TYPE_ENUM.ERP,
+        disabled: true,
       },
     },
     /** 特别备注 */

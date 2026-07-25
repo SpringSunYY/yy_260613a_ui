@@ -48,6 +48,7 @@
       "ship": "完成裁缝发货"
     },
     "actionMessage": {
+      "advanceConfirm": "您确定要提交订单{0}的订单工序吗？",
       "resetVectorConfirm": "您确定重置订单{0}向量吗？重置后之前图片向量将无效。"
     }
   }

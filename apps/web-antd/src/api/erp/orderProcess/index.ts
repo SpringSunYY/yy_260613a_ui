@@ -48,6 +48,13 @@ export namespace OrderProcessApi {
     remark: string; // 特别备注
     orderDetails?: OrderApi.OrderDetail[];
   }
+  /** 订单工序-待排序信息 */
+  export interface OrderProcessToTargetProcess {
+    id: number; // 编号
+    currentProcess?: string; // 当前工序
+    orderNo?: string; // 订单号
+    layoutPerson: string; // 排版人
+  }
 
   export interface OrderProcessDetail {
     id: number; // 编号
@@ -130,7 +137,7 @@ export function updateOrderProcessSort(data: OrderProcessApi.OrderProcessSort) {
 
 /** 推进订单工序 */
 export function updateProcessToTargetProcess(
-  data: OrderProcessApi.OrderProcessSort,
+  data: OrderProcessApi.OrderProcessToTargetProcess,
 ) {
   return requestClient.put('/erp/order-process/update/process', data);
 }

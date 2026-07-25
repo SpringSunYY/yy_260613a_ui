@@ -15,10 +15,12 @@ import {
   deleteOrderProcessList,
   exportOrderProcess,
   getOrderProcessPage,
+  updateProcessToTargetProcess,
 } from '#/api/erp/orderProcess';
 import I18nDictTag from '#/components/i18n/i18n-dict-tag/i18n-dict-tag.vue';
 import { $t } from '#/locales';
-import { DICT_TYPE, pickSort } from '#/utils';
+import { DICT_TYPE, ErpOrderCurrentProcess, pickSort } from '#/utils';
+import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -27,6 +29,12 @@ const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
   type: 'drawer',
+});
+
+const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
+  connectedComponent: ShipForm,
+  destroyOnClose: true,
+  type: 'modal',
 });
 
 /** 刷新表格 */
@@ -42,6 +50,82 @@ function handleCreate() {
 /** 编辑订单工序 */
 function handleEdit(row: OrderProcessApi.OrderProcess) {
   formModalDrawerApi.setData(row).open();
+}
+
+const processActionConfig = [
+  {
+    current: ErpOrderCurrentProcess.CURRENT_PROCESS_2,
+    target: ErpOrderCurrentProcess.CURRENT_PROCESS_3,
+    label: 'erp.orderProcess.action.layout',
+    auth: 'erp:order-process:layout',
+  },
+  {
+    current: ErpOrderCurrentProcess.CURRENT_PROCESS_3,
+    target: ErpOrderCurrentProcess.CURRENT_PROCESS_4,
+    label: 'erp.orderProcess.action.paper',
+    auth: 'erp:order-process:paper',
+  },
+  {
+    current: ErpOrderCurrentProcess.CURRENT_PROCESS_4,
+    target: ErpOrderCurrentProcess.CURRENT_PROCESS_5,
+    label: 'erp.orderProcess.action.roller',
+    auth: 'erp:order-process:roller',
+  },
+  {
+    current: ErpOrderCurrentProcess.CURRENT_PROCESS_5,
+    target: ErpOrderCurrentProcess.CURRENT_PROCESS_6,
+    label: 'erp.orderProcess.action.laser',
+    auth: 'erp:order-process:laser',
+  },
+  {
+    current: ErpOrderCurrentProcess.CURRENT_PROCESS_6,
+    target: ErpOrderCurrentProcess.CURRENT_PROCESS_7,
+    label: 'erp.orderProcess.action.ship',
+    auth: 'erp:order-process:ship',
+  },
+] as const;
+
+/** 推进订单工序 */
+async function handleToTargetProcess(
+  row: OrderProcessApi.OrderProcess,
+  targetProcess: string,
+) {
+  await updateProcessToTargetProcess({
+    id: row.id,
+    currentProcess: targetProcess,
+    orderNo: row.orderNo,
+    layoutPerson: row.layoutPerson,
+  });
+  message.success($t('ui.actionMessage.operationSuccess'));
+  onRefresh();
+}
+
+/** 发货 */
+function handleOrderShip(row: OrderProcessApi.OrderProcess) {
+  if (!row.orderNo) return;
+  shipFormModalDrawerApi.setData(row).open();
+}
+
+/** 根据当前工序生成“更多”中的推进操作 */
+function getProcessDropDownActions(row: OrderProcessApi.OrderProcess) {
+  return processActionConfig.map((action) => ({
+    label: $t(action.label),
+    type: 'link' as const,
+    auth: [action.auth],
+    ifShow: row.currentProcess === action.current,
+    ...(action.target === ErpOrderCurrentProcess.CURRENT_PROCESS_7
+      ? { onClick: handleOrderShip.bind(null, row) }
+      : {
+          popConfirm: {
+            title: row.orderNo
+              ? $t('erp.orderProcess.actionMessage.advanceConfirm', [
+                  row.orderNo,
+                ])
+              : $t('ui.actionMessage.submitConfirm'),
+            confirm: handleToTargetProcess.bind(null, row, action.target),
+          },
+        }),
+  }));
 }
 
 /** 删除订单工序 */
@@ -159,6 +243,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 <template>
   <Page auto-content-height>
     <FormModalDrawer @success="onRefresh" />
+    <ShipFormModalDrawer @success="onRefresh" />
 
     <Grid :table-title="$t('erp.orderProcess.orderProcess')">
       <template #toolbar-tools>
@@ -207,6 +292,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order-process:update'],
               onClick: handleEdit.bind(null, row),
             },
+          ]"
+          :drop-down-actions="[
+            ...getProcessDropDownActions(row),
             {
               label: $t('common.delete'),
               type: 'link',

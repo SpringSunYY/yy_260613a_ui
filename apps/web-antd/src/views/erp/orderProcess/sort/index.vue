@@ -8,6 +8,7 @@ import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue';
 import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { useUserStore } from '@vben/stores';
 import { formatDateTime } from '@vben/utils';
 
 import { message, Pagination } from 'ant-design-vue';
@@ -36,6 +37,12 @@ import {
 } from './data';
 
 const { hasAccessByCodes } = useAccess();
+const userStore = useUserStore();
+
+/** 当前登录用户名（用于默认排版人） */
+const currentLoginUserName = computed(
+  () => userStore.userInfo?.nickname || userStore.userInfo?.username || '',
+);
 
 /** 顶部查询表单 */
 const [SearchForm, searchFormApi] = useVbenForm({
@@ -190,6 +197,15 @@ async function loadDetail(id: number) {
   try {
     await detailFormApi.resetForm();
     const detail = await getOrderProcess(id);
+    // 如果排版人为空，默认设置为当前登录用户
+    if (
+      (detail as OrderProcessApi.OrderProcessSort).layoutPerson === undefined ||
+      (detail as OrderProcessApi.OrderProcessSort).layoutPerson === null ||
+      (detail as OrderProcessApi.OrderProcessSort).layoutPerson === ''
+    ) {
+      (detail as OrderProcessApi.OrderProcessSort).layoutPerson =
+        currentLoginUserName.value;
+    }
     await detailFormApi.setValues(detail);
     detailFormApi.setState({ commonConfig: { disabled: false } });
   } finally {
@@ -276,16 +292,22 @@ async function handleToTargetProcess(targetProcess: string) {
   saving.value = true;
   try {
     const values = await detailFormApi.getValues();
-    const orderDetails = orderDetailFormRef.value?.getData() || [];
+    // const orderDetails = orderDetailFormRef.value?.getData() || [];
+    // await updateProcessToTargetProcess({
+    //   ...(values as OrderProcessApi.OrderProcessSort),
+    //   currentProcess: targetProcess,
+    //   orderDetails,
+    // });
     await updateProcessToTargetProcess({
-      ...(values as OrderProcessApi.OrderProcessSort),
+      id: targetId,
       currentProcess: targetProcess,
-      orderDetails,
+      orderNo,
+      layoutPerson: values.layoutPerson,
     });
     await toSelectRow(targetId);
     message.success($t('ui.actionMessage.operationSuccess'));
     // 异步静默上传打印图片，完全不阻塞主线程
-    if (orderNo) uploadOrderPrintImage(orderNo);
+    // if (orderNo) uploadOrderPrintImage(orderNo);
   } finally {
     saving.value = false;
   }
@@ -302,15 +324,6 @@ function confirmToTargetProcess(targetProcess: string) {
   handleToTargetProcess(targetProcess);
 }
 
-/**
- * 工序推进动作配置：根据当前工序计算可用的「完成 XX」操作
- * - currentProcess=2 待排版  -> 完成排版 -> 3
- * - currentProcess=3 待打纸  -> 完成打纸 -> 4
- * - currentProcess=4 待滚筒  -> 完成滚筒 -> 5
- * - currentProcess=5 待激光  -> 完成激光 -> 6
- * - currentProcess=6 待裁缝发货 -> 完成裁缝发货 -> 7
- * - 1 草稿 / 7 完结 不展示
- */
 const processActions = computed(() => {
   const order = [
     ErpOrderCurrentProcess.CURRENT_PROCESS_2,
@@ -478,9 +491,14 @@ refreshAll();
                 :key="action.key"
                 :disabled="!selectedRow?.id"
                 :title="
-                  $t('ui.actionMessage.submitConfirm', [
-                    $t('erp.orderProcess.orderProcess'),
-                  ])
+                  selectedRow?.orderNo
+                    ? $t(
+                        'erp.orderProcess.actionMessage.advanceConfirm',
+                        [selectedRow.orderNo],
+                      )
+                    : $t('ui.actionMessage.submitConfirm', [
+                        $t('erp.orderProcess.orderProcess'),
+                      ])
                 "
                 :ok-text="$t('common.confirm')"
                 :cancel-text="$t('common.cancel')"
@@ -494,16 +512,16 @@ refreshAll();
                   {{ $t(action.i18nKey) }}
                 </a-button>
               </a-popconfirm>
-              <a-button
-                type="primary"
-                size="small"
-                :disabled="!selectedRow?.id"
-                :loading="saving"
-                v-if="hasAccessByCodes(['erp:order-process:update'])"
-                @click="handleSave"
-              >
-                {{ $t('common.save') }}
-              </a-button>
+              <!--              <a-button-->
+              <!--                type="primary"-->
+              <!--                size="small"-->
+              <!--                :disabled="!selectedRow?.id"-->
+              <!--                :loading="saving"-->
+              <!--                v-if="hasAccessByCodes(['erp:order-process:update'])"-->
+              <!--                @click="handleSave"-->
+              <!--              >-->
+              <!--                {{ $t('common.save') }}-->
+              <!--              </a-button>-->
             </span>
           </div>
           <div class="sort-pane__scroll">
@@ -513,7 +531,17 @@ refreshAll();
                 :description="$t('erp.orderProcess.selectRowHint')"
               />
               <div v-else>
-                <DetailForm class="sort-detail" />
+                <DetailForm class="sort-detail">
+                  <template #layoutPerson="slotProps">
+                    <AInput
+                      v-model:value="slotProps.value"
+                      :readonly="
+                        selectedRow?.currentProcess !==
+                        ErpOrderCurrentProcess.CURRENT_PROCESS_2
+                      "
+                    />
+                  </template>
+                </DetailForm>
                 <OrderDetailForm
                   v-if="selectedRow?.orderNo"
                   ref="orderDetailFormRef"
