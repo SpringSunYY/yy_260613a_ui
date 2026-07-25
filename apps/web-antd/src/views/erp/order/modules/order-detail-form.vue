@@ -285,10 +285,20 @@ defineExpose({
       if (!row) continue;
       if (isEmptyRow(row)) continue;
 
+      // 跳过表头行（第 0 行），用户感知的行号 = 索引 + 1
+      const userRowIndex = i + 1;
+
       if (isCellEmpty(row[SIZE_COL_INDEX])) {
+        console.warn('[OrderDetail] validation failed', {
+          reason: 'setSize is empty',
+          rowIndex: userRowIndex,
+          row,
+          setSize: row[SIZE_COL_INDEX],
+          setQuantity: row[QTY_COL_INDEX],
+        });
         message.warn(
           $t('ui.placeholder.subTableInput', [
-            i,
+            userRowIndex,
             emptyFieldLabels[SIZE_COL_INDEX],
           ]),
         );
@@ -296,9 +306,17 @@ defineExpose({
       }
 
       if (isCellEmpty(row[QTY_COL_INDEX]) || Number(row[QTY_COL_INDEX]) === 0) {
+        console.warn('[OrderDetail] validation failed', {
+          reason: 'setQuantity is empty or zero',
+          rowIndex: userRowIndex,
+          row,
+          setSize: row[SIZE_COL_INDEX],
+          setQuantity: row[QTY_COL_INDEX],
+          normalizedQuantity: Number(row[QTY_COL_INDEX]),
+        });
         message.warn(
           $t('ui.placeholder.subTableInput', [
-            i,
+            userRowIndex,
             emptyFieldLabels[QTY_COL_INDEX],
           ]),
         );
@@ -340,7 +358,6 @@ defineExpose({
     </Card>
   </div>
 
-  <!-- Jspreadsheet 表格 -->
   <!-- Jspreadsheet 表格 -->
   <div class="mx-4">
     <Jspreadsheet

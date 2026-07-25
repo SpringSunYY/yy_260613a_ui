@@ -92,6 +92,27 @@ function resolveDropdownSource(col: ColumnDefinition): string[] {
   return [];
 }
 
+/** 不区分大小写匹配下拉项，并返回字典中的标准值 */
+function matchDropdownValue(
+  col: ColumnDefinition,
+  value: unknown,
+): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const input = String(value).trim();
+  if (!input) return undefined;
+  const normalizedInput = input.toLocaleLowerCase();
+  return resolveDropdownSource(col).find(
+    (item) => item.trim().toLocaleLowerCase() === normalizedInput,
+  );
+}
+
+/** 将可匹配的下拉值统一成字典中的大小写，未匹配项视为脏值清空 */
+function normalizeDropdownValue(colIndex: number, value: any): any {
+  const col = props.columns[colIndex];
+  if (col?.type !== 'dropdown' || value === '' || value == null) return value;
+  return matchDropdownValue(col, value) ?? '';
+}
+
 /** 构建列配置 */
 function buildColumns(): any[] {
   return props.columns.map((col) => {
@@ -120,7 +141,7 @@ function normalizeRow(row: any[] | undefined, length: number): any[] {
   const result: any[] = new Array(length).fill('');
   if (row) {
     for (let i = 0; i < length; i++) {
-      result[i] = row[i] ?? '';
+      result[i] = normalizeDropdownValue(i, row[i] ?? '');
     }
   }
   return result;
@@ -243,10 +264,6 @@ function init() {
       if (destroyed) return;
       spreadsheetInstance = instance;
       worksheetInstance = instance?.worksheets?.[0] ?? null;
-      console.log(
-        '[Jspreadsheet] onload, worksheets:',
-        instance?.worksheets?.length,
-      );
       hideTopBar();
 
       // 列宽自适应：用 ResizeObserver 动态缩放表格填满父容器
@@ -298,53 +315,79 @@ function init() {
       _instance: any,
       _cell: HTMLTableCellElement,
       colIndex: number | string,
-      _rowIndex: number | string,
+      rowIndex: number | string,
       newValue: any,
     ) => {
-      if (newValue === undefined || newValue === null) {
-        return ''; // 拒绝 jspreadsheet 内部发出的"幽灵" undefined 值
-      }
       const cIdx = Number(colIndex);
+      const column = props.columns[cIdx];
+      if (newValue === undefined || newValue === null) {
+        console.warn('[Jspreadsheet] validation failed', {
+          reason: 'value is null or undefined',
+          rowIndex,
+          colIndex,
+          columnTitle: column?.title,
+          columnType: column?.type,
+          newValue,
+        });
+        return '';
+      }
       if (numericCols.has(cIdx)) {
         const normalized = normalizeNumericInput(newValue);
+        if (normalized === '' && String(newValue).trim() !== '') {
+          console.warn('[Jspreadsheet] validation failed', {
+            reason: 'numeric value cannot be normalized',
+            rowIndex,
+            colIndex,
+            columnTitle: column?.title,
+            columnType: column?.type,
+            newValue,
+          });
+        }
         return normalized === '' && newValue === '' ? undefined : normalized;
       }
-      // dropdown 列：必须是字符串且非空（具体值由 jSuites dropdown 内部已保证）
+      if (column?.type === 'dropdown') {
+        if (typeof newValue === 'string' && newValue.trim() === '') {
+          return undefined;
+        }
+        const matchedValue = matchDropdownValue(column, newValue);
+        if (matchedValue !== undefined) return matchedValue;
+        console.warn('[Jspreadsheet] validation failed', {
+          reason: 'dropdown value not in source (case-insensitive), rejected',
+          rowIndex,
+          colIndex,
+          columnTitle: column.title,
+          columnType: column.type,
+          newValue,
+          source: resolveDropdownSource(column),
+        });
+        return '';
+      }
       if (typeof newValue === 'string') {
         return newValue === '' ? undefined : newValue;
       }
-      // 其他类型（非字符串）：拒绝
+      console.warn('[Jspreadsheet] validation failed', {
+        reason: 'non-text value supplied to text column',
+        rowIndex,
+        colIndex,
+        columnTitle: column?.title,
+        columnType: column?.type,
+        newValue,
+      });
       return '';
     },
     // 单元格值变化（包括输入和粘贴）
     onchange: (
       _instance: any,
       _cell: HTMLTableCellElement,
-      colIndex: number | string,
-      rowIndex: number | string,
+      _colIndex: number | string,
+      _rowIndex: number | string,
       newValue: any,
       oldValue: any,
     ) => {
       // 忽略幽灵 onchange（jspreadsheet 内部会在某些路径上发出 undefined 值的 onchange）
-      if (newValue === undefined || newValue === null) {
-        console.log('[Jspreadsheet] onchange ignored (ghost)', {
-          colIndex,
-          rowIndex,
-          newValue,
-          oldValue,
-        });
-        return;
-      }
+      if (newValue === undefined || newValue === null) return;
       // 忽略值未变化的情况
-      if (newValue === oldValue) {
-        console.log('[Jspreadsheet] onchange ignored (no-op)', {
-          colIndex,
-          rowIndex,
-          newValue,
-        });
-        return;
-      }
-      console.log('[Jspreadsheet] onchange', { colIndex, rowIndex, newValue });
+      if (newValue === oldValue) return;
       const data = worksheetInstance?.getData?.() ?? [];
       emitChange(data);
     },
