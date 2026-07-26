@@ -18,6 +18,7 @@ import { $t } from '#/locales';
 import {
   DICT_TYPE,
   ErpOrderCurrentProcess,
+  ErpOrderPrintStatus,
   getDictLabel,
   getDictOptions,
 } from '#/utils';
@@ -329,12 +330,19 @@ const printObj = computed(() => {
       // 去更新订单打印。失败仅打日志，不影响打印流程；
       // success 推到下个 tick，避免任何潜在的同步递归（父组件 onSuccess
       // 不应阻塞到 iframe.document.write 完成后才返回）。
+      if (
+        orderDetail.value?.printStatus === ErpOrderPrintStatus.PRINT_STATUS_1
+      ) {
+        return;
+      }
       printOrder(orderDetail.value?.orderNo!)
         .catch((error) => {
           console.warn('[print] printOrder failed', error);
         })
         .finally(() => {
-          Promise.resolve().then(() => emit('success'));
+          Promise.resolve().then(() => {
+            emit('success');
+          });
         });
     },
     closeCallback() {
@@ -896,7 +904,10 @@ async function exportAsImage() {
 const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   async onConfirm() {
     await modalDrawerApi.close();
-    emit('success');
+    // 如果已经打印过了，不提示父组件了
+    if (orderDetail.value?.printStatus === ErpOrderPrintStatus.PRINT_STATUS_1) {
+      emit('success');
+    }
   },
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {

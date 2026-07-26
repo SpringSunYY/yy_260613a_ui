@@ -37,3 +37,12 @@ export const ErpOrderCurrentProcess = {
   /** 完结 */
   CURRENT_PROCESS_7: '7',
 } as const;
+
+// 订单打印状态
+export const ErpOrderPrintStatus = {
+  /** 未打印 */
+  PRINT_STATUS_0: '0',
+
+  /** 已打印 */
+  PRINT_STATUS_1: '1',
+} as const;

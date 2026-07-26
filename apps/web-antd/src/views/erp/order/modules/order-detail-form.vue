@@ -388,17 +388,18 @@ defineExpose({
 </template>
 
 <style scoped>
-/* Jspreadsheet 样式覆盖 */
-:deep(.jexcel) {
+/* Jspreadsheet 样式覆盖 - 使用 jspreadsheet CE v5 的真实 DOM 类名（jss_ 前缀） */
+:deep(.jss_worksheet) {
   font-size: 13px;
 }
 
-:deep(.jexcel td) {
+:deep(.jss_worksheet > thead > tr > td),
+:deep(.jss_worksheet > tbody > tr > td) {
   padding: 4px 6px;
 }
 
-:deep(.jexcel th) {
-  padding: 6px 8px;
-  background-color: #fafafa;
+:deep(.jss_worksheet > thead > tr > td) {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
 }
 </style>

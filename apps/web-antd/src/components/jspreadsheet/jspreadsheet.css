@@ -1,0 +1,54 @@
+/* =================================================================
+ * Jspreadsheet CE v5 官方 CSS 变量 → vben 主题变量映射
+ *
+ * 为什么必须放在全局：jspreadsheet 自带的 themes.css 通过
+ * `var(--border_color, #ccc)` 这种写法读取变量，
+ * 而变量只能在 **真正作用到 jspreadsheet DOM 节点上的祖先** 定义。
+ *
+ * 放在组件的 <style scoped> 里会被 Vue 加 [data-v-xxx] 属性选择器后缀，
+ * 变成 `:root[data-v-xxx] { ... }`，永远不会命中 <html>，
+ * jspreadsheet 的 var() 就会全部回退到 fallback。
+ *
+ * 全局 CSS 由 app.ts import，作用域就是 <html> / :root，
+ * 在 light 模式下设一次，dark 模式下 vben 的 dark.css 自动接管所有 token，
+ * 这里只需要照常赋值 `hsl(var(--xxx))`，CSS 变量是惰性求值的。
+ * ================================================================= */
+
+:root {
+  /* 单元格背景 / 文字 */
+  --content_background: hsl(var(--card));
+  --content_color: hsl(var(--foreground));
+
+  /* 表头 / 工具栏 / 序号列 / 分页背景 / 文字 */
+  --header_background: hsl(var(--accent));
+  --header_color: hsl(var(--accent-foreground));
+
+  /* 边框 */
+  --border_color: hsl(var(--border));
+
+  /* 表头选中态 */
+  --header_background_highlighted: hsl(var(--primary) / 15%);
+  --header_color_highlighted: hsl(var(--primary));
+
+  /* selection / 拖拽高亮 */
+  --selection: hsl(var(--primary) / 10%);
+  --border_color_highlighted: hsl(var(--primary));
+  --cursor: hsl(var(--accent-hover));
+
+  /* toolbar hover */
+  --content_background_highlighted: hsl(var(--accent-hover));
+  --content_color_highlighted: hsl(var(--foreground));
+
+  /* 右键菜单 */
+  --menu_background: hsl(var(--popover));
+  --menu_color: hsl(var(--foreground));
+  --menu_box_shadow: 0 6px 16px hsl(var(--overlay));
+  --menu_background_highlighted: hsl(var(--accent-hover));
+  --menu_color_highlighted: hsl(var(--foreground));
+}
+
+/* 深色下让选中态更明显（vben 的 dark token 自动接管 --card 等，
+   这里只调 jspreadsheet 自有变量值层面的差异） */
+.dark {
+  --selection: hsl(var(--primary) / 20%);
+}

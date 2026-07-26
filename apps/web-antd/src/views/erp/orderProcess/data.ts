@@ -235,16 +235,15 @@ export function useFormSchema(): VbenFormSchema[] {
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
-    /** 当前工序 */
+    /** 订单号 */
     {
-      fieldName: 'currentProcess',
-      label: $t('erp.orderProcess.field.currentProcess'),
-      component: 'I18nSelect',
+      fieldName: 'orderNo',
+      label: $t('erp.orderProcess.field.orderNo'),
+      component: 'Input',
       componentProps: {
         allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.orderProcess.field.currentProcess'),
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.orderNo'),
         ]),
       },
     },
@@ -257,15 +256,16 @@ export function useGridFormSchema(): VbenFormSchema[] {
         options: getDictOptions(DICT_TYPE.ERP_ORDER_STATUS, 'string'),
       },
     },
-    /** 订单号 */
+    /** 当前工序 */
     {
-      fieldName: 'orderNo',
-      label: $t('erp.orderProcess.field.orderNo'),
-      component: 'Input',
+      fieldName: 'currentProcess',
+      label: $t('erp.orderProcess.field.currentProcess'),
+      component: 'I18nSelect',
       componentProps: {
         allowClear: true,
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.orderNo'),
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.orderProcess.field.currentProcess'),
         ]),
       },
     },

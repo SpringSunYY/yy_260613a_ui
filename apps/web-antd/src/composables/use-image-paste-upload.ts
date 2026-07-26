@@ -1,9 +1,10 @@
+import type { FileType } from 'ant-design-vue/es/upload/interface';
+
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 
 import { message, Upload } from 'ant-design-vue';
-import type { FileType } from 'ant-design-vue/es/upload/interface';
 
 /**
  * 把标准 File 适配成 antd 的 FileType（antd 在原生 File 基础上多塞了 uid/lastModifiedDate）。
@@ -68,7 +69,7 @@ export function useImagePasteUpload(options: {
     if (!items || items.length === 0) {
       return;
     }
-    const list = Array.from(items);
+    const list = [...items];
     for (const item of list) {
       if (item.kind !== 'file') continue;
       const file = item.getAsFile();

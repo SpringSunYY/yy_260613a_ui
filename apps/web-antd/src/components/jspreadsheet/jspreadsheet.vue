@@ -5,6 +5,8 @@ dropdown（tableOverflow:true → position:true 自动脱离容器）数量列�
 onbeforechange 校验只接受数字，空值允许 使用 jspreadsheet v5 原生的
 options.onchange / options.onload 等回调 -->
 <script setup lang="ts">
+import type { ColumnDefinition, JspreadsheetInstance } from './typing';
+
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import jspreadsheet from 'jspreadsheet-ce';
@@ -12,26 +14,8 @@ import jspreadsheet from 'jspreadsheet-ce';
 import { getDictOptions } from '#/utils';
 
 import 'jspreadsheet-ce/dist/jspreadsheet.css';
+import 'jspreadsheet-ce/dist/jspreadsheet.themes.css';
 import 'jsuites/dist/jsuites.css';
-
-export interface ColumnDefinition {
-  title: string;
-  /** 宽度，可为像素（number）或百分比（string，如 '20%'） */
-  width?: number | string;
-  editable?: boolean;
-  /** 字典类型（如 'erp_set_size'），设置后将自动加载字典选项作为下拉项 */
-  dictType?: string;
-  /** 直接传入下拉项（与 dictType 二选一，优先使用 dictType） */
-  options?: { id: number | string; name: string }[];
-  type?: 'dropdown' | 'numeric' | 'text';
-}
-
-export interface JspreadsheetInstance {
-  getData: () => any[][];
-  setData: (data: any[][]) => void;
-  insertRow: () => void;
-  jexcel: any;
-}
 
 const props = withDefaults(
   defineProps<{
@@ -541,6 +525,20 @@ defineExpose({
 </template>
 
 <style scoped>
+/* =================================================================
+ * Jspreadsheet CE v5 主题适配
+ *
+ * 关键：jspreadsheet 官方变量 --border_color / --header_background /
+ * --content_background / --menu_background 等必须在 **全局 CSS 中**
+ * 赋值到 vben 的主题 token，否则 themes.css 的 var() 全部回退到 fallback。
+ * 这部分已搬到 apps/web-antd/src/adapter/jspreadsheet.css，
+ * 由全局样式统一管理，自动适配 light / dark。
+ *
+ * 下面只保留 :
+ *   1. 一些结构性样式（字号 / 居中 / 隐藏工具栏 / 数字列右对齐）
+ *   2. themes.css 覆盖不到的硬编码（jspreadsheet.css 里直接写死的）
+ *   3. jsuites 的 dropdown / editor（jsuites.css 没暴露 CSS 变量）
+ * ================================================================= */
 .jspreadsheet-wrapper {
   width: 100%;
   display: flex;
@@ -548,144 +546,168 @@ defineExpose({
   align-items: center;
 }
 
-/* 完全隐藏顶部工具栏 */
-:deep(.jexcel) > div:first-child {
+/* 完全隐藏顶部工具栏 / 分页 / tabs */
+:deep(.jss_toolbar),
+:deep(.jss_toolbar:empty),
+:deep(.jss_about),
+:deep(.jss_pagination),
+:deep(.jss_filter),
+:deep(.jss_spreadsheet > .jtabs),
+:deep(.jss_spreadsheet > .jexcel_footer) {
+  display: none !important;
+}
+:deep(.jss_spreadsheet > div:first-child) {
   display: none !important;
 }
 
-:deep(.jtab) {
-  display: none !important;
+/* 容器允许溢出（dropdown 浮层要溢出） */
+:deep(.jss_spreadsheet),
+:deep(.jss_container),
+:deep(.jss_content) {
+  overflow: visible !important;
 }
 
-:deep(.jexcel_footer) {
-  display: none !important;
-}
-
-:deep(.jexcel_contextmenu) {
-  z-index: 9999;
-}
-
-/* 禁用列拖拽 */
-:deep(.jexcel th) {
-  cursor: default !important;
-  user-select: none !important;
-}
-
-:deep(.jexcel th),
-:deep(.jexcel th > *) {
-  -webkit-user-drag: none !important;
-  pointer-events: auto !important;
-}
-
-:deep(.jexcel th .jexcel-column-handle),
-:deep(.jexcel thead .drag-handle),
-:deep(.jexcel thead [draggable]) {
-  display: none !important;
-  pointer-events: none !important;
-}
-
-/* 主题样式覆盖 */
-:deep(.jexcel) {
+:deep(.jss_worksheet) {
   font-size: 13px;
   font-family: inherit;
-  color: var(--text-color, #000);
-  background: var(--component-bg, #fff);
-  border: 1px solid var(--border-color, #d9d9d9) !important;
-  border-radius: 6px;
 }
 
-:deep(.jexcel_container),
-:deep(.jexcel_content) {
-  overflow: visible !important;
+/* 数字列右对齐 */
+:deep(.jss_worksheet td.numeric) {
+  text-align: right !important;
 }
 
-:deep(.jexcel thead) {
-  background: var(--hover-bg, #fafafa);
+/* =================================================================
+ * themes.css 没接管这些硬编码（仍在 jspreadsheet.css 里）
+ * 必须靠 :deep 选择器补
+ * ================================================================= */
+
+/* .jss_worksheet 容器自身的白底
+   （themes.css 只接管了内部 td 的背景，没接管 .jss_worksheet 容器） */
+:deep(.jss_worksheet) {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
-:deep(.jexcel td) {
-  padding: 4px 8px;
-  border-color: var(--border-color, #d9d9d9) !important;
-  background: var(--component-bg, #fff) !important;
-  color: var(--text-color, #000) !important;
-  text-align: center;
-  overflow: visible !important;
+/* 内部 td 自身没有 background，由 .jss_worksheet 透传；对深色无问题
+   但要确保表格内容文字色正确（themes.css 只设了 .content_color，
+   fallback 是 #000，深色下不可见，但我们的 :root 全局已重新赋值，
+   这里依然补一份防止 themes.css 未生效） */
+:deep(.jss_worksheet > thead > tr > td),
+:deep(.jss_worksheet > tbody > tr > td),
+:deep(.jss_worksheet > tfoot > tr > td) {
+  color: hsl(var(--foreground));
 }
 
-:deep(.jexcel th) {
-  padding: 8px;
-  border-color: var(--border-color, #d9d9d9) !important;
-  background: var(--hover-bg, #fafafa) !important;
-  color: var(--text-color, #000) !important;
-  font-weight: 600;
-  text-align: center;
+/* themes.css 没接管的硬编码：
+   - .jss_worksheet > thead > tr > td.selected { #dcdcdc }
+   - .jss_worksheet > tbody > tr.selected > td:first-child { #dcdcdc }
+   - .jss_worksheet tbody .jss_freezed { #fff }
+   - .jss_worksheet .editor .jupload / .jss_richtext { #fff }
+   - .jss_corner { rgb(0,0,0) }
+   - .jss_worksheet .onDrag { rgba(0,0,0,0.6) }
+   - .fullscreen { #ffffff }
+   - .jss_worksheet > tbody > tr > td.readonly { rgba(0,0,0,0.3) }
+   - .jss_worksheet tbody > tr.dragging > td { #eee } */
+:deep(.jss_worksheet > thead > tr > td.selected),
+:deep(.jss_worksheet > tbody > tr.selected > td:first-child) {
+  background-color: hsl(var(--primary) / 15%) !important;
+  color: hsl(var(--primary)) !important;
+}
+:deep(.jss_worksheet tbody .jss_freezed) {
+  background-color: hsl(var(--card)) !important;
+  box-shadow: 1px 1px 1px 1px hsl(var(--border)) !important;
+}
+:deep(.jss_worksheet thead .jss_freezed),
+:deep(.jss_worksheet tfoot .jss_freezed) {
+  box-shadow: 2px 0px 2px 0.2px hsl(var(--border)) !important;
+}
+:deep(.jss_worksheet .editor .jupload),
+:deep(.jss_worksheet .editor .jss_richtext) {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 8px 10px 1px hsl(var(--overlay)) !important;
+}
+:deep(.jss_worksheet > tbody > tr > td.readonly) {
+  color: hsl(var(--muted-foreground)) !important;
+}
+:deep(.jss_worksheet > tbody > tr.dragging > td) {
+  background-color: hsl(var(--muted)) !important;
+}
+:deep(.fullscreen) {
+  background-color: hsl(var(--background)) !important;
 }
 
-:deep(.jexcel th > *),
-:deep(.jexcel th) {
-  text-align: center !important;
+/* 冻结列模式下，右下角的小黑块 .jss_corner 不重要，保持原样 */
+
+/* scrollbar */
+:deep(.jss_content::-webkit-scrollbar-track) {
+  background: hsl(var(--muted)) !important;
+}
+:deep(.jss_content::-webkit-scrollbar-thumb) {
+  background: hsl(var(--border)) !important;
 }
 
-:deep(.jexcel td.selected) {
-  background: var(--primary-1, #e6f7ff) !important;
-  border-color: var(--primary-color, #1890ff) !important;
+/* checkbox / radio accent color */
+:deep(.jss_worksheet input[type='checkbox']),
+:deep(.jss_worksheet input[type='radio']) {
+  accent-color: hsl(var(--primary));
 }
 
-:deep(.jexcel tbody tr:hover td) {
-  background: var(--hover-bg, #f5f5f5) !important;
-}
-
-/* 关键：jSuites dropdown 浮层（position:true 时定位到屏幕外） */
+/* =================================================================
+ * jsuites.css - jsuitse 没暴露 CSS 变量，只能用 :deep
+ * ================================================================= */
 :deep(.jdropdown-container) {
-  background: #fff !important;
-  border: 1px solid #d9d9d9 !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18) !important;
-  border-radius: 4px !important;
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 6px 16px hsl(var(--overlay)) !important;
+  border-radius: 4px;
   z-index: 99999 !important;
   max-height: 260px !important;
   overflow-y: auto !important;
 }
-
+:deep(.jdropdown-content) {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--foreground)) !important;
+}
 :deep(.jdropdown-item) {
-  color: #333 !important;
-  padding: 8px 12px !important;
-  cursor: pointer !important;
-  user-select: none !important;
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent !important;
 }
-
 :deep(.jdropdown-item:hover),
-:deep(.jdropdown-item.jdropdown-selected),
+:deep(.jdropdown-item.jdropdown-cursor),
 :deep(.jdropdown-item.jdropdown-focus) {
-  background: #e6f7ff !important;
-  color: #1890ff !important;
+  background-color: hsl(var(--accent-hover)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+:deep(.jdropdown-default .jdropdown-selected) {
+  background-color: hsl(var(--primary) / 15%) !important;
+  color: hsl(var(--primary)) !important;
+}
+:deep(.jdropdown-group) {
+  background-color: hsl(var(--popover)) !important;
+}
+:deep(.jdropdown-group-name) {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
-/* 关键：cell 内的 .jdropdown 容器不能撑开 cell（浮层是 fixed 定位） */
-:deep(.jexcel td > .jdropdown),
-:deep(.jexcel td > .jdropdown-searchbar),
-:deep(.jexcel td > .jdropdown-list),
-:deep(.jexcel td > .jdropdown-picker) {
-  display: block !important;
-  width: 100% !important;
-  position: relative;
+/* 编辑态 input/textarea caret + placeholder + focus */
+:deep(.jss_worksheet > tbody > tr > td > input),
+:deep(.jss_worksheet > tbody > tr > td > textarea),
+:deep(.jss_worksheet .editor > input) {
+  caret-color: hsl(var(--primary)) !important;
 }
-
-/* 隐藏 cell 内 dropdown 的 header、backdrop 等占位元素 */
-:deep(.jexcel td .jdropdown-container-header),
-:deep(.jexcel td .jdropdown-backdrop) {
-  display: none !important;
+:deep(.jss_worksheet > tbody > tr > td > input::placeholder),
+:deep(.jss_worksheet > tbody > tr > td > textarea::placeholder) {
+  color: hsl(var(--muted-foreground)) !important;
 }
-
-/* 主容器允许溢出 */
-:deep(.jexcel_wrapper),
-:deep(.jexcel > .jexcel_container),
-:deep(.jexcel > .jexcel_content) {
-  overflow: visible !important;
-}
-
-/* 数字列右对齐 */
-:deep(.jexcel td.jexcel_column_3),
-:deep(.jexcel td.numeric) {
-  text-align: right !important;
+:deep(.jss_worksheet > tbody > tr > td > input:focus),
+:deep(.jss_worksheet > tbody > tr > td > textarea:focus),
+:deep(.jss_worksheet .editor > input:focus) {
+  outline-color: hsl(var(--primary)) !important;
 }
 </style>

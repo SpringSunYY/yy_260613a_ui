@@ -296,13 +296,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
             <span
               v-for="item in statisticsData"
               :key="item.name"
+              v-show="item.total > 0"
               class="inline-flex items-center"
             >
               <I18nDictTag
                 :type="DICT_TYPE.ERP_SPECIFICATION"
                 :value="item.name"
               />
-              ：<span class="text-primary">{{ item.total }}</span>
+              ：<span>{{ item.total }}</span>
             </span>
           </div>
           <div class="flex items-center gap-x-4">
@@ -313,13 +314,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
             <span
               v-for="item in loanStatisticsData"
               :key="item.name"
+              v-show="item.name !== ''"
               class="inline-flex items-center"
             >
               <I18nDictTag
                 :type="DICT_TYPE.ERP_LOAN_STATUS"
                 :value="item.name"
               />
-              ：<span class="text-primary">{{ item.total }}</span>
+              ：<span>{{ item.total }}</span>
             </span>
           </div>
           <div class="flex items-center gap-x-4">
@@ -330,13 +332,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
             <span
               v-for="item in postageStatisticsData"
               :key="item.name"
+              v-show="item.name !== ''"
               class="inline-flex items-center"
             >
               <I18nDictTag
                 :type="DICT_TYPE.ERP_POSTAGE_STATUS"
                 :value="item.name"
               />
-              ：<span class="text-primary">{{ item.total }}</span>
+              ：<span>{{ item.total }}</span>
             </span>
           </div>
         </div>
