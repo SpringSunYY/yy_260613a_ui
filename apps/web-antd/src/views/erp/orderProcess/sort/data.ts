@@ -19,7 +19,6 @@ export function useSearchSchema(): VbenFormSchema[] {
     {
       fieldName: 'orderNo',
       label: $t('erp.orderProcess.field.orderNo'),
-      rules: 'required',
       component: 'Input',
       componentProps: {
         placeholder: $t('ui.placeholder.input', [

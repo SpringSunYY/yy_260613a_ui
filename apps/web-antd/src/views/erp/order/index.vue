@@ -3,6 +3,7 @@ import type { PageParam } from '@vben/request';
 
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { OrderApi } from '#/api/erp/order';
+import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { ref } from 'vue';
 
@@ -34,6 +35,7 @@ import {
   pickSort,
 } from '#/utils';
 import FormView from '#/views/erp/order/modules/form-view.vue';
+import OrderProcessHistoryForm from '#/views/erp/order/modules/order-process-history-form.vue';
 import PrintForm from '#/views/erp/order/modules/print-form.vue';
 import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 
@@ -279,6 +281,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
     sortChange: () => gridApi.query(),
   },
 });
+
+const [ProcessHistoryFormModalDrawer, processHistoryModalDrawerApi] =
+  useVbenModelDrawer({
+    connectedComponent: OrderProcessHistoryForm,
+    destroyOnClose: true,
+    type: 'modal',
+    externalCloseConfirm: false,
+  });
+
+function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
+  processHistoryModalDrawerApi.setData(row).open();
+}
 </script>
 
 <template>
@@ -288,6 +302,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <ShipFormModalDrawer @success="onRefresh" />
     <AuditFormModalDrawer @success="onRefresh" />
     <PrintFormModalDrawer @success="onRefresh" />
+    <ProcessHistoryFormModalDrawer />
     <Grid>
       <template #table-title>
         <div class="flex flex-col gap-y-2">
@@ -512,6 +527,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
           </div>
           <div>{{ row.number }}套</div>
         </div>
+      </template>
+      <template #currentProcess="{ row }">
+        <div>
+          <I18nDictTag
+            :type="DICT_TYPE.ERP_ORDER_CURRENT_PROCESS"
+            :value="row.currentProcess"
+          />
+        </div>
+        <AButton type="link" @click="handleViewProcessHistory(row)">
+          {{ row.currentProcessPerson }}
+        </AButton>
       </template>
     </Grid>
   </Page>

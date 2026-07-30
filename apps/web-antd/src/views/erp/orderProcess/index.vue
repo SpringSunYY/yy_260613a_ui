@@ -292,8 +292,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
               auth: ['erp:order-process:update'],
               onClick: handleEdit.bind(null, row),
             },
-          ]"
-          :drop-down-actions="[
             ...getProcessDropDownActions(row),
             {
               label: $t('common.delete'),

@@ -446,7 +446,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'I18nSelect',
       componentProps: {
         allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.order.field.loanStatus'),
         ]),
@@ -465,7 +465,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'I18nSelect',
       componentProps: {
         allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
         placeholder: $t('ui.placeholder.select', [
           $t('erp.order.field.postageStatus'),
         ]),
@@ -679,10 +679,11 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       field: 'currentProcess',
       title: $t('erp.order.field.currentProcess'),
       minWidth: 120,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
-      },
+      // cellRender: {
+      //   name: 'CellI18nDict',
+      //   props: { type: DICT_TYPE.ERP_ORDER_CURRENT_PROCESS },
+      // },
+      slots: { default: 'currentProcess' },
     },
     /** 图片 */
     {
@@ -826,7 +827,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       visible: false,
       cellRender: {
         name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_POSTAGE_STATUS },
+        props: { type: DICT_TYPE.ERP_LOAN_STATUS },
       },
     },
     /** 邮费 */
@@ -845,7 +846,7 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       visible: false,
       cellRender: {
         name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_LOAN_STATUS },
+        props: { type: DICT_TYPE.ERP_POSTAGE_STATUS },
       },
     },
     /** 预计发货时间 */
@@ -1277,21 +1278,21 @@ export function useProcessFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         moduleType: MODULE_TYPE_ENUM.ERP,
-        maxNumber: 1,
+        maxNumber: 2,
       },
       formItemClass: 'col-span-2',
     },
     /** 特别备注 */
-    {
-      fieldName: 'remark',
-      label: $t('erp.orderProcess.field.remark'),
-      component: 'Textarea',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.remark'),
-        ]),
-      },
-      formItemClass: 'col-span-4',
-    },
+    // {
+    //   fieldName: 'remark',
+    //   label: $t('erp.orderProcess.field.remark'),
+    //   component: 'Textarea',
+    //   componentProps: {
+    //     placeholder: $t('ui.placeholder.input', [
+    //       $t('erp.orderProcess.field.remark'),
+    //     ]),
+    //   },
+    //   formItemClass: 'col-span-4',
+    // },
   ];
 }

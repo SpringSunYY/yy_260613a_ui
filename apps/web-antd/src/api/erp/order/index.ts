@@ -30,6 +30,7 @@ export namespace OrderApi {
     orderStatus?: string; // 订单状态
     auditStatus?: string; // 审核状态
     currentProcess?: string; // 当前工序
+    currentProcessPerson?: string; // 当前处理人
     customer: string; // 客户
     orderImage: string; // 图片
     qrCode: string; // 二维码

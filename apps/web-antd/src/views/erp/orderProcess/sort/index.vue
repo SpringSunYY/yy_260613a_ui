@@ -492,10 +492,9 @@ refreshAll();
                 :disabled="!selectedRow?.id"
                 :title="
                   selectedRow?.orderNo
-                    ? $t(
-                        'erp.orderProcess.actionMessage.advanceConfirm',
-                        [selectedRow.orderNo],
-                      )
+                    ? $t('erp.orderProcess.actionMessage.advanceConfirm', [
+                        selectedRow.orderNo,
+                      ])
                     : $t('ui.actionMessage.submitConfirm', [
                         $t('erp.orderProcess.orderProcess'),
                       ])
@@ -533,13 +532,11 @@ refreshAll();
               <div v-else>
                 <DetailForm class="sort-detail">
                   <template #layoutPerson="slotProps">
-                    <AInput
-                      v-model:value="slotProps.value"
-                      :readonly="
+                    <!--                        :readonly="
                         selectedRow?.currentProcess !==
                         ErpOrderCurrentProcess.CURRENT_PROCESS_2
-                      "
-                    />
+                      "-->
+                    <AInput v-bind="slotProps" :readonly="true" />
                   </template>
                 </DetailForm>
                 <OrderDetailForm

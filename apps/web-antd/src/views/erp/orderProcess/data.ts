@@ -218,17 +218,17 @@ export function useFormSchema(): VbenFormSchema[] {
       formItemClass: 'col-span-2',
     },
     /** 特别备注 */
-    {
-      fieldName: 'remark',
-      label: $t('erp.orderProcess.field.remark'),
-      component: 'Textarea',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.remark'),
-        ]),
-      },
-      formItemClass: 'col-span-4',
-    },
+    // {
+    //   fieldName: 'remark',
+    //   label: $t('erp.orderProcess.field.remark'),
+    //   component: 'Textarea',
+    //   componentProps: {
+    //     placeholder: $t('ui.placeholder.input', [
+    //       $t('erp.orderProcess.field.remark'),
+    //     ]),
+    //   },
+    //   formItemClass: 'col-span-4',
+    // },
   ];
 }
 
