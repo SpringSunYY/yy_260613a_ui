@@ -141,6 +141,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
       orderNo.value = data.orderNo;
     }
     if (isCopy) {
+      orderNo.value = '';
       // 复制模式：保留订单明细，清空以下字段
       const copyData = {
         ...data,
@@ -151,12 +152,12 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         shippingNo: undefined,
         hydration: undefined,
         shippingTime: undefined,
-        // 清空订单明细中的 orderNo
-        orderDetails: data.orderDetails?.map((item) => ({
-          ...item,
-          id: undefined,
-          orderNo: undefined,
-        })),
+        // // 清空订单明细中的 orderNo
+        // orderDetails: data.orderDetails?.map((item) => ({
+        //   ...item,
+        //   id: undefined,
+        //   orderNo: undefined,
+        // })),
         // 清空订单工序中的 orderNo
         orderProcess: data.orderProcess
           ? { ...data.orderProcess, orderNo: undefined }

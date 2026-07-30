@@ -483,6 +483,7 @@ refreshAll();
                 :disabled="!selectedRow?.orderNo"
                 :loading="saving"
                 @click="handleView(selectedRow?.orderNo || '')"
+                v-if="hasAccessByCodes(['erp:order:query'])"
               >
                 {{ $t('common.view') }}
               </a-button>

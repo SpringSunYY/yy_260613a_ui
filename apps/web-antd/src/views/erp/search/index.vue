@@ -4,20 +4,24 @@ import type { FileType } from 'ant-design-vue/es/upload/interface';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
 
+import { useClipboard } from '@vueuse/core';
 import { Image, message, Upload } from 'ant-design-vue';
 
 import {
   searchOrderVectorById,
   searchOrderVectorByUpload,
 } from '#/api/erp/orderVector';
-import { $t } from '#/locales';
 import {
   previewFileAsDataURL,
   useImagePasteUpload,
 } from '#/composables/use-image-paste-upload';
+import { $t } from '#/locales';
 import FormView from '#/views/erp/order/modules/form-view.vue';
+
+const { hasAccessByCodes } = useAccess();
 
 /**
  * 左侧查询图文件（用户上传的本地 File）。
@@ -243,6 +247,19 @@ const [ViewFormModalDrawer, viewFormModalDrawerApi] = useVbenModelDrawer({
   externalCloseConfirm: false,
 });
 
+const { copy } = useClipboard({ legacy: true });
+
+/** 复制订单号 */
+async function handleCopyOrderNo(orderNo: string) {
+  if (!orderNo) return;
+  try {
+    await copy(orderNo);
+    message.success($t('ui.actionMessage.copySuccess'));
+  } catch {
+    message.error($t('infra.file.message.copyFailed'));
+  }
+}
+
 /** 查看订单信息 */
 function handleView(orderNo: string) {
   if (!orderNo) return;
@@ -399,19 +416,31 @@ function handleView(orderNo: string) {
             </div>
             <div class="p-2 text-xs">
               <div class="truncate font-mono text-gray-700" :title="r.id">
-                ID: {{ r.id }}
-              </div>
-              <div class="mt-1 flex justify-between text-gray-700">
-                <a-tag class="text-blue-600">{{ r.similarity }}</a-tag>
-                <span class="text-xs">
+                <span
+                  class="min-w-0 flex-1 truncate text-xs"
+                  :title="r.originKey"
+                >
                   {{ $t('erp.orderAudit.field.orderNo') }}:
                   {{ r.originKey }}
                 </span>
-                <span>
-                  <a-button size="small" @click="handleView(r.originKey)">{{
-                    $t('common.view')
-                  }}</a-button>
-                </span>
+              </div>
+              <div class="mt-1 flex items-center gap-2 text-gray-700">
+                <a-tag class="shrink-0 text-blue-600">{{ r.similarity }}</a-tag>
+                <span class="min-w-0 flex-1"></span>
+                <a-button
+                  size="small"
+                  :disabled="!r.originKey"
+                  @click="handleCopyOrderNo(r.originKey)"
+                >
+                  {{ $t('common.copy') }}
+                </a-button>
+                <a-button
+                  size="small"
+                  v-if="hasAccessByCodes(['erp:order:query'])"
+                  @click="handleView(r.originKey)"
+                >
+                  {{ $t('common.view') }}
+                </a-button>
               </div>
             </div>
           </div>
@@ -435,7 +464,9 @@ function handleView(orderNo: string) {
   background: hsl(var(--input-background));
   color: hsl(var(--foreground));
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   cursor: text;
 }
 .paste-hint:focus-within {

@@ -213,7 +213,6 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('erp.order.field.loan'),
       rules: 'required',
       component: 'InputNumber',
-      defaultValue: 0,
       componentProps: {
         min: 0,
         max: 1_000_000,
@@ -253,7 +252,6 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'postage',
       label: $t('erp.order.field.postage'),
       component: 'InputNumber',
-      defaultValue: 0,
       componentProps: {
         min: 0,
         max: 1_000_000,

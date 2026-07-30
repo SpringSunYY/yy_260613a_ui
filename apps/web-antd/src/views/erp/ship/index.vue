@@ -219,45 +219,67 @@ function isTimeOut(exceptShippingTime: number): boolean {
     <ShipFormModalDrawer @success="onRefresh" />
     <Grid :table-title="$t('erp.order.order')">
       <template #table-title>
-        <div class="inline-flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span class="inline-flex items-center gap-x-0">
+        <div class="flex flex-col gap-y-2">
+          <span class="inline-flex items-center gap-x-2" v-if="totalCount > 0">
             总计：{{ totalCount }}
-            <template v-for="item in todayStats" :key="item.name">
-              <I18nDictTag
-                :type="DICT_TYPE.ERP_SPECIFICATION"
-                :value="item.name"
-              />
-              ：<span class="text-primary">{{ item.total }}</span>
+            <template v-for="item in statisticsData" :key="item.name">
+              <template v-if="item.name && item.total && item.total > 0">
+                <span class="inline-flex items-center">
+                  <I18nDictTag
+                    :type="DICT_TYPE.ERP_SPECIFICATION"
+                    :value="item.name"
+                  />
+                  ：<span class="text-primary">{{ item.total }}</span>
+                </span>
+              </template>
             </template>
           </span>
-          <span class="inline-flex items-center gap-x-0">
+          <span class="inline-flex items-center gap-x-2" v-if="totalToday > 0">
             今日待发：{{ totalToday }}
             <template v-for="item in todayStats" :key="item.name">
-              <I18nDictTag
-                :type="DICT_TYPE.ERP_SPECIFICATION"
-                :value="item.name"
-              />
-              ：<span class="text-primary">{{ item.total }}</span>
+              <template v-if="item.name && item.total && item.total > 0">
+                <span class="inline-flex items-center">
+                  <I18nDictTag
+                    :type="DICT_TYPE.ERP_SPECIFICATION"
+                    :value="item.name"
+                  />
+                  ：<span class="text-primary">{{ item.total }}</span>
+                </span>
+              </template>
             </template>
           </span>
-          <span class="inline-flex items-center gap-x-0">
+          <span
+            class="inline-flex items-center gap-x-2"
+            v-if="totalTomorrow > 0"
+          >
             明日待发：{{ totalTomorrow }}
             <template v-for="item in tomorrowStats" :key="item.name">
-              <I18nDictTag
-                :type="DICT_TYPE.ERP_SPECIFICATION"
-                :value="item.name"
-              />
-              ：<span class="text-primary">{{ item.total }}</span>
+              <template v-if="item.name && item.total && item.total > 0">
+                <span class="inline-flex items-center">
+                  <I18nDictTag
+                    :type="DICT_TYPE.ERP_SPECIFICATION"
+                    :value="item.name"
+                  />
+                  ：<span class="text-primary">{{ item.total }}</span>
+                </span>
+              </template>
             </template>
           </span>
-          <span class="inline-flex items-center gap-x-0">
+          <span
+            class="inline-flex items-center gap-x-2"
+            v-if="totalDayAfterTomorrow > 0"
+          >
             后日待发：{{ totalDayAfterTomorrow }}
             <template v-for="item in dayAfterTomorrowStats" :key="item.name">
-              <I18nDictTag
-                :type="DICT_TYPE.ERP_SPECIFICATION"
-                :value="item.name"
-              />
-              ：<span class="text-primary">{{ item.total }}</span>
+              <template v-if="item.name && item.total && item.total > 0">
+                <span class="inline-flex items-center">
+                  <I18nDictTag
+                    :type="DICT_TYPE.ERP_SPECIFICATION"
+                    :value="item.name"
+                  />
+                  ：<span class="text-primary">{{ item.total }}</span>
+                </span>
+              </template>
             </template>
           </span>
         </div>
