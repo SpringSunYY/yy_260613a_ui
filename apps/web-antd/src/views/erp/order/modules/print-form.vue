@@ -516,10 +516,44 @@ watch(
   { immediate: true },
 );
 
-/** 二维码图（qrCode 仅一张） */
-const qrCode = computed<string>(() =>
-  String((orderDetail.value as any)?.qrCode ?? '').trim(),
-);
+/** 二维码图（qrCode 支持多张图片：||  / 逗号 / 分号 / 换行 分隔，
+ * 多张图全部居中、限定宽高，整体看起来是一个统一图块）。
+ * 与 orderImages 解析规则保持一致，便于样式与口径统一。 */
+const qrCodes = computed<string[]>(() => {
+  const raw = (orderDetail.value as any)?.qrCode;
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : String(raw).split(/\|\||[,;\n]/);
+  return arr.map((s: unknown) => String(s ?? '').trim()).filter(Boolean);
+});
+
+/**
+ * 二维码 td 实际净空（与 use-order-print.ts / CSS 保持一致）：
+ *   qr-cell：colspan=4 × 700 / 12 ≈ 233px 宽；rowspan=4 × 24 = 96px 高；
+ *   扣 1px 边框双向 → 约 231×94px。
+ *
+ * 按张数算每张图的具体像素尺寸（写死 px，不用 aspect-ratio / max-height %），
+ * 直接 inline style 到 <img>，这样打印 PDF / 截图 都不会被 iframe / 浏览器渲染差异坑。
+ *
+ * 规则：
+ *   - 单张：父级高 90% × 宽 90% 取 min = 约 85px（接近正方形，跟父级同比例）。
+ *   - 多张：每张 = min((可用宽 - gap) / 张数, 可用高 - 4)，最少 18px 兜底。
+ */
+const QR_CELL_INNER_WIDTH = 700 * 4 / 12 - 2; // ≈ 231
+const QR_CELL_INNER_HEIGHT = 4 * 24 - 2; // 94
+const qrItemSize = computed(() => {
+  const n = qrCodes.value.length;
+  if (n === 0) return '';
+  if (n === 1) {
+    const w = Math.floor(QR_CELL_INNER_WIDTH * 0.9);
+    const h = Math.floor(QR_CELL_INNER_HEIGHT * 0.9);
+    const side = Math.min(w, h);
+    return `width:${side}px;height:${side}px;`;
+  }
+  const gap = 4;
+  const perW = Math.floor((QR_CELL_INNER_WIDTH - gap * (n - 1)) / n);
+  const side = Math.max(18, Math.min(perW, QR_CELL_INNER_HEIGHT - 4));
+  return `width:${side}px;height:${side}px;`;
+});
 
 /** 明细人员列表（名字/号码/尺码/备注） */
 const personList = computed(() =>
@@ -1087,14 +1121,26 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 <th class="cell lbl" colspan="1">备注</th>
                 <th class="cell lbl" colspan="2">订单状态</th>
 
-                <!-- 二维码：紧贴订单状态右边，向下合并 表头 + 3 个状态行 = 4 行 -->
+                <!-- 二维码：紧贴订单状态右边，向下合并 表头 + 3 个状态行 = 4 行。
+                     支持多张图（qrCode 字段用 || 等分隔），用 CSS Grid 让图块撑满整个净空。 -->
                 <td class="cell qr-cell" colspan="4" rowspan="4">
-                  <img
-                    v-if="qrCode"
-                    :src="qrCode"
-                    class="qr-img"
-                    alt="订单二维码"
-                  />
+                  <div
+                    v-if="qrCodes.length"
+                    class="qr-imgs"
+                    :class="{
+                      'is-single': qrCodes.length === 1,
+                      'is-multi': qrCodes.length > 1,
+                    }"
+                  >
+                    <img
+                      v-for="(src, idx) in qrCodes"
+                      :key="idx"
+                      :src="src"
+                      :style="qrItemSize"
+                      class="qr-img"
+                      :alt="`订单二维码 ${idx + 1}`"
+                    />
+                  </div>
                 </td>
               </tr>
 
@@ -1356,17 +1402,37 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 }
 
 /* ---------- 二维码 ---------- */
+/* qr-cell 是 td：水平居中、垂直居中，padding 0 让净空留给图块。
+ * 给一个明确的 height，让内层 .qr-imgs 用 height:100% 时真的能拿到 96px。 */
 #orderPrintDiv .qr-cell {
   vertical-align: middle;
-  padding: 3px;
+  padding: 0;
+  height: 96px; /* rowspan=4 × 24px */
 }
 
+/* 二维码容器：flex 单行排列，所有图水平垂直居中。
+ * 关键：每张 <img> 上有 inline style 写死 px 宽高（见 qrItemSize），
+ * 容器只负责排列+间距，不再依赖 aspect-ratio / max-height 百分比这种
+ * iframe 打印渲染不稳定的 CSS。 */
+#orderPrintDiv .qr-imgs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* qr-img 兜底样式：尺寸由 inline style 控制；这里只设对齐+背景。
+ * 不要写 width/height/aspect-ratio，避免覆盖 inline style。 */
 #orderPrintDiv .qr-img {
   display: block;
   margin: 0 auto;
-  width: 100px;
-  height: 100px;
   object-fit: contain;
+  background: #fff;
+  flex-shrink: 0; /* 多张时绝不被 flex 压缩到极小 */
 }
 
 /* ---------- 款式图 ---------- */

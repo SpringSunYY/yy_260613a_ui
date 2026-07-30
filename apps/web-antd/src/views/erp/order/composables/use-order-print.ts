@@ -36,6 +36,31 @@ const IMG_PANEL_INNER_PAD = 16; // 8 + 8
 const IMG_GRID_GAP = 8;
 
 /**
+ * 二维码 td 净空（与 print-form.vue 中的 QR_CELL_INNER_* 保持一致）：
+ *   qr-cell：colspan=4 × 700 / 12 ≈ 233px 宽；rowspan=4 × 24 = 96px 高；
+ *   扣 1px 边框双向 → 约 231×94px。
+ */
+const QR_CELL_INNER_WIDTH = 700 * 4 / 12 - 2;
+const QR_CELL_INNER_HEIGHT = 4 * 24 - 2;
+
+/** 按张数算每张二维码的 inline style —— 直接写到 <img> 上，
+ * 这样不管是浏览器显示 / 打印 PDF / 截图都拿到一致尺寸，
+ * 不依赖 aspect-ratio / max-height 100% 这种 iframe 渲染不稳定的 CSS。 */
+function qrItemStyle(n: number): string {
+  if (n <= 0) return '';
+  if (n === 1) {
+    const w = Math.floor(QR_CELL_INNER_WIDTH * 0.9);
+    const h = Math.floor(QR_CELL_INNER_HEIGHT * 0.9);
+    const side = Math.min(w, h);
+    return `width:${side}px;height:${side}px;`;
+  }
+  const gap = 4;
+  const perW = Math.floor((QR_CELL_INNER_WIDTH - gap * (n - 1)) / n);
+  const side = Math.max(18, Math.min(perW, QR_CELL_INNER_HEIGHT - 4));
+  return `width:${side}px;height:${side}px;`;
+}
+
+/**
  * 与 print-form.vue 中 `<style>` 块完全一致。
  *
  * 这里搬到 head 里再内联进渲染容器时仍然用同一份文本——避免两处样式各自漂移。
@@ -107,13 +132,23 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
 #${PRINT_CONTAINER_ID} .status-normal { background: #37a24a; color: #fff; }
 #${PRINT_CONTAINER_ID} .status-mid { background: #ffff00; color: #000; }
 #${PRINT_CONTAINER_ID} .status-neck { color: #d40000; background: #eef3fb; }
-#${PRINT_CONTAINER_ID} .qr-cell { vertical-align: middle; padding: 3px; }
+#${PRINT_CONTAINER_ID} .qr-cell { vertical-align: middle; padding: 0; height: 96px; }
+#${PRINT_CONTAINER_ID} .qr-imgs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
 #${PRINT_CONTAINER_ID} .qr-img {
   display: block;
   margin: 0 auto;
-  width: 100px;
-  height: 100px;
   object-fit: contain;
+  background: #fff;
+  flex-shrink: 0;
 }
 /* 尺码统计：红色加粗 */
 #${PRINT_CONTAINER_ID} .jls-stat-text {
@@ -243,7 +278,7 @@ function buildHtmlBody(
   orderProcess?: OrderProcessApi.OrderProcess,
   orderDetails?: OrderApi.OrderDetail[],
   imgHeightPx = 0,
-  qrCodeUrl = '',
+  qrCodeUrls: string[] = [],
   printerName = '',
   printTime = '',
 ): string {
@@ -401,7 +436,16 @@ function buildHtmlBody(
         <th class="cell lbl" colspan="1">数量</th>
         <th class="cell lbl" colspan="1">备注</th>
         <th class="cell lbl" colspan="2">订单状态</th>
-        <td class="cell qr-cell" colspan="4" rowspan="4">${qrCodeUrl ? `<img src="${qrCodeUrl}" class="qr-img" alt="订单二维码" />` : ''}</td>
+        <td class="cell qr-cell" colspan="4" rowspan="4">${
+          qrCodeUrls.length > 0
+            ? `<div class="qr-imgs ${qrCodeUrls.length === 1 ? 'is-single' : 'is-multi'}">${qrCodeUrls
+                .map(
+                  (src, idx) =>
+                    `<img src="${src}" style="${qrItemStyle(qrCodeUrls.length)}" class="qr-img" alt="订单二维码 ${idx + 1}" />`,
+                )
+                .join('')}</div>`
+            : ''
+        }</td>
       </tr>
       ${detailRowsHtml}
 
@@ -455,7 +499,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
     throw new Error(`订单 ${orderNo} 不存在`);
   }
   const orderImages = getOrderImages((order as any)?.orderImage);
-  const qrCodeUrl = String((order as any)?.qrCode ?? '').trim();
+  const qrCodeUrls = getOrderImages((order as any)?.qrCode);
 
   const title = `JLS制单-${order.name ?? order.customer}-${order.orderNo}-${dictLabel(
     DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
@@ -494,7 +538,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
         order.orderProcess,
         order.orderDetails,
         0,
-        qrCodeUrl,
+        qrCodeUrls,
         printerName,
         printTime,
       );
@@ -512,7 +556,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
       order.orderProcess,
       order.orderDetails,
       imgHeightPx,
-      qrCodeUrl,
+      qrCodeUrls,
       printerName,
       printTime,
     );
