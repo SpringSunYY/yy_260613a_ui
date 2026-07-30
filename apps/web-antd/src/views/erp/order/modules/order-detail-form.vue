@@ -6,7 +6,7 @@ import type { OrderApi } from '#/api/erp/order';
  */
 import type { JspreadsheetInstance } from '#/components/jspreadsheet';
 
-import { h, ref, watch } from 'vue';
+import { h, nextTick, ref, watch } from 'vue';
 
 import { Plus } from '@vben/icons';
 
@@ -76,6 +76,9 @@ const isJspreadsheetReady = ref(false);
 /** 当前数据（用于统计） */
 const currentData = ref<any[][]>([]);
 
+/** 加载的原始订单明细（用于保留 id/orderNo/setName 等字段） */
+const loadedOrderDetails = ref<OrderApi.OrderDetail[]>([]);
+
 /** 尺码统计条目 */
 interface SizeStat {
   value: string;
@@ -125,8 +128,8 @@ const sizeStats = ref([] as SizeStat[]);
 function refreshSizeStats() {
   const map = new Map<string, number>();
 
-  // 跳过表头行（第0行），从第1行开始解析数据
-  for (let i = 1; i < currentData.value.length; i++) {
+  // 从第0行开始解析数据（jspreadsheet 数据没有表头行）
+  for (let i = 0; i < currentData.value.length; i++) {
     const row = normalizeRow(currentData.value[i], COL_COUNT);
     // setSize 在索引 2，setQuantity 在索引 3
     const size = row[SIZE_COL_INDEX];
@@ -156,6 +159,10 @@ function refreshSizeStats() {
 
 /** 数据变化回调：jspreadsheet 实时推送最新数据 */
 function handleChange(_instance: JspreadsheetInstance, data: any[][]) {
+  if (!data || !Array.isArray(data)) {
+    console.warn('[OrderDetail] handleChange received invalid data', data);
+    return;
+  }
   currentData.value = data;
   refreshSizeStats();
 }
@@ -175,9 +182,13 @@ function handleLoaded(instance: JspreadsheetInstance) {
 /** 加载订单明细 */
 async function loadOrderDetails(orderNo: string) {
   const details = await getOrderDetailListByOrderNo(orderNo);
+  loadedOrderDetails.value = details; // 保存原始数据（包含 id/orderNo/setName）
   if (spreadsheetRef.value) {
     const spreadsheetData = convertToJspreadsheetData(details);
     spreadsheetRef.value.setData(spreadsheetData);
+    // 等待 jspreadsheet 内部同步完成后再获取数据
+    await nextTick();
+    await nextTick();
     currentData.value = spreadsheetRef.value.getData();
   }
   refreshSizeStats();
@@ -216,20 +227,37 @@ function convertToJspreadsheetData(
 function convertFromJspreadsheetData(data: any[][]): OrderApi.OrderDetail[] {
   const results: OrderApi.OrderDetail[] = [];
 
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!row) continue;
-    if (isEmptyRow(row)) continue;
-
-    results.push({
-      setName: row[0] || undefined,
-      setNumber: row[1] || undefined,
-      setSize: row[SIZE_COL_INDEX] || undefined,
-      setQuantity: row[QTY_COL_INDEX] ? Number(row[QTY_COL_INDEX]) : undefined,
-      remark: row[4] || undefined,
-    } as OrderApi.OrderDetail);
+  // 合并原始数据行的 id/orderNo/setName（如果有的话）
+  // 将 jspreadsheet 数据与原始数据按行索引合并
+  const originalData = loadedOrderDetails.value ?? [];
+  const rowMap = new Map<number, OrderApi.OrderDetail>();
+  for (const [i, originalDatum] of originalData.entries()) {
+    rowMap.set(i, originalDatum);
   }
 
+  for (const [i, row] of data.entries()) {
+    if (!row) continue;
+    const rowEmpty = isEmptyRow(row);
+    if (rowEmpty) continue;
+
+    // 合并：从原始数据取 id/orderNo/setName，从 jspreadsheet 取用户修改的值
+    const original = rowMap.get(i);
+    results.push({
+      id: original?.id,
+      orderNo: original?.orderNo ?? props.orderNo,
+      setName: row[0] === '' ? (original?.setName ?? undefined) : row[0],
+      setNumber: row[1] === '' ? (original?.setNumber ?? undefined) : row[1],
+      setSize:
+        row[SIZE_COL_INDEX] === ''
+          ? (original?.setSize ?? undefined)
+          : row[SIZE_COL_INDEX],
+      setQuantity:
+        row[QTY_COL_INDEX] !== '' && row[QTY_COL_INDEX] !== undefined
+          ? Number(row[QTY_COL_INDEX])
+          : (original?.setQuantity ?? undefined),
+      remark: row[4] === '' ? (original?.remark ?? undefined) : row[4],
+    } as OrderApi.OrderDetail);
+  }
   return results;
 }
 
@@ -242,6 +270,7 @@ watch(
         spreadsheetRef.value.setData([]);
       }
       currentData.value = [];
+      loadedOrderDetails.value = []; // 重置原始数据
       refreshSizeStats();
       return;
     }
@@ -280,12 +309,11 @@ defineExpose({
       [SIZE_COL_INDEX]: $t('erp.orderDetail.field.setSize'),
     };
 
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
+    for (const [i, row] of data.entries()) {
       if (!row) continue;
       if (isEmptyRow(row)) continue;
 
-      // 跳过表头行（第 0 行），用户感知的行号 = 索引 + 1
+      // 用户感知的行号 = 索引 + 1
       const userRowIndex = i + 1;
 
       if (isCellEmpty(row[SIZE_COL_INDEX])) {

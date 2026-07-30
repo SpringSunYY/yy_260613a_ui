@@ -11,6 +11,18 @@ export interface ColumnDefinition {
   type?: 'dropdown' | 'numeric' | 'text';
 }
 
+export interface JspreadsheetProps {
+  columns: ColumnDefinition[];
+  data?: any[][];
+  height?: number | string;
+  minCols?: number;
+  minRows?: number;
+  /** 复制时是否包含表头，默认 true */
+  copyWithHeader?: boolean;
+  onChange?: (instance: any, data: any[][]) => void;
+  onLoaded?: (instance: any) => void;
+}
+
 /** 运行时实例 */
 export interface JspreadsheetInstance {
   getData: () => any[][];

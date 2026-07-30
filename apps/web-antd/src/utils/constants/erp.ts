@@ -46,3 +46,11 @@ export const ErpOrderPrintStatus = {
   /** 已打印 */
   PRINT_STATUS_1: '1',
 } as const;
+
+// 订单字段权限
+export const ErpOrderFieldPermission = {
+  /** 贷款 */
+  ORDER_FIELD_LOAN: 'erp:order:filed:loan',
+  /** 邮费 */
+  ORDER_FIELD_POSTAGE: 'erp:order:filed:postage',
+};

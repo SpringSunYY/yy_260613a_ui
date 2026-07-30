@@ -7,6 +7,7 @@ import type { OrderProcessApi } from '#/api/erp/orderProcess';
 
 import { ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, formatTime, isEmpty } from '@vben/utils';
 
@@ -32,6 +33,7 @@ import {
   DICT_TYPE,
   ErpOrderAuditStatus,
   ErpOrderCurrentProcess,
+  ErpOrderFieldPermission,
   pickSort,
 } from '#/utils';
 import FormView from '#/views/erp/order/modules/form-view.vue';
@@ -42,6 +44,8 @@ import ShipForm from '#/views/erp/ship/modules/ship-form.vue';
 import { useGridColumns, useGridFormSchema } from './data';
 import AuditForm from './modules/audit-form.vue';
 import Form from './modules/form.vue';
+
+const { hasAccessByCodes } = useAccess();
 
 const [FormModalDrawer, formModalDrawerApi] = useVbenModelDrawer({
   connectedComponent: Form,
@@ -61,6 +65,7 @@ const [PrintFormModalDrawer, printFormModalDrawerApi] = useVbenModelDrawer({
   type: 'modal',
   externalCloseConfirm: false,
 });
+
 /** 打印*/
 function handleOrderPrint(row: OrderApi.Order) {
   if (!row.orderNo) return;
@@ -73,6 +78,7 @@ const [ShipFormModalDrawer, shipFormModalDrawerApi] = useVbenModelDrawer({
   destroyOnClose: true,
   type: 'modal',
 });
+
 async function handleOrderShip(row: OrderApi.Order) {
   if (!row.orderNo) return;
   // 先查询一遍订单工序
@@ -114,6 +120,7 @@ function handleView(row: OrderApi.Order) {
 }
 
 const orderResetVectorLoading = ref(false);
+
 /** 重置向量*/
 async function handleOrderResetVector(row: OrderApi.Order) {
   if (!row.orderNo) return;
@@ -218,20 +225,24 @@ function getStatistics(formValues: PageParam) {
     totalCount.value = 0;
     res.forEach((item) => (totalCount.value += Number(item.total)));
   });
-  // 获取贷款
-  getOrderLoanStatistics(formValues).then((res) => {
-    if (!res || res?.length <= 0) return;
-    loanStatisticsData.value = res;
-    loanTotalCount.value = 0;
-    res.forEach((item) => (loanTotalCount.value += Number(item.total)));
-  });
-  //  获取邮费
-  getOrderPostageStatistics(formValues).then((res) => {
-    if (!res || res?.length <= 0) return;
-    postageStatisticsData.value = res;
-    postageTotalCount.value = 0;
-    res.forEach((item) => (postageTotalCount.value += Number(item.total)));
-  });
+  if (hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])) {
+    //  获取邮费
+    getOrderPostageStatistics(formValues).then((res) => {
+      if (!res || res?.length <= 0) return;
+      postageStatisticsData.value = res;
+      postageTotalCount.value = 0;
+      res.forEach((item) => (postageTotalCount.value += Number(item.total)));
+    });
+  }
+  if (hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])) {
+    // 获取贷款
+    getOrderLoanStatistics(formValues).then((res) => {
+      if (!res || res?.length <= 0) return;
+      loanStatisticsData.value = res;
+      loanTotalCount.value = 0;
+      res.forEach((item) => (loanTotalCount.value += Number(item.total)));
+    });
+  }
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -321,7 +332,10 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
               ：<span>{{ item.total }}</span>
             </span>
           </div>
-          <div class="flex items-center gap-x-4">
+          <div
+            class="flex items-center gap-x-4"
+            v-if="hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])"
+          >
             <span>
               <a-tag>贷款总计</a-tag>
               ：{{ loanTotalCount?.toFixed(2) }}
@@ -339,7 +353,12 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
               ：<span>{{ item.total }}</span>
             </span>
           </div>
-          <div class="flex items-center gap-x-4">
+          <div
+            class="flex items-center gap-x-4"
+            v-if="
+              hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+            "
+          >
             <span>
               <a-tag>邮费总计</a-tag>
               ：{{ postageTotalCount?.toFixed(2) }}

@@ -357,10 +357,10 @@ function buildHtmlBody(
       </tr>
       <tr>
         <td class="cell val val-red" colspan="2">${dictLabel(DICT_TYPE.ERP_PATTERN, orderDetail.pattern)}</td>
-        <td class="cell val" colspan="2">${orderDetail.customer ?? ''}</td>
+        <td class="cell val" colspan="2">${orderDetail.name ?? ''}</td>
         <td class="cell val val-red" colspan="1">${orderDetail.number ?? ''}</td>
         <td class="cell val val-red" colspan="2">${formatDateValue(orderDetail.orderTime)}</td>
-        <td class="cell val val-red" colspan="2">${formatDateValue(orderDetail.shippingTime)}</td>
+        <td class="cell val val-red" colspan="2">${formatDateValue(orderDetail.exceptShippingTime)}</td>
       </tr>
 
       <tr>
@@ -457,7 +457,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
   const orderImages = getOrderImages((order as any)?.orderImage);
   const qrCodeUrl = String((order as any)?.qrCode ?? '').trim();
 
-  const title = `JLS制单-${order.orderNo}-${dictLabel(
+  const title = `JLS制单-${order.name ?? order.customer}-${order.orderNo}-${dictLabel(
     DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
     order.pickupMethod,
   )}`;

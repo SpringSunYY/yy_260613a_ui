@@ -17,7 +17,7 @@ import { getOrderDetailNo, printOrder } from '#/api/erp/order';
 import { $t } from '#/locales';
 import {
   DICT_TYPE,
-  ErpOrderCurrentProcess,
+  ErpOrderAuditStatus,
   ErpOrderPrintStatus,
   getDictLabel,
   getDictOptions,
@@ -321,7 +321,8 @@ const printObj = computed(() => {
         return;
       }
       const title =
-        orderTitle.value || `JLS制单-${orderDetail.value?.orderNo ?? ''}`;
+        orderTitle.value ||
+        `JLS制单-${orderDetail.value?.name ?? orderDetail.value?.customer}-${orderDetail.value?.orderNo}`;
       // Firefox：同步读 iframe 自己的 title
       const doc = currentPrintIframe?.contentDocument;
       if (doc) doc.title = title;
@@ -614,7 +615,7 @@ async function loadPrintData(orderNo: string) {
     orderDetails.value = (order?.orderDetails ?? []).filter(
       (row) => row.setSize && Number(row.setQuantity) > 0,
     );
-    orderTitle.value = `JLS制单-${orderDetail.value?.orderNo}-${dictLabel(
+    orderTitle.value = `JLS制单-${orderDetail.value.name ?? orderDetail.value.customer}-${orderDetail.value.orderNo}-${dictLabel(
       DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
       orderDetail.value?.pickupMethod,
     )}`;
@@ -866,7 +867,8 @@ async function exportAsImage() {
     }
 
     const rawFileName =
-      orderTitle.value || `JLS制单-${orderDetail.value.orderNo}`;
+      orderTitle.value ||
+      `JLS制单-${orderDetail.value.name ?? orderDetail.value.customer}-${orderDetail.value.orderNo}`;
     const fileName = rawFileName.replaceAll(/[<>:"/\\|?*]/g, '-');
 
     // html-to-image 走 SVG → 浏览器解码 → Canvas → dataURL，
@@ -874,7 +876,8 @@ async function exportAsImage() {
     // 用 fetch 转 blob 再 URL.createObjectURL 绕过污染问题。
     let href: string;
     try {
-      const blob = await (await fetch(dataUrl)).blob();
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
       href = URL.createObjectURL(blob);
       setTimeout(() => URL.revokeObjectURL(href), 60_000);
     } catch {
@@ -1001,7 +1004,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   {{ dictLabel(DICT_TYPE.ERP_PATTERN, orderDetail.pattern) }}
                 </td>
                 <td class="cell val" colspan="2">
-                  {{ orderDetail.customer ?? '' }}
+                  {{ orderDetail.name ?? '' }}
                 </td>
                 <td class="cell val val-red" colspan="1">
                   {{ orderDetail.number ?? '' }}
@@ -1010,7 +1013,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   {{ formatDateValue(orderDetail.orderTime) }}
                 </td>
                 <td class="cell val val-red" colspan="2">
-                  {{ formatDateValue(orderDetail.shippingTime) }}
+                  {{ formatDateValue(orderDetail.exceptShippingTime) }}
                 </td>
               </tr>
 
@@ -1213,8 +1216,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         @click="onPrintClick"
         v-print="printObj"
         v-if="
-          orderDetail?.currentProcess ===
-          ErpOrderCurrentProcess.CURRENT_PROCESS_7
+          orderDetail?.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3
         "
       >
         {{ $t('common.print') }}

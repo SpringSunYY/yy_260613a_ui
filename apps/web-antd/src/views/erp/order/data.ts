@@ -9,6 +9,7 @@ import {
   DICT_TYPE,
   ErpOrderAuditStatus,
   ErpOrderCurrentProcess,
+  ErpOrderFieldPermission,
   getDictOptions,
   getRangePickerDefaultProps,
   MODULE_TYPE_ENUM,
@@ -322,17 +323,17 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },*/
     /** 补水 */
-    {
-      fieldName: 'hydration',
-      label: $t('erp.order.field.hydration'),
-      component: 'Textarea',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.order.field.hydration'),
-        ]),
-      },
-      formItemClass: 'col-span-3',
-    },
+    // {
+    //   fieldName: 'hydration',
+    //   label: $t('erp.order.field.hydration'),
+    //   component: 'Textarea',
+    //   componentProps: {
+    //     placeholder: $t('ui.placeholder.input', [
+    //       $t('erp.order.field.hydration'),
+    //     ]),
+    //   },
+    //   formItemClass: 'col-span-3',
+    // },
     /** 备注 */
     {
       fieldName: 'remark',
@@ -750,12 +751,12 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       },
     },
     /** 补水 */
-    {
-      field: 'hydration',
-      title: $t('erp.order.field.hydration'),
-      minWidth: 120,
-      visible: false,
-    },
+    // {
+    //   field: 'hydration',
+    //   title: $t('erp.order.field.hydration'),
+    //   minWidth: 120,
+    //   visible: false,
+    // },
     /** 订单来源 */
     {
       field: 'orderResource',
@@ -811,44 +812,52 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       visible: false,
       sortable: true,
     },
-    /** 贷款 */
-    {
-      field: 'loan',
-      title: $t('erp.order.field.loan'),
-      minWidth: 120,
-      visible: false,
-      sortable: true,
-    },
-    /** 贷款状态 */
-    {
-      field: 'loanStatus',
-      title: $t('erp.order.field.loanStatus'),
-      minWidth: 120,
-      visible: false,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_LOAN_STATUS },
-      },
-    },
-    /** 邮费 */
-    {
-      field: 'postage',
-      title: $t('erp.order.field.postage'),
-      minWidth: 120,
-      visible: false,
-      sortable: true,
-    },
-    /** 邮费状态 */
-    {
-      field: 'postageStatus',
-      title: $t('erp.order.field.postageStatus'),
-      minWidth: 120,
-      visible: false,
-      cellRender: {
-        name: 'CellI18nDict',
-        props: { type: DICT_TYPE.ERP_POSTAGE_STATUS },
-      },
-    },
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])
+      ? [
+          /** 贷款状态 */
+          {
+            field: 'loanStatus',
+            title: $t('erp.order.field.loanStatus'),
+            minWidth: 120,
+            visible: false,
+            cellRender: {
+              name: 'CellI18nDict',
+              props: { type: DICT_TYPE.ERP_LOAN_STATUS },
+            },
+          },
+          /** 贷款 */
+          {
+            field: 'loan',
+            title: $t('erp.order.field.loan'),
+            minWidth: 120,
+            visible: false,
+            sortable: true,
+          },
+        ]
+      : []),
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+      ? [
+          /** 邮费状态 */
+          {
+            field: 'postageStatus',
+            title: $t('erp.order.field.postageStatus'),
+            minWidth: 120,
+            visible: false,
+            cellRender: {
+              name: 'CellI18nDict',
+              props: { type: DICT_TYPE.ERP_POSTAGE_STATUS },
+            },
+          },
+          /** 邮费 */
+          {
+            field: 'postage',
+            title: $t('erp.order.field.postage'),
+            minWidth: 120,
+            visible: false,
+            sortable: true,
+          },
+        ]
+      : []),
     /** 预计发货时间 */
     {
       field: 'exceptShippingTime',

@@ -216,12 +216,12 @@ export function useGridColumns(): VxeTableGridOptions<OrderApi.Order>['columns']
       minWidth: 150,
     },
     /** 补水 */
-    {
-      field: 'hydration',
-      title: $t('erp.order.field.hydration'),
-      minWidth: 120,
-      visible: false,
-    },
+    // {
+    //   field: 'hydration',
+    //   title: $t('erp.order.field.hydration'),
+    //   minWidth: 120,
+    //   visible: false,
+    // },
     /** 客户 */
     {
       field: 'customer',

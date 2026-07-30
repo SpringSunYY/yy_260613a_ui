@@ -20,6 +20,8 @@ import 'jsuites/dist/jsuites.css';
 const props = withDefaults(
   defineProps<{
     columns: ColumnDefinition[];
+    /** 复制时是否包含表头，默认 true */
+    copyWithHeader?: boolean;
     data?: any[][];
     height?: number | string;
     minCols?: number;
@@ -32,6 +34,9 @@ const props = withDefaults(
     minRows: 8,
     minCols: 8,
     height: 300,
+    copyWithHeader: true,
+    onChange: undefined,
+    onLoaded: undefined,
   },
 );
 
@@ -93,7 +98,7 @@ function matchDropdownValue(
 /** 将可匹配的下拉值统一成字典中的大小写，未匹配项视为脏值清空 */
 function normalizeDropdownValue(colIndex: number, value: any): any {
   const col = props.columns[colIndex];
-  if (col?.type !== 'dropdown' || value === '' || value == null) return value;
+  if (col?.type !== 'dropdown' || value === '' || value === null) return value;
   return matchDropdownValue(col, value) ?? '';
 }
 
@@ -122,7 +127,7 @@ function buildColumns(): any[] {
 
 /** 规范化一行数据 */
 function normalizeRow(row: any[] | undefined, length: number): any[] {
-  const result: any[] = new Array(length).fill('');
+  const result: any[] = Array.from({ length }, () => '');
   if (row) {
     for (let i = 0; i < length; i++) {
       result[i] = normalizeDropdownValue(i, row[i] ?? '');
@@ -140,10 +145,11 @@ function normalizeData(data: any[][]): any[][] {
 /** 获取对外暴露的实例 */
 function getInstance(): JspreadsheetInstance {
   return {
-    getData: () => worksheetInstance?.getData?.() ?? [],
+    getData: () => getData(),
     setData: (data: any[][]) => {
       if (worksheetInstance) {
         worksheetInstance.setData(normalizeData(data));
+        nextTick(() => lockColumns());
       }
     },
     insertRow: () => worksheetInstance?.insertRow?.(),
@@ -215,7 +221,7 @@ function init() {
 
   const columns = buildColumns();
   const data = normalizeData(props.data || []);
-  const colCount = props.columns.length || props.minCols;
+  const colCount = props.columns.length > 0 || props.minCols;
   const numericCols = new Set(numericColumnIndexes.value);
 
   const options: any = {
@@ -289,6 +295,71 @@ function init() {
       if (props.onLoaded && worksheetInstance) {
         props.onLoaded(getInstance());
       }
+
+      // 拦截粘贴事件，支持粘贴包含表头的内容
+      nextTick(() => {
+        const tableEl = worksheetInstance?.el;
+        if (tableEl) {
+          const handlePaste = (e: ClipboardEvent) => {
+            const clipboardData = e.clipboardData;
+            if (!clipboardData) return;
+
+            const text = clipboardData.getData('text/plain');
+
+            if (!text) return;
+
+            const rows = text.split('\n').filter((line) => line.trim());
+            if (rows.length === 0) return;
+
+            // 解析为二维数组
+            const pastedData = rows.map((row) =>
+              row.split('\t').map((cell) => cell.trim()),
+            );
+
+            // 检查第一行是否是表头（匹配任意一列的 title）
+            const firstRow = pastedData[0]!;
+            let matchedCol = -1;
+            for (const [colIdx, cellValue] of firstRow.entries()) {
+              const col = props.columns[colIdx];
+              if (col && cellValue === String(col.title).trim()) {
+                matchedCol = colIdx;
+                break;
+              }
+            }
+
+            // 如果匹配到表头，跳过第一行
+            if (matchedCol >= 0 && pastedData.length > 1) {
+              e.preventDefault();
+
+              // 获取当前选中的单元格
+              const selectedCell = tableEl.querySelector('.jss_selected');
+              if (!selectedCell) return;
+
+              const td = selectedCell.closest('td');
+              if (!td) return;
+
+              const startRow = Number.parseInt(td.dataset.y ?? '0', 10);
+              const startCol = Number.parseInt(td.dataset.x ?? '0', 10);
+
+              // 逐行设置数据
+              const dataRows = pastedData.slice(1);
+              dataRows.forEach((row, rowOffset) => {
+                row.forEach((cell, colOffset) => {
+                  const targetRow = startRow + rowOffset;
+                  const targetCol = startCol + colOffset;
+                  if (worksheetInstance) {
+                    worksheetInstance.setCellValue(targetRow, targetCol, cell);
+                  }
+                });
+              });
+            }
+            // 如果没有匹配到表头，让默认行为处理
+          };
+
+          tableEl.addEventListener('paste', handlePaste, true);
+          (instance as any).__pasteHandler = handlePaste;
+        }
+      });
     },
     /**
      * 写入前的最后一道拦截：
@@ -369,17 +440,58 @@ function init() {
       oldValue: any,
     ) => {
       // 忽略幽灵 onchange（jspreadsheet 内部会在某些路径上发出 undefined 值的 onchange）
-      if (newValue === undefined || newValue === null) return;
+      if (newValue === undefined || newValue === null) {
+        return;
+      }
       // 忽略值未变化的情况
-      if (newValue === oldValue) return;
+      if (newValue === oldValue) {
+        return;
+      }
       const data = worksheetInstance?.getData?.() ?? [];
       emitChange(data);
     },
-    // 粘贴完成后
-    onpaste: (_instance: any) => {
+    // 复制时是否包含表头（根据 props.copyWithHeader 配置）
+    oncopy: (_instance: any, selectedRange: any, copiedData: string) => {
+      // 不包含表头
+      if (!props.copyWithHeader) {
+        return;
+      }
+
+      // selectedRange 格式: [x1, y1, x2, y2] - 选中的矩形范围
+      // 只取选中列的表头
+      let startCol = 0;
+      let endCol = props.columns.length - 1;
+
+      if (Array.isArray(selectedRange) && selectedRange.length >= 4) {
+        const x1 = Number(selectedRange[0]);
+        const x2 = Number(selectedRange[2]);
+        startCol = Math.min(x1, x2);
+        endCol = Math.max(x1, x2);
+      } else if (Array.isArray(selectedRange) && selectedRange.length >= 2) {
+        // 部分版本可能只传选中的单元格
+        const x1 = Number(selectedRange[0]);
+        startCol = x1;
+        endCol = x1;
+      }
+
+      const headers: string[] = [];
+      for (let i = startCol; i <= endCol; i++) {
+        headers.push(String(props.columns[i]?.title ?? ''));
+      }
+
+      const headerRow = headers.join('\t');
+      const result = `${headerRow}\n${copiedData}`;
+      return result;
+    },
+    // 粘贴完成后（支持粘贴表头）
+    onpaste: (event: any) => {
       lockColumns();
-      const data = worksheetInstance?.getData?.() ?? [];
-      emitChange(data);
+
+      // 延迟执行，等待 jspreadsheet 内部处理完成
+      nextTick(() => {
+        const data = worksheetInstance?.getData?.() ?? [];
+        emitChange(data);
+      });
     },
     oninsertrow: () => {
       const data = worksheetInstance?.getData?.() ?? [];
@@ -439,8 +551,17 @@ function setData(data: any[][]) {
   if (worksheetInstance && data) {
     worksheetInstance.setData(normalizeData(data));
     nextTick(() => lockColumns());
-    emitChange(normalizeData(data));
+    // 注意：setData 后 emitChange 由 jspreadsheet 的 onload/onchange 触发，
+    // 不在这里调用，避免时序问题
   }
+}
+
+/** 对外暴露：获取数据 */
+function getData(): any[][] {
+  if (worksheetInstance) {
+    return worksheetInstance.getData?.() ?? [];
+  }
+  return [];
 }
 
 /** 对外暴露：重置数据 */
@@ -459,6 +580,11 @@ onUnmounted(() => {
   destroyed = true;
   if (spreadsheetInstance) {
     try {
+      // 移除 paste 事件监听器
+      const pasteHandler = (spreadsheetInstance as any).__pasteHandler;
+      if (pasteHandler && worksheetInstance?.el) {
+        worksheetInstance.el.removeEventListener('paste', pasteHandler);
+      }
       spreadsheetInstance.destroy?.();
     } catch {}
     // 清理 ResizeObserver

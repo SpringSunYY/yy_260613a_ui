@@ -19,6 +19,7 @@ import { I18nSelect } from '#/components/i18n/i18n-select';
 import { TimelineLog } from '#/components/timeline-log';
 import { $t } from '#/locales';
 import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
+import OrderDetailForm from '#/views/erp/order/modules/order-detail-form.vue';
 
 import { useFormSchema as useProcessFormSchema } from '../../orderProcess/data';
 import { useFormSchema } from '../data';
@@ -169,7 +170,7 @@ async function loadAuditList(orderNo?: string) {
         :tab="$t('erp.orderDetail.orderDetail')"
         force-render
       >
-        <OrderDetailFormView
+        <OrderDetailForm
           ref="orderDetailFormRef"
           :order-no="formData?.orderNo"
         />
