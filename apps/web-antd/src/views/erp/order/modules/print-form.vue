@@ -54,7 +54,7 @@ const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 /** 款式图列内部 padding + 2 列网格 gap */
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
-const IMG_GRID_GAP = 8;
+const IMG_GRID_GAP = 2;
 /** 明细行单元高度（与 .cell { height: 24px } 一致，用于把"像素"转成"行" */
 const TABLE_ROW_PX = 24;
 /** 款式图列里"状态行"占的 3 行（前 3 行是状态色块，第 4 行起才是图） */
@@ -432,7 +432,7 @@ const orderImages = computed<string[]>(() => {
 const productImgsHeightPx = ref(0);
 
 /**
- * 读 DOM 里 <img> 的真实宽高比，再按 2 列网格算出图片区总像素高。
+ * 读 DOM 里 <img> 的真实宽高比，再按行数上限算出图片区总像素高。
  * 函数本身纯计算，无副作用——可以多次调用、配合 watch 增量触发。
  */
 function calcImageGridHeight(imgs: string[]): number {
@@ -446,24 +446,24 @@ function calcImageGridHeight(imgs: string[]): number {
     (PRINT_INNER_WIDTH * IMG_PANEL_COLSPAN) / IMG_PANEL_TOTAL_COLS;
   const usableWidth = panelWidth - IMG_PANEL_INNER_PAD;
 
-  const isSingle = imgs.length === 1;
-  // 单张图占满整列；多张图走 2 列网格，列宽 = (可用宽 - gap) / 2
-  const cellWidth = isSingle
-    ? usableWidth
-    : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+  // ≤ IMG_GRID_GAP 张时纵向单列（每张占满整列宽度），否则改为两列
+  const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
+  const cellWidth =
+    cols === 1
+      ? usableWidth
+      : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
 
-  // 模拟 2 列网格行高累计：每行两列里取较高那张，作为该行行高
+  // 模拟 grid 行高累计：每行取该行所有图片中的最大高度
   let totalPx = 0;
   let rowMaxPx = 0;
   for (let i = 0; i < imgs.length; i++) {
-    const col = i % 2; // 0 / 1
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
     const h = dom?.naturalHeight ?? 0;
     const aspect = w > 0 && h > 0 ? w / h : 1; // 未加载完的图按 1:1 兜底
     const cellH = cellWidth / aspect;
 
-    if (col === 0) {
+    if (i % cols === 0) {
       // 进入新一行：上一行先收尾
       if (i > 0) {
         totalPx += rowMaxPx + IMG_GRID_GAP;
@@ -477,6 +477,11 @@ function calcImageGridHeight(imgs: string[]): number {
   if (imgs.length > 0) totalPx += rowMaxPx;
   return totalPx;
 }
+
+/** 款式图容器 class：≤IMG_GRID_GAP 张纵向单列，>IMG_GRID_GAP 张两列 */
+const imageLayoutClass = computed(() =>
+  orderImages.value.length > IMG_GRID_GAP ? 'is-multi' : 'is-single',
+);
 
 /**
  * 等 DOM 提交、<img> 元素已经在节点树里之后，
@@ -1183,14 +1188,14 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 >
                   <div
                     class="product-imgs"
-                    :class="{ 'is-single': orderImages.length === 1 }"
+                    :class="imageLayoutClass"
                   >
                     <img
                       v-for="(src, idx) in orderImages"
                       :key="idx"
                       :src="src"
                       class="product-img"
-                      :class="{ 'is-only': orderImages.length === 1 }"
+                      :class="{ 'is-only': orderImages.length <= IMG_GRID_GAP }"
                       :alt="`款式图 ${idx + 1}`"
                     />
                   </div>
@@ -1453,15 +1458,22 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 }
 
 /*
- * 两列 grid 布局：html-to-image 走 SVG foreignObject，由浏览器原生渲染，
- * grid / flex / rowspan / position 都正常，所以可以放回最自然的 grid。
- *   - grid-template-columns: repeat(2, 1fr) → 每格 width:50%，整齐两列。
- *   - align-items: stretch 让每个 img 格子占满 td 高度，
- *     img { width:100%; height:100%; object-fit:contain } 等比缩放进格子，不变形。
- *   - max-height:100% + overflow:hidden 保证图片不溢出 td。
- *   - 奇数张时最后一张自然独占一行。
+ * 款式图容器 grid 布局：
+ *   - is-single（≤IMG_GRID_GAP 张）：单列纵向排列，每张图占满整列宽度
+ *   - is-multi（>IMG_GRID_GAP 张）：两列网格，行数按 ceil(n/2) 计算
+ * html-to-image 走 SVG foreignObject，由浏览器原生渲染，grid / flex / rowspan 都正常。
  */
-#orderPrintDiv .product-imgs {
+#orderPrintDiv .product-imgs.is-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+}
+
+#orderPrintDiv .product-imgs.is-multi {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: 1fr;
@@ -1483,8 +1495,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   min-height: 0;
 }
 
-/* 单张图：让那一格横跨两列，图片占满整个宽度 */
-#orderPrintDiv .product-imgs .product-img.is-only {
+/* 单列模式下每张图横跨整列（图片占满整个宽度） */
+#orderPrintDiv .product-imgs.is-single .product-img {
   grid-column: 1 / -1;
 }
 

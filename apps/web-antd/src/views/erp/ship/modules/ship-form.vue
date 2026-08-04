@@ -17,7 +17,7 @@ const emit = defineEmits(['success']);
 const formData = ref<OrderApi.OrderShip>();
 const rowData = ref<OrderApi.OrderShip>();
 const getTitle = computed(() => {
-  return `${$t('erp.orderProcess.action.ship')}-${formData.value?.id}`;
+  return `${$t('erp.orderProcess.action.ship')}-${formData.value?.orderNo}`;
 });
 
 const [Form, formApi] = useVbenForm({

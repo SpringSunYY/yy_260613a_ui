@@ -317,7 +317,7 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
     <Grid>
       <template #table-title>
         <div class="flex flex-col gap-y-2">
-          <div class="flex items-center gap-x-4">
+          <div class="flex items-center gap-x-4" v-if="totalCount > 0">
             <span><a-tag>总计</a-tag>：{{ totalCount }}</span>
             <span
               v-for="item in statisticsData"
@@ -334,7 +334,10 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
           </div>
           <div
             class="flex items-center gap-x-4"
-            v-if="hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])"
+            v-if="
+              hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN]) &&
+              loanTotalCount > 0
+            "
           >
             <span>
               <a-tag>贷款总计</a-tag>
@@ -343,7 +346,7 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
             <span
               v-for="item in loanStatisticsData"
               :key="item.name"
-              v-show="item.name !== ''"
+              v-show="item.name !== '' && item.total > 0"
               class="inline-flex items-center"
             >
               <I18nDictTag
@@ -356,7 +359,8 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
           <div
             class="flex items-center gap-x-4"
             v-if="
-              hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+              hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE]) &&
+              postageTotalCount > 0
             "
           >
             <span>
@@ -366,7 +370,7 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
             <span
               v-for="item in postageStatisticsData"
               :key="item.name"
-              v-show="item.name !== ''"
+              v-show="item.name !== '' && item.total > 0"
               class="inline-flex items-center"
             >
               <I18nDictTag
@@ -446,9 +450,6 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
               label: $t('common.approve'),
               type: 'link',
               auth: ['erp:order-audit:create'],
-              ifShow:
-                row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_1 &&
-                row.auditStatus !== ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3,
               onClick: handleApproveAudit.bind(null, row),
             },
             //发货
@@ -554,7 +555,14 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
             :value="row.currentProcess"
           />
         </div>
-        <AButton type="link" @click="handleViewProcessHistory(row)">
+        <AButton
+          v-if="
+            row.currentProcess !== ErpOrderCurrentProcess.CURRENT_PROCESS_1 &&
+            row.currentProcessPerson
+          "
+          type="link"
+          @click="handleViewProcessHistory(row)"
+        >
           {{ row.currentProcessPerson }}
         </AButton>
       </template>

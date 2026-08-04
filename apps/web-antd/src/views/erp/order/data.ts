@@ -194,33 +194,39 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       defaultValue: 0,
     },
-    /** 贷款状态 */
-    {
-      fieldName: 'loanStatus',
-      label: $t('erp.order.field.loanStatus'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.loanStatus'),
-        ]),
-      },
-    },
-    /** 贷款 */
-    {
-      fieldName: 'loan',
-      label: $t('erp.order.field.loan'),
-      rules: 'required',
-      component: 'InputNumber',
-      componentProps: {
-        min: 0,
-        max: 1_000_000,
-        precision: 2,
-        controlsPosition: 'right',
-        placeholder: $t('ui.placeholder.input', [$t('erp.order.field.loan')]),
-      },
-    },
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+      ? [
+          /** 贷款状态 */
+          {
+            fieldName: 'loanStatus',
+            label: $t('erp.order.field.loanStatus'),
+            rules: 'required',
+            component: 'I18nSelect',
+            componentProps: {
+              options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.loanStatus'),
+              ]),
+            },
+          },
+          /** 贷款 */
+          {
+            fieldName: 'loan',
+            label: $t('erp.order.field.loan'),
+            rules: 'required',
+            component: 'InputNumber',
+            componentProps: {
+              min: 0,
+              max: 1_000_000,
+              precision: 2,
+              controlsPosition: 'right',
+              placeholder: $t('ui.placeholder.input', [
+                $t('erp.order.field.loan'),
+              ]),
+            },
+          },
+        ]
+      : []),
     /** 提货方式 */
     {
       fieldName: 'pickupMethod',
@@ -234,34 +240,38 @@ export function useFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 邮费状态 */
-    {
-      fieldName: 'postageStatus',
-      label: $t('erp.order.field.postageStatus'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.postageStatus'),
-        ]),
-      },
-    },
-    /** 邮费 */
-    {
-      fieldName: 'postage',
-      label: $t('erp.order.field.postage'),
-      component: 'InputNumber',
-      componentProps: {
-        min: 0,
-        max: 1_000_000,
-        precision: 2,
-        controlsPosition: 'right',
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.order.field.postage'),
-        ]),
-      },
-    },
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+      ? [
+          /** 邮费状态 */
+          {
+            fieldName: 'postageStatus',
+            label: $t('erp.order.field.postageStatus'),
+            rules: 'required',
+            component: 'I18nSelect',
+            componentProps: {
+              options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.postageStatus'),
+              ]),
+            },
+          },
+          /** 邮费 */
+          {
+            fieldName: 'postage',
+            label: $t('erp.order.field.postage'),
+            component: 'InputNumber',
+            componentProps: {
+              min: 0,
+              max: 1_000_000,
+              precision: 2,
+              controlsPosition: 'right',
+              placeholder: $t('ui.placeholder.input', [
+                $t('erp.order.field.postage'),
+              ]),
+            },
+          },
+        ]
+      : []),
     /** 发货地址 */
     {
       fieldName: 'shippingAddress',
@@ -432,44 +442,52 @@ export function useGridFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 贷款 */
-    {
-      fieldName: 'loan',
-      label: $t('erp.order.field.loan'),
-      component: 'NumberRange',
-    },
-    /** 贷款状态 */
-    {
-      fieldName: 'loanStatus',
-      label: $t('erp.order.field.loanStatus'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.loanStatus'),
-        ]),
-      },
-    },
-    /** 邮费 */
-    {
-      fieldName: 'postage',
-      label: $t('erp.order.field.postage'),
-      component: 'NumberRange',
-    },
-    /** 邮费状态 */
-    {
-      fieldName: 'postageStatus',
-      label: $t('erp.order.field.postageStatus'),
-      component: 'I18nSelect',
-      componentProps: {
-        allowClear: true,
-        options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.postageStatus'),
-        ]),
-      },
-    },
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])
+      ? [
+          /** 贷款状态 */
+          {
+            fieldName: 'loanStatus',
+            label: $t('erp.order.field.loanStatus'),
+            component: 'I18nSelect',
+            componentProps: {
+              allowClear: true,
+              options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.loanStatus'),
+              ]),
+            },
+          },
+          /** 贷款 */
+          {
+            fieldName: 'loan',
+            label: $t('erp.order.field.loan'),
+            component: 'NumberRange',
+          },
+        ]
+      : []),
+    ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
+      ? [
+          /** 邮费状态 */
+          {
+            fieldName: 'postageStatus',
+            label: $t('erp.order.field.postageStatus'),
+            component: 'I18nSelect',
+            componentProps: {
+              allowClear: true,
+              options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.postageStatus'),
+              ]),
+            },
+          },
+          /** 邮费 */
+          {
+            fieldName: 'postage',
+            label: $t('erp.order.field.postage'),
+            component: 'NumberRange',
+          },
+        ]
+      : []),
     /** 客户 */
     {
       fieldName: 'customer',

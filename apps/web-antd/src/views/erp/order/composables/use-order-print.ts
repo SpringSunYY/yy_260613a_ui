@@ -33,7 +33,7 @@ const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
 const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
-const IMG_GRID_GAP = 8;
+const IMG_GRID_GAP = 2;
 
 /**
  * 二维码 td 净空（与 print-form.vue 中的 QR_CELL_INNER_* 保持一致）：
@@ -160,7 +160,21 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
   padding: 8px;
   page-break-inside: avoid;
 }
-#${PRINT_CONTAINER_ID} .product-imgs {
+/*
+ * 款式图容器 grid 布局：
+ *   - is-single（≤IMG_GRID_GAP 张）：单列纵向排列，每张图占满整列宽度
+ *   - is-multi（>IMG_GRID_GAP 张）：两列网格
+ */
+#${PRINT_CONTAINER_ID} .product-imgs.is-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+}
+#${PRINT_CONTAINER_ID} .product-imgs.is-multi {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: 1fr;
@@ -180,7 +194,8 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
   background: #fff;
   min-height: 0;
 }
-#${PRINT_CONTAINER_ID} .product-imgs .product-img.is-only {
+/* 单列模式下每张图横跨整列 */
+#${PRINT_CONTAINER_ID} .product-imgs.is-single .product-img {
   grid-column: 1 / -1;
 }
 #${PRINT_CONTAINER_ID} .jls-meta {
@@ -226,8 +241,8 @@ function getOrderImages(raw: unknown): string[] {
 }
 
 /**
- * 读 DOM 里 <img> 的真实宽高比，再按 2 列网格算出图片区总像素高。
- * 与 print-form.vue 中的 calcImageGridHeight 一致。
+ * 读 DOM 里 <img> 的真实宽高比，再按行数上限算出图片区总像素高。
+ * ≤IMG_GRID_GAP 张纵向单列，>IMG_GRID_GAP 张改为两列。
  */
 function calcImageGridHeight(
   sourceEl: HTMLElement,
@@ -238,22 +253,22 @@ function calcImageGridHeight(
     ...sourceEl.querySelectorAll<HTMLImageElement>('img.product-img'),
   ];
 
-  const isSingle = imgs.length === 1;
-  const cellWidth = isSingle
-    ? usableWidth
-    : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+  const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
+  const cellWidth =
+    cols === 1
+      ? usableWidth
+      : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
 
   let totalPx = 0;
   let rowMaxPx = 0;
   for (let i = 0; i < imgs.length; i++) {
-    const col = i % 2;
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
     const h = dom?.naturalHeight ?? 0;
     const aspect = w > 0 && h > 0 ? w / h : 1;
     const cellH = cellWidth / aspect;
 
-    if (col === 0) {
+    if (i % cols === 0) {
       if (i > 0) {
         totalPx += rowMaxPx + IMG_GRID_GAP;
         rowMaxPx = 0;
@@ -327,7 +342,7 @@ function buildHtmlBody(
 
   const imgsHtml = orderImages
     .map((src, idx) => {
-      const isOnly = orderImages.length === 1;
+      const isOnly = orderImages.length <= IMG_GRID_GAP;
       return `<img src="${src}" class="product-img${isOnly ? ' is-only' : ''}" alt="款式图 ${idx + 1}" />`;
     })
     .join('');
@@ -360,7 +375,7 @@ function buildHtmlBody(
       if (i === STATUS_ROWS_BEFORE_IMG) {
         return `<tr>${leftCells}
           <td class="cell img-panel" colspan="6" rowspan="${rowCount - STATUS_ROWS_BEFORE_IMG}" style="height:${imgPanelHeight}">
-            <div class="product-imgs${orderImages.length === 1 ? ' is-single' : ''}">${imgsHtml}</div>
+            <div class="product-imgs${orderImages.length <= IMG_GRID_GAP ? ' is-single' : ' is-multi'}">${imgsHtml}</div>
           </td>
         </tr>`;
       }
