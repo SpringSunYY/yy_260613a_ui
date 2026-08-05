@@ -449,9 +449,7 @@ function calcImageGridHeight(imgs: string[]): number {
   // ≤ IMG_GRID_GAP 张时纵向单列（每张占满整列宽度），否则改为两列
   const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
   const cellWidth =
-    cols === 1
-      ? usableWidth
-      : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+    cols === 1 ? usableWidth : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
 
   // 模拟 grid 行高累计：每行取该行所有图片中的最大高度
   let totalPx = 0;
@@ -543,7 +541,7 @@ const qrCodes = computed<string[]>(() => {
  *   - 单张：父级高 90% × 宽 90% 取 min = 约 85px（接近正方形，跟父级同比例）。
  *   - 多张：每张 = min((可用宽 - gap) / 张数, 可用高 - 4)，最少 18px 兜底。
  */
-const QR_CELL_INNER_WIDTH = 700 * 4 / 12 - 2; // ≈ 231
+const QR_CELL_INNER_WIDTH = (700 * 4) / 12 - 2; // ≈ 231
 const QR_CELL_INNER_HEIGHT = 4 * 24 - 2; // 94
 const qrItemSize = computed(() => {
   const n = qrCodes.value.length;
@@ -563,7 +561,7 @@ const qrItemSize = computed(() => {
 /** 明细人员列表（名字/号码/尺码/备注） */
 const personList = computed(() =>
   orderDetails.value.map((row) => ({
-    name: (row as any).name ?? '',
+    name: (row as any).setName ?? '',
     number: row.setNumber ?? '',
     size: dictLabel(DICT_TYPE.ERP_SET_SIZE, row.setSize),
     remark: (row as any).remark ?? '',
@@ -1130,7 +1128,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                      支持多张图（qrCode 字段用 || 等分隔），用 CSS Grid 让图块撑满整个净空。 -->
                 <td class="cell qr-cell" colspan="4" rowspan="4">
                   <div
-                    v-if="qrCodes.length"
+                    v-if="qrCodes.length > 0"
                     class="qr-imgs"
                     :class="{
                       'is-single': qrCodes.length === 1,
@@ -1186,10 +1184,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   :rowspan="rowCount - 3"
                   :style="{ height: `${(rowCount - 3) * TABLE_ROW_PX}px` }"
                 >
-                  <div
-                    class="product-imgs"
-                    :class="imageLayoutClass"
-                  >
+                  <div class="product-imgs" :class="imageLayoutClass">
                     <img
                       v-for="(src, idx) in orderImages"
                       :key="idx"

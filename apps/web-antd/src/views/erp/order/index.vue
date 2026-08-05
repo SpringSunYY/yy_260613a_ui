@@ -220,26 +220,29 @@ const postageTotalCount = ref<number>(0);
 function getStatistics(formValues: PageParam) {
   // 获取统计
   getOrderStatistics(formValues).then((res) => {
+    totalCount.value = 0;
+    statisticsData.value = [];
     if (!res || res?.length <= 0) return;
     statisticsData.value = res;
-    totalCount.value = 0;
     res.forEach((item) => (totalCount.value += Number(item.total)));
   });
   if (hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])) {
     //  获取邮费
     getOrderPostageStatistics(formValues).then((res) => {
+      postageTotalCount.value = 0;
+      postageStatisticsData.value = [];
       if (!res || res?.length <= 0) return;
       postageStatisticsData.value = res;
-      postageTotalCount.value = 0;
       res.forEach((item) => (postageTotalCount.value += Number(item.total)));
     });
   }
   if (hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_LOAN])) {
     // 获取贷款
     getOrderLoanStatistics(formValues).then((res) => {
+      loanTotalCount.value = 0;
+      loanStatisticsData.value = [];
       if (!res || res?.length <= 0) return;
       loanStatisticsData.value = res;
-      loanTotalCount.value = 0;
       res.forEach((item) => (loanTotalCount.value += Number(item.total)));
     });
   }

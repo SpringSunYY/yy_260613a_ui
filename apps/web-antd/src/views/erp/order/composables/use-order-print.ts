@@ -40,7 +40,7 @@ const IMG_GRID_GAP = 2;
  *   qr-cell：colspan=4 × 700 / 12 ≈ 233px 宽；rowspan=4 × 24 = 96px 高；
  *   扣 1px 边框双向 → 约 231×94px。
  */
-const QR_CELL_INNER_WIDTH = 700 * 4 / 12 - 2;
+const QR_CELL_INNER_WIDTH = (700 * 4) / 12 - 2;
 const QR_CELL_INNER_HEIGHT = 4 * 24 - 2;
 
 /** 按张数算每张二维码的 inline style —— 直接写到 <img> 上，
@@ -255,9 +255,7 @@ function calcImageGridHeight(
 
   const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
   const cellWidth =
-    cols === 1
-      ? usableWidth
-      : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+    cols === 1 ? usableWidth : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
 
   let totalPx = 0;
   let rowMaxPx = 0;
@@ -311,7 +309,7 @@ function buildHtmlBody(
     );
 
   const personList = validDetails.map((row) => ({
-    name: (row as any).name ?? '',
+    name: (row as any).setName ?? '',
     number: row.setNumber ?? '',
     size: dictLabel(DICT_TYPE.ERP_SET_SIZE, row.setSize),
     remark: (row as any).remark ?? '',

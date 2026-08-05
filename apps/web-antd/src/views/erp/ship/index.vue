@@ -91,14 +91,12 @@ const tomorrowStats = ref<OrderApi.OrderStatistics[]>([]);
 const totalTomorrow = ref(0);
 const dayAfterTomorrowStats = ref<OrderApi.OrderStatistics[]>([]);
 const totalDayAfterTomorrow = ref(0);
-function fetchStatistics(formValues: PageParam) {
-  totalCount.value = 0;
-  todayStats.value = [];
-  tomorrowStats.value = [];
-  dayAfterTomorrowStats.value = [];
+function getStatistics(formValues: PageParam) {
   const fmt = 'YYYY-MM-DD HH:mm:ss';
   // 规格统计
   getOrderShipStatistics(formValues).then((res) => {
+    totalCount.value = 0;
+    statisticsData.value = [];
     if (!res) return;
     statisticsData.value = res;
     res?.forEach((item) => (totalCount.value += Number(item.total)));
@@ -111,6 +109,8 @@ function fetchStatistics(formValues: PageParam) {
       dayjs().endOf('day').format(fmt),
     ],
   }).then((res) => {
+    todayStats.value = [];
+    totalToday.value = 0;
     if (!res) return;
     todayStats.value = res;
     res?.forEach((item) => (totalToday.value += Number(item.total)));
@@ -123,6 +123,8 @@ function fetchStatistics(formValues: PageParam) {
       dayjs().add(1, 'day').endOf('day').format(fmt),
     ],
   }).then((res) => {
+    tomorrowStats.value = [];
+    totalTomorrow.value = 0;
     if (!res) return;
     tomorrowStats.value = res;
     totalTomorrow.value = res.reduce((acc, cur) => acc + cur.total, 0);
@@ -135,6 +137,8 @@ function fetchStatistics(formValues: PageParam) {
       dayjs().add(2, 'day').endOf('day').format(fmt),
     ],
   }).then((res) => {
+    dayAfterTomorrowStats.value = [];
+    totalDayAfterTomorrow.value = 0;
     if (!res) return;
     dayAfterTomorrowStats.value = res;
     totalDayAfterTomorrow.value = res.reduce((acc, cur) => acc + cur.total, 0);
@@ -156,7 +160,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async (ctx, formValues) => {
-          fetchStatistics(formValues);
+          getStatistics(formValues);
           const { page } = ctx || {};
           const { sortBy, sort } = pickSort(ctx);
           return await getShipOrderPage({
