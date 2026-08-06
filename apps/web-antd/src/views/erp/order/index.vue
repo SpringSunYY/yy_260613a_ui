@@ -471,15 +471,12 @@ function handleViewProcessHistory(row: OrderProcessApi.OrderProcess) {
                     ErpOrderCurrentProcess.CURRENT_PROCESS_7),
               onClick: handleOrderShip.bind(null, row),
             },
-            //发货
+            //打印
             {
               label: $t('common.print'),
               type: 'link',
               icon: ACTION_ICON.PRINT,
-              auth: [
-                'erp.orderProcess.action.ship',
-                'erp:order-process:complete',
-              ],
+              auth: ['erp:order:create'],
               onClick: handleOrderPrint.bind(null, row),
             },
             //重置向量

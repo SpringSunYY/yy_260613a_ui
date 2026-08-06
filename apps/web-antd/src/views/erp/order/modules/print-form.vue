@@ -1261,9 +1261,6 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         :loading="printing"
         @click="onPrintClick"
         v-print="printObj"
-        v-if="
-          orderDetail?.auditStatus === ErpOrderAuditStatus.ORDER_AUDIT_STATUS_3
-        "
       >
         {{ $t('common.print') }}
       </Button>
