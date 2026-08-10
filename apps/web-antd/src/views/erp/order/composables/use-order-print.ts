@@ -161,42 +161,39 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
   page-break-inside: avoid;
 }
 /*
- * 款式图容器 grid 布局：
- *   - is-single（≤IMG_GRID_GAP 张）：单列纵向排列，每张图占满整列宽度
- *   - is-multi（>IMG_GRID_GAP 张）：两列网格
+ * 款式图容器布局：
+ *   - is-single（≤IMG_GRID_GAP 张）：单列纵向排列
+ *   - is-multi（>IMG_GRID_GAP 张）：两列网格，每行高度 = 图片内容高度（min-content）
  */
 #${PRINT_CONTAINER_ID} .product-imgs.is-single {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   width: 100%;
-  height: 100%;
+  height: auto;
   align-items: stretch;
 }
 #${PRINT_CONTAINER_ID} .product-imgs.is-multi {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
+  grid-auto-rows: min-content;
   align-items: stretch;
   justify-items: stretch;
   gap: 8px;
   width: 100%;
-  height: 100%;
-  max-height: 100%;
-  overflow: hidden;
+  height: auto;
 }
 #${PRINT_CONTAINER_ID} .product-img {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
   background: #fff;
   min-height: 0;
 }
-/* 单列模式下每张图横跨整列 */
+/* 单列模式下每张图占满整列宽度 */
 #${PRINT_CONTAINER_ID} .product-imgs.is-single .product-img {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 #${PRINT_CONTAINER_ID} .jls-meta {
   display: flex;
@@ -241,21 +238,29 @@ function getOrderImages(raw: unknown): string[] {
 }
 
 /**
- * 读 DOM 里 <img> 的真实宽高比，再按行数上限算出图片区总像素高。
- * ≤IMG_GRID_GAP 张纵向单列，>IMG_GRID_GAP 张改为两列。
+ * 量 DOM 里 td.img-panel 的实际渲染净宽，再用 naturalWidth/Height 模拟 grid 布局
+ * 算出图片区总像素高。量 DOM 宽度 → 预览和导出用同一个计算基准 → rowCount 完全一致。
  */
 function calcImageGridHeight(
   sourceEl: HTMLElement,
   imgs: string[],
-  usableWidth: number,
 ): number {
+  const td = sourceEl.querySelector<HTMLElement>('td.img-panel');
+  if (!td) return 0;
+
+  const style = window.getComputedStyle(td);
+  const contentWidth = td.clientWidth
+    - parseFloat(style.paddingLeft)
+    - parseFloat(style.paddingRight);
+  if (contentWidth <= 0) return 0;
+
   const domImgs: HTMLImageElement[] = [
     ...sourceEl.querySelectorAll<HTMLImageElement>('img.product-img'),
   ];
 
   const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
   const cellWidth =
-    cols === 1 ? usableWidth : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+    cols === 1 ? contentWidth : Math.max(1, (contentWidth - IMG_GRID_GAP) / 2);
 
   let totalPx = 0;
   let rowMaxPx = 0;
@@ -345,8 +350,6 @@ function buildHtmlBody(
     })
     .join('');
 
-  const imgPanelHeight = `${(rowCount - STATUS_ROWS_BEFORE_IMG) * TABLE_ROW_PX}px`;
-
   const statusLabels = [
     dictLabel(DICT_TYPE.ERP_ORDER_STATUS, orderDetail.orderStatus),
     dictLabel(DICT_TYPE.ERP_ORDER_PICKUP_METHOD, orderDetail.pickupMethod),
@@ -372,7 +375,7 @@ function buildHtmlBody(
       }
       if (i === STATUS_ROWS_BEFORE_IMG) {
         return `<tr>${leftCells}
-          <td class="cell img-panel" colspan="6" rowspan="${rowCount - STATUS_ROWS_BEFORE_IMG}" style="height:${imgPanelHeight}">
+          <td class="cell img-panel" colspan="6" rowspan="${rowCount - STATUS_ROWS_BEFORE_IMG}">
             <div class="product-imgs${orderImages.length <= IMG_GRID_GAP ? ' is-single' : ' is-multi'}">${imgsHtml}</div>
           </td>
         </tr>`;
@@ -556,10 +559,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
         printTime,
       );
       await waitForImages(renderEl);
-      const usableWidth =
-        (PRINT_INNER_WIDTH * IMG_PANEL_COLSPAN) / IMG_PANEL_TOTAL_COLS -
-        IMG_PANEL_INNER_PAD;
-      imgHeightPx = calcImageGridHeight(renderEl, orderImages, usableWidth);
+      imgHeightPx = calcImageGridHeight(renderEl, orderImages);
       renderEl.innerHTML = '';
     }
 

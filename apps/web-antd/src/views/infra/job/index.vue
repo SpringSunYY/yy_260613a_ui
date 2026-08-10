@@ -18,6 +18,7 @@ import {
   updateJobStatus,
 } from '#/api/infra/job';
 import { $t } from '#/locales';
+import { setPendingExtraTitle } from '#/router/state';
 import { InfraJobStatusEnum } from '#/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
@@ -101,6 +102,7 @@ async function handleTrigger(row: InfraJobApi.Job) {
 
 /** 跳转到任务日志 */
 function handleLog(row?: InfraJobApi.Job) {
+  setPendingExtraTitle(row?.name);
   push({
     name: 'InfraJobLog',
     query: row?.id ? { id: row.id } : {},
@@ -232,13 +234,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: $t('infra.job.action.detail'),
               type: 'link',
-              auth: ['infra:job:search'],
+              auth: ['infra:job:query'],
               onClick: handleDetail.bind(null, row),
             },
             {
               label: $t('infra.job.log'),
               type: 'link',
-              auth: ['infra:job:search'],
+              auth: ['infra:job:query'],
               onClick: handleLog.bind(null, row),
             },
             {

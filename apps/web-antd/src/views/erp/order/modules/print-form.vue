@@ -145,6 +145,41 @@ function getPrintCss() {
       margin: 0 auto;
       padding: 12px;
     }
+    /* 款式图：is-single 单列纵向，is-multi 两列 min-content */
+    #orderPrintDiv .product-imgs.is-single {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      height: auto;
+      align-items: stretch;
+    }
+    #orderPrintDiv .product-imgs.is-multi {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: min-content;
+      align-items: stretch;
+      justify-items: stretch;
+      gap: 8px;
+      width: 100%;
+      height: auto;
+    }
+    #orderPrintDiv .product-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      background: #fff;
+      min-height: 0;
+    }
+    #orderPrintDiv .product-imgs.is-single .product-img {
+      width: 100%;
+    }
+    /* val-area 保留换行 */
+    #orderPrintDiv .val-area {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>`;
 }
 
@@ -432,37 +467,39 @@ const orderImages = computed<string[]>(() => {
 const productImgsHeightPx = ref(0);
 
 /**
- * 读 DOM 里 <img> 的真实宽高比，再按行数上限算出图片区总像素高。
- * 函数本身纯计算，无副作用——可以多次调用、配合 watch 增量触发。
+ * 实时量 DOM 里 td.img-panel 的实际渲染净宽（不含 padding），
+ * 再用 naturalWidth/Height 模拟 grid 布局算出图片区总像素高。
+ * 量 DOM 宽度 → 预览和导出用同一个计算基准 → rowCount 完全一致。
  */
-function calcImageGridHeight(imgs: string[]): number {
-  const sourceEl = document.querySelector('#orderPrintDiv');
-  const domImgs: HTMLImageElement[] = sourceEl
-    ? ([...sourceEl.querySelectorAll('img.product-img')] as HTMLImageElement[])
-    : [];
+function calcImageGridHeight(): number {
+  const td = document.querySelector<HTMLElement>('#orderPrintDiv td.img-panel');
+  if (!td) return 0;
 
-  // 款式图列宽度 = 容器宽 × (colspan/totalCols)，再扣 td 内 padding
-  const panelWidth =
-    (PRINT_INNER_WIDTH * IMG_PANEL_COLSPAN) / IMG_PANEL_TOTAL_COLS;
-  const usableWidth = panelWidth - IMG_PANEL_INNER_PAD;
+  // clientWidth = 内容 + padding；减去 padding 得到纯内容宽
+  const contentWidth =
+    td.clientWidth -
+    parseFloat(window.getComputedStyle(td).paddingLeft) -
+    parseFloat(window.getComputedStyle(td).paddingRight);
+  if (contentWidth <= 0) return 0;
 
-  // ≤ IMG_GRID_GAP 张时纵向单列（每张占满整列宽度），否则改为两列
-  const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
+  const domImgs: HTMLImageElement[] = [
+    ...(document.querySelectorAll<HTMLImageElement>('#orderPrintDiv img.product-img')),
+  ];
+
+  const cols = orderImages.value.length <= IMG_GRID_GAP ? 1 : 2;
   const cellWidth =
-    cols === 1 ? usableWidth : Math.max(1, (usableWidth - IMG_GRID_GAP) / 2);
+    cols === 1 ? contentWidth : Math.max(1, (contentWidth - IMG_GRID_GAP) / 2);
 
-  // 模拟 grid 行高累计：每行取该行所有图片中的最大高度
   let totalPx = 0;
   let rowMaxPx = 0;
-  for (let i = 0; i < imgs.length; i++) {
+  for (let i = 0; i < orderImages.value.length; i++) {
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
     const h = dom?.naturalHeight ?? 0;
-    const aspect = w > 0 && h > 0 ? w / h : 1; // 未加载完的图按 1:1 兜底
+    const aspect = w > 0 && h > 0 ? w / h : 1;
     const cellH = cellWidth / aspect;
 
     if (i % cols === 0) {
-      // 进入新一行：上一行先收尾
       if (i > 0) {
         totalPx += rowMaxPx + IMG_GRID_GAP;
         rowMaxPx = 0;
@@ -472,7 +509,7 @@ function calcImageGridHeight(imgs: string[]): number {
       rowMaxPx = Math.max(rowMaxPx, cellH);
     }
   }
-  if (imgs.length > 0) totalPx += rowMaxPx;
+  if (orderImages.value.length > 0) totalPx += rowMaxPx;
   return totalPx;
 }
 
@@ -487,34 +524,47 @@ const imageLayoutClass = computed(() =>
  * 关闭弹窗 / 切换订单 → watch 重新触发；首次进来 → nextTick 也覆盖到。
  */
 function recomputeImgsHeight() {
-  const imgs = orderImages.value;
-  productImgsHeightPx.value = imgs.length === 0 ? 0 : calcImageGridHeight(imgs);
+  productImgsHeightPx.value = calcImageGridHeight();
 }
 
 watch(
   orderImages,
-  () => {
-    // DOM 已 patch、img 元素已挂上 → 再计算。
-    void nextTick(() => {
-      recomputeImgsHeight();
-      // 抽屉打开后立刻让图加载；图加载完后 nextTick 内 <img>.complete === true，
-      // 在 requestIdleCallback 空闲窗口里**后台预热**压缩缓存。
-      // 用户点打印时直接命中缓存，毫秒级完成压图，**不卡顿**。
-      const printEl = document.querySelector<HTMLElement>('#orderPrintDiv');
-      if (!printEl) return;
-      const ric = (window as any).requestIdleCallback as
-        | ((cb: () => void) => number)
-        | undefined;
-      if (ric) {
-        ric(() => {
-          void prewarmDownsampleCache(printEl);
+  async () => {
+    if (orderImages.value.length === 0) {
+      productImgsHeightPx.value = 0;
+      return;
+    }
+    // DOM 已 patch、img 元素已挂上 → 等图片加载完成后再计算真实高度
+    //（naturalWidth/Height 在图片未加载完时为 0，按 1:1 兜底会导致行数严重不准）
+    await nextTick();
+    const imgs = [...document.querySelectorAll<HTMLImageElement>('#orderPrintDiv img.product-img')];
+    await Promise.all(
+      imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
         });
-      } else {
-        setTimeout(() => {
-          void prewarmDownsampleCache(printEl);
-        }, 0);
-      }
-    });
+      }),
+    );
+    recomputeImgsHeight();
+
+    // 抽屉打开后立刻让图加载；图加载完后预热压缩缓存。
+    // 用户点打印时直接命中缓存，毫秒级完成压图，**不卡顿**。
+    const printEl = document.querySelector<HTMLElement>('#orderPrintDiv');
+    if (!printEl) return;
+    const ric = (window as any).requestIdleCallback as
+      | ((cb: () => void) => number)
+      | undefined;
+    if (ric) {
+      ric(() => {
+        void prewarmDownsampleCache(printEl);
+      });
+    } else {
+      setTimeout(() => {
+        void prewarmDownsampleCache(printEl);
+      }, 0);
+    }
   },
   { immediate: true },
 );
@@ -1182,7 +1232,6 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   class="cell img-panel"
                   colspan="6"
                   :rowspan="rowCount - 3"
-                  :style="{ height: `${(rowCount - 3) * TABLE_ROW_PX}px` }"
                 >
                   <div class="product-imgs" :class="imageLayoutClass">
                     <img
@@ -1371,6 +1420,8 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 #orderPrintDiv .val-area {
   text-align: left;
   vertical-align: middle;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 #orderPrintDiv .val-total {
@@ -1456,32 +1507,30 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
  * html-to-image 走 SVG foreignObject，由浏览器原生渲染，grid / flex / rowspan 都正常。
  */
 #orderPrintDiv .product-imgs.is-single {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   width: 100%;
-  height: 100%;
+  height: auto;
   align-items: stretch;
 }
 
 #orderPrintDiv .product-imgs.is-multi {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
+  /* min-content：每行高度 = 该行最高图片的内容高度（不再拉伸到填满容器） */
+  grid-auto-rows: min-content;
   align-items: stretch;
   justify-items: stretch;
   gap: 8px;
   width: 100%;
-  height: 100%;
-  max-height: 100%;
-  overflow: hidden;
+  height: auto;
 }
 
 #orderPrintDiv .product-img {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
   background: #fff;
   min-height: 0;
@@ -1489,7 +1538,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 
 /* 单列模式下每张图横跨整列（图片占满整个宽度） */
 #orderPrintDiv .product-imgs.is-single .product-img {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
 /* ---------- 打印信息 ---------- */
