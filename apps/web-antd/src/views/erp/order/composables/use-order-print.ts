@@ -10,18 +10,18 @@
  * uploadOrderPrintImage(orderNo);
  * ```
  */
-import type { Dayjs } from 'dayjs';
+import type {Dayjs} from 'dayjs';
 
-import type { OrderApi } from '#/api/erp/order';
-import type { OrderProcessApi } from '#/api/erp/orderProcess';
+import type {OrderApi} from '#/api/erp/order';
+import type {OrderProcessApi} from '#/api/erp/orderProcess';
 
-import { useUserStore } from '@vben/stores';
-import { formatDate } from '@vben/utils';
+import {useUserStore} from '@vben/stores';
+import {formatDate} from '@vben/utils';
 
-import { toPng } from 'html-to-image';
+import {toPng} from 'html-to-image';
 
-import { getOrderDetailNo, updateOrderPrintImage } from '#/api/erp/order';
-import { DICT_TYPE, getDictLabel, getDictObj, getDictOptions } from '#/utils';
+import {getOrderDetailNo, updateOrderPrintImage} from '#/api/erp/order';
+import {DICT_TYPE, getDictLabel, getDictObj} from '#/utils';
 
 const PRINT_CONTAINER_ID = 'orderPrintDiv';
 
@@ -29,10 +29,6 @@ const PRINT_CONTAINER_ID = 'orderPrintDiv';
 const MIN_ROWS = 20;
 const TABLE_ROW_PX = 24;
 const STATUS_ROWS_BEFORE_IMG = 3;
-const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
-const IMG_PANEL_COLSPAN = 6;
-const IMG_PANEL_TOTAL_COLS = 12;
-const IMG_PANEL_INNER_PAD = 16; // 8 + 8
 
 /**
  * 订单状态字典 colorType → 字体色 hex（与 print-form.vue 保持一致）。
@@ -66,8 +62,9 @@ function buildOrderStatusCell(value: any): {
     ORDER_STATUS_COLOR_MAP[colorType] || ORDER_STATUS_COLOR_MAP.default;
   const className = ['status-normal', cssClass].filter(Boolean).join(' ');
   const style = cssClass ? '' : `color: ${colorHex}; font-weight: 700;`;
-  return { label, className, style };
+  return {label, className, style};
 }
+
 const IMG_GRID_GAP = 2;
 /**
  * 款式图布局里图片与图片之间的实际像素 gap。
@@ -328,7 +325,7 @@ function calcImageGridHeight(
     const cellW = dom?.clientWidth ?? 0;
     if (cellW <= 0) continue;
     const aspect = w / h;
-    ready.push({ cellW, cellH: cellW / aspect });
+    ready.push({cellW, cellH: cellW / aspect});
   }
 
   if (ready.length === 0) return 0;
@@ -371,13 +368,52 @@ function buildHtmlBody(
     (row) => row.setSize && Number(row.setQuantity) > 0,
   );
 
-  const sizeOptions = getDictOptions(DICT_TYPE.ERP_SET_SIZE, 'string');
-  const sizeSortList = sizeOptions
-    .map((opt) => ({ value: String(opt.value), label: opt.label }))
-    .sort((a, b) =>
-      a.label.localeCompare(b.label, 'zh-Hans-CN', { numeric: true }),
-    );
+  /**
+   * 尺码 => 数量 汇总（导出场景，与预览端 print-form.vue 的 sizeSummary 口径完全一致）
+   *
+   * 排序口径：**按订单详情 orderDetails 中 setSize 首次出现的下标升序**——
+   * 这样"尺码统计行"与详情里尺码出现的顺序一一对应，看起来不"乱"。
+   *
+   * 关键坑：
+   *   1. 同一尺码多次出现要累加（不变）。
+   *   2. **字典没声明的尺码不能丢**。原实现用 `sizeSortList.filter(has)`，
+   *      会把字典之外的尺码直接过滤掉。改用 `dictLabel` 兜底——
+   *      字典有就用字典 label，没有就用原值，避免自定义尺码消失在统计里。
+   *   3. firstIdx 用累加时第一次写入的下标（不是 min），保证"详情顺序"语义清晰。
+   */
+  const sizeSummary = (() => {
+    const acc = new Map<string, { label: string; qty: number; firstIdx: number }>();
+    validDetails.forEach((row, idx) => {
+      const size = row.setSize;
+      const qty = Number(row.setQuantity) || 0;
+      if (size === undefined || size === null || size === '' || qty <= 0)
+        return;
+      const key = String(size);
+      const existed = acc.get(key);
+      if (existed) {
+        existed.qty += qty;
+      } else {
+        acc.set(key, {
+          label: dictLabel(DICT_TYPE.ERP_SET_SIZE, size) || String(size),
+          qty,
+          firstIdx: idx,
+        });
+      }
+    });
+    return [...acc.values()]
+      .sort((a, b) => a.firstIdx - b.firstIdx)
+      .map(({label, qty}) => ({label, qty}));
+  })();
+  const sizeTotal = sizeSummary.reduce((sum, i) => sum + i.qty, 0);
+  const sizeRows = [
+    ...sizeSummary.map((i) => ({...i, isTotal: false})),
+    {label: '总计', qty: sizeTotal, isTotal: true},
+  ];
 
+  /**
+   * 明细人员列表（名字/号码/尺码/备注）。
+   * 用 validDetails 保证 personList 与下面 detailRowsHtml 的 i 索引口径一致。
+   */
   const personList = validDetails.map((row) => ({
     name: (row as any).setName ?? '',
     number: row.setNumber ?? '',
@@ -385,28 +421,11 @@ function buildHtmlBody(
     remark: (row as any).remark ?? '',
   }));
 
-  const totals = new Map<string, number>();
-  for (const row of validDetails) {
-    const size = row.setSize;
-    const qty = Number(row.setQuantity) || 0;
-    if (size === undefined || size === null || size === '' || qty <= 0)
-      continue;
-    totals.set(String(size), (totals.get(String(size)) ?? 0) + qty);
-  }
-  const sizeSummary = sizeSortList
-    .filter((s) => totals.has(s.value))
-    .map((s) => ({ label: s.label, qty: totals.get(s.value)! }));
-  const sizeTotal = sizeSummary.reduce((sum, i) => sum + i.qty, 0);
-  const sizeRows = [
-    ...sizeSummary.map((i) => ({ ...i, isTotal: false })),
-    { label: '总计', qty: sizeTotal, isTotal: true },
-  ];
-
   const requiredImageRows = Math.ceil(imgHeightPx / TABLE_ROW_PX);
   const base = Math.max(personList.length, MIN_ROWS);
   const needForImages = requiredImageRows + STATUS_ROWS_BEFORE_IMG;
   const rowCount = Math.max(base, needForImages);
-  const rowIndexes = Array.from({ length: rowCount }, (_, i) => i);
+  const rowIndexes = Array.from({length: rowCount}, (_, i) => i);
 
   const imgsHtml = orderImages
     .map((src, idx) => {
@@ -458,7 +477,7 @@ function buildHtmlBody(
     .join('');
 
   const cols = Array.from(
-    { length: 12 },
+    {length: 12},
     () => '<col style="width:8.333%">',
   ).join('');
 
@@ -510,10 +529,10 @@ function buildHtmlBody(
       <tr>
         <th class="cell lbl" colspan="1">尺码统计</th>
         <td class="cell val val-area jls-stat-text" colspan="11">${
-          sizeRows.length > 0
-            ? sizeRows.map((s) => `${s.label}-${s.qty}`).join('、')
-            : ''
-        }</td>
+    sizeRows.length > 0
+      ? sizeRows.map((s) => `${s.label}-${s.qty}`).join('、')
+      : ''
+  }</td>
       </tr>
 
       <tr>
@@ -525,15 +544,15 @@ function buildHtmlBody(
         <th class="cell lbl" colspan="1">备注</th>
         <th class="cell lbl" colspan="2">订单状态</th>
         <td class="cell qr-cell" colspan="4" rowspan="4">${
-          qrCodeUrls.length > 0
-            ? `<div class="qr-imgs ${qrCodeUrls.length === 1 ? 'is-single' : 'is-multi'}">${qrCodeUrls
-                .map(
-                  (src, idx) =>
-                    `<img src="${src}" style="${qrItemStyle(qrCodeUrls.length)}" class="qr-img" alt="订单二维码 ${idx + 1}" />`,
-                )
-                .join('')}</div>`
-            : ''
-        }</td>
+    qrCodeUrls.length > 0
+      ? `<div class="qr-imgs ${qrCodeUrls.length === 1 ? 'is-single' : 'is-multi'}">${qrCodeUrls
+        .map(
+          (src, idx) =>
+            `<img src="${src}" style="${qrItemStyle(qrCodeUrls.length)}" class="qr-img" alt="订单二维码 ${idx + 1}" />`,
+        )
+        .join('')}</div>`
+      : ''
+  }</td>
       </tr>
       ${detailRowsHtml}
 
@@ -568,8 +587,8 @@ async function waitForImages(element: HTMLElement) {
     images.map((image) => {
       if (image.complete) return Promise.resolve();
       return new Promise<void>((resolve) => {
-        image.addEventListener('load', () => resolve(), { once: true });
-        image.addEventListener('error', () => resolve(), { once: true });
+        image.addEventListener('load', () => resolve(), {once: true});
+        image.addEventListener('error', () => resolve(), {once: true});
       });
     }),
   );
@@ -688,7 +707,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
     // 真正拿 File：toBlob 触发 canvas 渲染在主流程里走一遍；
     // 这里直接 fetch 上面 dataURL 的 blob，再构造成 File（与打印端一致）。
     const finalBlob = await (await fetch(href)).blob();
-    return new File([finalBlob], fileName, { type: 'image/png' });
+    return new File([finalBlob], fileName, {type: 'image/png'});
   } finally {
     container.remove();
   }
@@ -713,7 +732,7 @@ export function uploadOrderPrintImage(orderNo: string): void {
   setTimeout(async () => {
     try {
       const file = await generatePrintImageFile(orderNo);
-      await updateOrderPrintImage({ file, orderNo });
+      await updateOrderPrintImage({file, orderNo});
     } catch (error) {
       console.error('打印图片上传失败', error);
     }

@@ -20,7 +20,6 @@ import {
   ErpOrderPrintStatus,
   getDictLabel,
   getDictObj,
-  getDictOptions,
 } from '#/utils';
 
 const emit = defineEmits(['success']);
@@ -41,19 +40,6 @@ let currentPrintingOrderNo: null | string = null;
 /** 明细表最少渲染行数（不足补空行，贴近纸质单据样式） */
 const MIN_ROWS = 20;
 
-/**
- * 打印纸张内 #orderPrintDiv 容器的有效宽度（px）。
- *
- * Issue 4 需要根据款式图总高度算出"明细区要补多少行"，而这个高度依赖容器宽。
- * 屏幕端 drawer 和 iframe 端都共用同一份全局 CSS（max-width: 700px; padding: 12px），
- * 所以这里直接用固定值，避免布局抖动时重复计算。
- */
-const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
-/** 主表共 12 等分列；款式图列 colspan = 6（覆盖状态 2 + 二维码 4） */
-const IMG_PANEL_COLSPAN = 6;
-const IMG_PANEL_TOTAL_COLS = 12;
-/** 款式图列内部 padding + 2 列网格 gap */
-const IMG_PANEL_INNER_PAD = 16; // 8 + 8
 /**
  * 款式图列由几张开始走两列网格的"张数阈值"。
  * 与 CSS `.product-imgs.is-single` / `.product-imgs.is-multi` 切换口径一致：
@@ -80,19 +66,14 @@ const IMG_CELL_GAP_PX = 8;
  *     所以 cellH、rowspan 都按比例缩小，不需要额外修改计算逻辑。
  * 调整该值即可微调"图片在版面上占多大"；0.95 = 小 5%。
  */
-const IMG_SCALE = 0.95;
 /** 明细行单元高度（与 .cell { height: 24px } 一致，用于把"像素"转成"行" */
 const TABLE_ROW_PX = 24;
 /** 款式图列里"状态行"占的 3 行（前 3 行是状态色块，第 4 行起才是图） */
 const STATUS_ROWS_BEFORE_IMG = 3;
 
-/** 尺码字典（把 setSize 翻译成 label 并按自然序排序） */
-const sizeOptions = getDictOptions(DICT_TYPE.ERP_SET_SIZE, 'string');
-const sizeSortList = sizeOptions
-  .map((opt) => ({ value: String(opt.value), label: opt.label }))
-  .sort((a, b) =>
-    a.label.localeCompare(b.label, 'zh-Hans-CN', { numeric: true }),
-  );
+/** 把 setSize 原值翻译成 label；字典没声明的兜底用原值（避免自定义尺码被丢） */
+const sizeLabelOf = (value: null | number | string | undefined) =>
+  dictLabel(DICT_TYPE.ERP_SET_SIZE, String(value ?? '')) || String(value ?? '');
 
 /** 当前打印用户 */
 const printerName = computed(
@@ -530,7 +511,7 @@ function calcImageGridHeight(): number {
 
   // 这里只用"已经在 DOM 里、naturalWidth/naturalHeight 都有效"的图来算高度。
   // 没加载完的图直接跳过，等下一轮 watcher 重新跑。
-  const ready: { cellW: number; cellH: number }[] = [];
+  const ready: { cellH: number; cellW: number }[] = [];
   for (let i = 0; i < orderImages.value.length; i++) {
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
@@ -551,15 +532,15 @@ function calcImageGridHeight(): number {
   // 用 ready 重排 cells 到 cols 列网格的行高（max per row）。
   let totalPx = 0;
   let rowMaxPx = 0;
-  for (let i = 0; i < ready.length; i++) {
+  for (const [i, element] of ready.entries()) {
     if (i % cols === 0) {
       if (i > 0) {
         totalPx += rowMaxPx + IMG_CELL_GAP_PX;
         rowMaxPx = 0;
       }
-      rowMaxPx = ready[i]!.cellH;
+      rowMaxPx = element!.cellH;
     } else {
-      rowMaxPx = Math.max(rowMaxPx, ready[i]!.cellH);
+      rowMaxPx = Math.max(rowMaxPx, element!.cellH);
     }
   }
   totalPx += rowMaxPx;
@@ -675,20 +656,39 @@ const personList = computed(() =>
   })),
 );
 
-/** 尺码 => 数量 汇总 */
+/**
+ * 尺码 => 数量 汇总
+ *
+ * 排序口径：**按订单详情 orderDetails 中 setSize 首次出现的下标升序**——
+ * 这样"尺码统计行"与详情里尺码出现的顺序一一对应，看起来不"乱"。
+ *
+ * 关键坑：
+ *   1. 同一尺码多次出现要累加（不变）。
+ *   2. **字典没声明的尺码不能丢**。原实现用 `sizeSortList.filter(has)`，
+ *      会把字典之外的尺码直接过滤掉。改用 `sizeLabelOf(value)` 兜底——
+ *      字典有就用字典 label，没有就用原值，避免自定义尺码消失在统计里。
+ *   3. firstIdx 用累加时第一次写入的下标（不是 min），保证"详情顺序"语义清晰。
+ */
 const sizeSummary = computed(() => {
-  const totals = new Map<string, number>();
-  for (const row of orderDetails.value) {
+  const acc = new Map<
+    string,
+    { firstIdx: number; label: string; qty: number }
+  >();
+  orderDetails.value.forEach((row, idx) => {
     const size = row.setSize;
     const qty = Number(row.setQuantity) || 0;
-    if (size === undefined || size === null || size === '' || qty <= 0)
-      continue;
+    if (size === undefined || size === null || size === '' || qty <= 0) return;
     const key = String(size);
-    totals.set(key, (totals.get(key) ?? 0) + qty);
-  }
-  return sizeSortList
-    .filter((s) => totals.has(s.value))
-    .map((s) => ({ label: s.label, qty: totals.get(s.value)! }));
+    const existed = acc.get(key);
+    if (existed) {
+      existed.qty += qty;
+    } else {
+      acc.set(key, { label: sizeLabelOf(size), qty, firstIdx: idx });
+    }
+  });
+  return [...acc.values()]
+    .sort((a, b) => a.firstIdx - b.firstIdx)
+    .map(({ label, qty }) => ({ label, qty }));
 });
 
 /** 汇总总数量 */
@@ -730,7 +730,13 @@ const ORDER_STATUS_COLOR_MAP: Record<string, string> = {
   purple: '#722ed1',
 };
 
-function buildOrderStatusCell() {
+interface StatusCell {
+  label: string;
+  cls: string;
+  style?: { color?: string; fontWeight: number };
+}
+
+function buildOrderStatusCell(): StatusCell {
   const value = orderDetail.value?.orderStatus;
   const label = dictLabel(DICT_TYPE.ERP_ORDER_STATUS, value);
   const dict = getDictObj(DICT_TYPE.ERP_ORDER_STATUS, value);
@@ -746,7 +752,7 @@ function buildOrderStatusCell() {
   };
 }
 
-const statusCells = computed(() => [
+const statusCells = computed<StatusCell[]>(() => [
   buildOrderStatusCell(),
   {
     label: dictLabel(
