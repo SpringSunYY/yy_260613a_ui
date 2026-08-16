@@ -17,9 +17,9 @@ import { getOrderDetailNo, printOrder } from '#/api/erp/order';
 import { $t } from '#/locales';
 import {
   DICT_TYPE,
-  ErpOrderAuditStatus,
   ErpOrderPrintStatus,
   getDictLabel,
+  getDictObj,
   getDictOptions,
 } from '#/utils';
 
@@ -54,7 +54,33 @@ const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 /** 款式图列内部 padding + 2 列网格 gap */
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
+/**
+ * 款式图列由几张开始走两列网格的"张数阈值"。
+ * 与 CSS `.product-imgs.is-single` / `.product-imgs.is-multi` 切换口径一致：
+ * 列表长度 ≤ 该值 → 单列纵向，否则 → 两列网格。
+ *
+ * 注意：这里只是"张数阈值"，**不要再当成像素 gap 用**——
+ * 像素 gap 见 IMG_CELL_GAP_PX。
+ */
 const IMG_GRID_GAP = 2;
+/**
+ * 款式图布局里图片与图片之间的实际像素 gap。
+ * 必须与 CSS 里 `.product-imgs` 的 gap 值保持一致，
+ * 否则 calcImageGridHeight() 算出的"图片区总像素高"会跟浏览器真实渲染不一致，
+ * 进而导致 rowspan 偏大、款式图列下方出现一段空白行。
+ */
+const IMG_CELL_GAP_PX = 8;
+/**
+ * 款式图视觉缩放系数（仅打印场景生效）。
+ * 图片盒子宽度 = 父格子宽度 × 该系数 + 水平居中。
+ * 配套效果：
+ *   - CSS 上 .product-img 用 IMG_SCALE 取代 width: 100%；
+ *   - DOM 上 <img>.clientWidth 自动变为 cellW × IMG_SCALE；
+ *   - calcImageGridHeight() 直接从 DOM 读 clientWidth，
+ *     所以 cellH、rowspan 都按比例缩小，不需要额外修改计算逻辑。
+ * 调整该值即可微调"图片在版面上占多大"；0.95 = 小 5%。
+ */
+const IMG_SCALE = 0.95;
 /** 明细行单元高度（与 .cell { height: 24px } 一致，用于把"像素"转成"行" */
 const TABLE_ROW_PX = 24;
 /** 款式图列里"状态行"占的 3 行（前 3 行是状态色块，第 4 行起才是图） */
@@ -460,8 +486,10 @@ const orderImages = computed<string[]>(() => {
  * 设计要点：
  *  - 不重新发网络请求加载图片尺寸——直接读 DOM 里已经渲染的 <img>
  *    元素的 naturalWidth/Height（浏览器缓存命中时是同步可读的）。
- *  - 未加载完成的图（naturalWidth === 0）按 1:1 兜底，
- *    不会阻塞主流程，也不会让整个页面卡顿（用户上一轮反馈）。
+ *  - 未加载完成的图（naturalWidth/Height === 0）直接跳过、不计入，
+ *    等下一轮 watcher（图片 load 完成）再补算；
+ *    绝不能按 1:1 兜底成"正方形"，否则横向款式图 cellH 翻倍，
+ *    会把 rowspan 撑大、款式图列下方凭空多出几行空白。
  *  - 监听 orderImages 变化 → 在 DOM 更新完成 (flush: 'post') 后再算。
  */
 const productImgsHeightPx = ref(0);
@@ -470,46 +498,71 @@ const productImgsHeightPx = ref(0);
  * 实时量 DOM 里 td.img-panel 的实际渲染净宽（不含 padding），
  * 再用 naturalWidth/Height 模拟 grid 布局算出图片区总像素高。
  * 量 DOM 宽度 → 预览和导出用同一个计算基准 → rowCount 完全一致。
+ *
+ * 关键坑（保留计算结果跟浏览器实际渲染完全一致）：
+ *   1. <img> 的 naturalWidth/naturalHeight 必须 > 0 才能参与计算。
+ *      没加载完时 aspect 兜底成 1（正方形）会把横向款式图 cellH 翻倍，
+ *      直接撑大 rowspan → 图列下方凭空多出几行空白。这里**跳过该图不计入**，
+ *      而不是用 1 兜底。
+ *   2. 图片间隙用 IMG_CELL_GAP_PX（=8px），跟 CSS .product-imgs 的 gap 同源，
+ *      不再复用 IMG_GRID_GAP（那是"张数阈值"，不是像素）。
+ *   3. **cellWidth 必须从 DOM 实际渲染的 img 上取**，不能纯靠
+ *      `(contentWidth - gap) / cols` 算 —— 预览抽屉（~570px）和导出
+ *      临时容器（固定 700px）外层宽度不同；两个端算出来的 cellWidth
+ *      可以差 30~50px，导致同一份图在两边算出不同 rowspan，导出版"多几行"。
+ *      直接读 domImgs[i].clientWidth（浏览器分给该 <img> 的实际像素宽）
+ *      作为 cellWidth，aspect 用 naturalWidth/Height 推 cellH，
+ *      函数与浏览器渲染 100% 同源。
  */
 function calcImageGridHeight(): number {
   const td = document.querySelector<HTMLElement>('#orderPrintDiv td.img-panel');
   if (!td) return 0;
 
-  // clientWidth = 内容 + padding；减去 padding 得到纯内容宽
-  const contentWidth =
-    td.clientWidth -
-    parseFloat(window.getComputedStyle(td).paddingLeft) -
-    parseFloat(window.getComputedStyle(td).paddingRight);
-  if (contentWidth <= 0) return 0;
-
   const domImgs: HTMLImageElement[] = [
-    ...(document.querySelectorAll<HTMLImageElement>('#orderPrintDiv img.product-img')),
+    ...document.querySelectorAll<HTMLImageElement>(
+      '#orderPrintDiv img.product-img',
+    ),
   ];
 
+  // 列数：≤IMG_GRID_GAP 张 → 单列；>IMG_GRID_GAP 张 → 两列网格。
+  // 与 CSS .product-imgs.is-single / .product-imgs.is-multi 切换口径一致。
   const cols = orderImages.value.length <= IMG_GRID_GAP ? 1 : 2;
-  const cellWidth =
-    cols === 1 ? contentWidth : Math.max(1, (contentWidth - IMG_GRID_GAP) / 2);
 
-  let totalPx = 0;
-  let rowMaxPx = 0;
+  // 这里只用"已经在 DOM 里、naturalWidth/naturalHeight 都有效"的图来算高度。
+  // 没加载完的图直接跳过，等下一轮 watcher 重新跑。
+  const ready: { cellW: number; cellH: number }[] = [];
   for (let i = 0; i < orderImages.value.length; i++) {
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
     const h = dom?.naturalHeight ?? 0;
-    const aspect = w > 0 && h > 0 ? w / h : 1;
-    const cellH = cellWidth / aspect;
+    if (w <= 0 || h <= 0) continue;
+    // cellWidth 从 DOM 拿 —— 浏览器分给该 <img> 的真实像素宽。
+    // 这能彻底消除"外层容器宽不一样"带来的 colspan/rowspan 漂移。
+    // 单图兜底：偶尔 img 还在某个未 layout 的中间状态，clientWidth=0；
+    // 这时候跳过，下一轮再算。
+    const cellW = dom?.clientWidth ?? 0;
+    if (cellW <= 0) continue;
+    const aspect = w / h;
+    ready.push({ cellW, cellH: cellW / aspect });
+  }
 
+  if (ready.length === 0) return 0;
+
+  // 用 ready 重排 cells 到 cols 列网格的行高（max per row）。
+  let totalPx = 0;
+  let rowMaxPx = 0;
+  for (let i = 0; i < ready.length; i++) {
     if (i % cols === 0) {
       if (i > 0) {
-        totalPx += rowMaxPx + IMG_GRID_GAP;
+        totalPx += rowMaxPx + IMG_CELL_GAP_PX;
         rowMaxPx = 0;
       }
-      rowMaxPx = cellH;
+      rowMaxPx = ready[i]!.cellH;
     } else {
-      rowMaxPx = Math.max(rowMaxPx, cellH);
+      rowMaxPx = Math.max(rowMaxPx, ready[i]!.cellH);
     }
   }
-  if (orderImages.value.length > 0) totalPx += rowMaxPx;
+  totalPx += rowMaxPx;
   return totalPx;
 }
 
@@ -535,9 +588,13 @@ watch(
       return;
     }
     // DOM 已 patch、img 元素已挂上 → 等图片加载完成后再计算真实高度
-    //（naturalWidth/Height 在图片未加载完时为 0，按 1:1 兜底会导致行数严重不准）
+    // （naturalWidth/Height 在图片未加载完时为 0，按 1:1 兜底会导致行数严重不准）
     await nextTick();
-    const imgs = [...document.querySelectorAll<HTMLImageElement>('#orderPrintDiv img.product-img')];
+    const imgs = [
+      ...document.querySelectorAll<HTMLImageElement>(
+        '#orderPrintDiv img.product-img',
+      ),
+    ];
     await Promise.all(
       imgs.map((img) => {
         if (img.complete) return Promise.resolve();
@@ -652,14 +709,45 @@ const sizeRows = computed(() => [
  * 不再硬编码 '正常' '中通' '圆领' —— 字典改了名字这里会自动跟上。
  * 字典查不到值时返回空串，由 .val 占位，避免出现误导的"占位词"。
  */
+/**
+ * 订单状态取色：只针对订单状态（statusCells[0]），
+ * 从字典 dictObj.colorType 映射到固定字体色 hex（打印 PDF 兼容性最好）。
+ * 其他两格（取件方式 / 领型）保持硬编码样式，不参与本次改造。
+ */
+const ORDER_STATUS_COLOR_MAP: Record<string, string> = {
+  default: '#333333',
+  processing: '#1677ff',
+  success: '#52c41a',
+  warning: '#faad14',
+  error: '#ff4d4f',
+  danger: '#ff4d4f',
+  pink: '#eb2f96',
+  red: '#ff4d4f',
+  orange: '#fa8c16',
+  green: '#52c41a',
+  cyan: '#13c2c2',
+  blue: '#1677ff',
+  purple: '#722ed1',
+};
+
+function buildOrderStatusCell() {
+  const value = orderDetail.value?.orderStatus;
+  const label = dictLabel(DICT_TYPE.ERP_ORDER_STATUS, value);
+  const dict = getDictObj(DICT_TYPE.ERP_ORDER_STATUS, value);
+  const cssClass = (dict?.cssClass ?? '').toString().trim();
+  const colorType = (dict?.colorType ?? '').toString().trim();
+  const colorHex =
+    ORDER_STATUS_COLOR_MAP[colorType] || ORDER_STATUS_COLOR_MAP.default;
+  return {
+    label,
+    cls: ['status-normal', cssClass].filter(Boolean).join(' '),
+    // 内联 style → 字体颜色（优先 cssClass 字典没设色时才用 colorType 映射）
+    style: cssClass ? undefined : { color: colorHex, fontWeight: 700 },
+  };
+}
+
 const statusCells = computed(() => [
-  {
-    label: dictLabel(
-      DICT_TYPE.ERP_ORDER_STATUS,
-      orderDetail.value?.orderStatus,
-    ),
-    cls: 'status-normal',
-  },
+  buildOrderStatusCell(),
   {
     label: dictLabel(
       DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
@@ -1222,6 +1310,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                   class="cell val status-cell"
                   colspan="2"
                   :class="statusCells[i]?.cls"
+                  :style="statusCells[i]?.style"
                 >
                   {{ statusCells[i]?.label ?? '' }}
                 </td>
@@ -1329,10 +1418,15 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   margin: 0;
 }
 
-/* ---------- 容器 ---------- */
+/* ---------- 容器 ----------
+ * max-width 必须与 use-order-print.ts 的容器宽（700px）对齐。
+ * 否则两边的 <img>.clientWidth 不一样，calcImageGridHeight() 算出的
+ * rowspan 会漂移，预览/导出图"行数不一样"。
+ * 早前这里写的是 900px，与导出口径不一致——已改为 700px。
+ */
 #orderPrintDiv {
   width: 100%;
-  max-width: 900px;
+  max-width: 700px;
   margin: 0 auto;
   /* 屏幕端 padding 适配 drawer 预览；纸张端由下面 @media print 拉到 ~12mm */
   padding: 12px;
@@ -1434,9 +1528,10 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   font-weight: 700;
 }
 
+/* 字体颜色由内联 style 控制（取字典 colorType 映射），
+   这里只覆盖历史 .status-normal 的背景色，避免绿底白字遮住字典色。 */
 #orderPrintDiv .status-normal {
-  background: #37a24a;
-  color: #fff;
+  background: transparent;
 }
 
 #orderPrintDiv .status-mid {
@@ -1529,16 +1624,24 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 
 #orderPrintDiv .product-img {
   display: block;
-  width: 100%;
+  /* 宽度按 IMG_SCALE 缩 5%，水平居中——打印版面图片整体小一圈。
+   * 同时把 width 显式写出来，避免浏览器对 95% 类型的"非标准百分比"
+   * 在某些 layout 阶段把它回退到 100%。配合 max-width: 100% 兜底，
+   * 保证图片不会突破父格子。 */
+  width: calc(100% * 0.95);
+  max-width: 100%;
+  margin: 0 auto;
   height: auto;
   object-fit: contain;
   background: #fff;
   min-height: 0;
 }
 
-/* 单列模式下每张图横跨整列（图片占满整个宽度） */
+/* 单列模式下每张图同样按 IMG_SCALE 占整列宽度，水平居中 */
 #orderPrintDiv .product-imgs.is-single .product-img {
-  width: 100%;
+  width: calc(100% * 0.95);
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 /* ---------- 打印信息 ---------- */

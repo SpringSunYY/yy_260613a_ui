@@ -21,7 +21,7 @@ import { formatDate } from '@vben/utils';
 import { toPng } from 'html-to-image';
 
 import { getOrderDetailNo, updateOrderPrintImage } from '#/api/erp/order';
-import { DICT_TYPE, getDictLabel, getDictOptions } from '#/utils';
+import { DICT_TYPE, getDictLabel, getDictObj, getDictOptions } from '#/utils';
 
 const PRINT_CONTAINER_ID = 'orderPrintDiv';
 
@@ -33,7 +33,55 @@ const PRINT_INNER_WIDTH = 700 - 24; // 700 - 2 * 12 padding
 const IMG_PANEL_COLSPAN = 6;
 const IMG_PANEL_TOTAL_COLS = 12;
 const IMG_PANEL_INNER_PAD = 16; // 8 + 8
+
+/**
+ * 订单状态字典 colorType → 字体色 hex（与 print-form.vue 保持一致）。
+ */
+const ORDER_STATUS_COLOR_MAP: Record<string, string> = {
+  default: '#333333',
+  processing: '#1677ff',
+  success: '#52c41a',
+  warning: '#faad14',
+  error: '#ff4d4f',
+  danger: '#ff4d4f',
+  pink: '#eb2f96',
+  red: '#ff4d4f',
+  orange: '#fa8c16',
+  green: '#52c41a',
+  cyan: '#13c2c2',
+  blue: '#1677ff',
+  purple: '#722ed1',
+};
+
+function buildOrderStatusCell(value: any): {
+  label: string;
+  className: string;
+  style: string;
+} {
+  const label = dictLabel(DICT_TYPE.ERP_ORDER_STATUS, value);
+  const dict = getDictObj(DICT_TYPE.ERP_ORDER_STATUS, value);
+  const cssClass = (dict?.cssClass ?? '').toString().trim();
+  const colorType = (dict?.colorType ?? '').toString().trim();
+  const colorHex =
+    ORDER_STATUS_COLOR_MAP[colorType] || ORDER_STATUS_COLOR_MAP.default;
+  const className = ['status-normal', cssClass].filter(Boolean).join(' ');
+  const style = cssClass ? '' : `color: ${colorHex}; font-weight: 700;`;
+  return { label, className, style };
+}
 const IMG_GRID_GAP = 2;
+/**
+ * 款式图布局里图片与图片之间的实际像素 gap。
+ * 与 print-form.vue 中的 IMG_CELL_GAP_PX 等价，并跟 CSS .product-imgs 的 gap 同源。
+ * 不要再用 IMG_GRID_GAP（那是"张数阈值"，不是像素）。
+ */
+const IMG_CELL_GAP_PX = 8;
+/**
+ * 款式图视觉缩放系数（仅打印场景生效）。
+ * 与 print-form.vue 的 IMG_SCALE 等价；两边必须保持一致，
+ * 否则同一份图在预览和导出图里占比不一样。
+ * 配套 CSS：.product-img width: calc(100% * IMG_SCALE) + 水平居中。
+ */
+const IMG_SCALE = 0.95;
 
 /**
  * 二维码 td 净空（与 print-form.vue 中的 QR_CELL_INNER_* 保持一致）：
@@ -129,7 +177,8 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
 }
 #${PRINT_CONTAINER_ID} .val-total { font-weight: 700; background: #f2f2f2; }
 #${PRINT_CONTAINER_ID} .status-cell { font-weight: 700; }
-#${PRINT_CONTAINER_ID} .status-normal { background: #37a24a; color: #fff; }
+/* 字体颜色由内联 style 控制（取字典 colorType 映射），这里只兜底 */
+#${PRINT_CONTAINER_ID} .status-normal { background: transparent; }
 #${PRINT_CONTAINER_ID} .status-mid { background: #ffff00; color: #000; }
 #${PRINT_CONTAINER_ID} .status-neck { color: #d40000; background: #eef3fb; }
 #${PRINT_CONTAINER_ID} .qr-cell { vertical-align: middle; padding: 0; height: 96px; }
@@ -185,15 +234,21 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
 }
 #${PRINT_CONTAINER_ID} .product-img {
   display: block;
-  width: 100%;
+  /* 宽度按 IMG_SCALE 缩 5%，水平居中——打印版面图片整体小一圈。
+   * 同步预览端 print-form.vue 的规则，保证两边一致。 */
+  width: calc(100% * 0.95);
+  max-width: 100%;
+  margin: 0 auto;
   height: auto;
   object-fit: contain;
   background: #fff;
   min-height: 0;
 }
-/* 单列模式下每张图占满整列宽度 */
+/* 单列模式下每张图同样按 IMG_SCALE 占整列宽度，水平居中 */
 #${PRINT_CONTAINER_ID} .product-imgs.is-single .product-img {
-  width: 100%;
+  width: calc(100% * 0.95);
+  max-width: 100%;
+  margin: 0 auto;
 }
 #${PRINT_CONTAINER_ID} .jls-meta {
   display: flex;
@@ -240,6 +295,16 @@ function getOrderImages(raw: unknown): string[] {
 /**
  * 量 DOM 里 td.img-panel 的实际渲染净宽，再用 naturalWidth/Height 模拟 grid 布局
  * 算出图片区总像素高。量 DOM 宽度 → 预览和导出用同一个计算基准 → rowCount 完全一致。
+ *
+ * 关键坑（与 print-form.vue 同款，注释见那边）：
+ *   1. naturalWidth/naturalHeight 拿不到 → 跳过，不让 aspect 兜底成 1 把横向图 cellH 翻倍。
+ *   2. 图片间隙用 IMG_CELL_GAP_PX（=8px），与 CSS 同源。
+ *   3. **cellWidth 必须从 DOM 实际渲染的 img 上取**。
+ *      预览端（#orderPrintDiv 在抽屉内 ~570px 宽）和导出端（临时容器固定 700px）
+ *      外层宽不一样；纯靠 (contentWidth - gap) / cols 算，两边会差 30~50px，
+ *      同一份图在两端算出不同 rowspan，导出版"多几行"。
+ *      直接读 domImgs[i].clientWidth 作为 cellWidth，aspect 用 naturalWidth/Height
+ *      推 cellH，函数与浏览器渲染 100% 同源，**预览/导出版行数完全一致**。
  */
 function calcImageGridHeight(
   sourceEl: HTMLElement,
@@ -248,40 +313,40 @@ function calcImageGridHeight(
   const td = sourceEl.querySelector<HTMLElement>('td.img-panel');
   if (!td) return 0;
 
-  const style = window.getComputedStyle(td);
-  const contentWidth = td.clientWidth
-    - parseFloat(style.paddingLeft)
-    - parseFloat(style.paddingRight);
-  if (contentWidth <= 0) return 0;
-
   const domImgs: HTMLImageElement[] = [
     ...sourceEl.querySelectorAll<HTMLImageElement>('img.product-img'),
   ];
 
   const cols = imgs.length <= IMG_GRID_GAP ? 1 : 2;
-  const cellWidth =
-    cols === 1 ? contentWidth : Math.max(1, (contentWidth - IMG_GRID_GAP) / 2);
 
-  let totalPx = 0;
-  let rowMaxPx = 0;
+  const ready: { cellW: number; cellH: number }[] = [];
   for (let i = 0; i < imgs.length; i++) {
     const dom = domImgs[i];
     const w = dom?.naturalWidth ?? 0;
     const h = dom?.naturalHeight ?? 0;
-    const aspect = w > 0 && h > 0 ? w / h : 1;
-    const cellH = cellWidth / aspect;
+    if (w <= 0 || h <= 0) continue;
+    const cellW = dom?.clientWidth ?? 0;
+    if (cellW <= 0) continue;
+    const aspect = w / h;
+    ready.push({ cellW, cellH: cellW / aspect });
+  }
 
+  if (ready.length === 0) return 0;
+
+  let totalPx = 0;
+  let rowMaxPx = 0;
+  for (let i = 0; i < ready.length; i++) {
     if (i % cols === 0) {
       if (i > 0) {
-        totalPx += rowMaxPx + IMG_GRID_GAP;
+        totalPx += rowMaxPx + IMG_CELL_GAP_PX;
         rowMaxPx = 0;
       }
-      rowMaxPx = cellH;
+      rowMaxPx = ready[i]!.cellH;
     } else {
-      rowMaxPx = Math.max(rowMaxPx, cellH);
+      rowMaxPx = Math.max(rowMaxPx, ready[i]!.cellH);
     }
   }
-  if (imgs.length > 0) totalPx += rowMaxPx;
+  totalPx += rowMaxPx;
   return totalPx;
 }
 
@@ -356,6 +421,7 @@ function buildHtmlBody(
     dictLabel(DICT_TYPE.ERP_NECKLINE, orderProcess?.neckline),
   ];
   const statusClasses = ['status-normal', 'status-mid', 'status-neck'];
+  const orderStatusCell = buildOrderStatusCell(orderDetail.orderStatus);
 
   // 与 print-form.vue 模板里左侧 6 列（明细新增"数量"列）保持一致
   const detailRowsHtml = rowIndexes
@@ -369,8 +435,14 @@ function buildHtmlBody(
         <td class="cell val" colspan="1">${personList[i]?.remark ?? ''}</td>`;
 
       if (i < STATUS_ROWS_BEFORE_IMG) {
+        // 第 0 行（订单状态）走字典 colorType；其他两行保持原硬编码样式
+        const isOrderStatus = i === 0;
+        const cls = isOrderStatus ? orderStatusCell.className : statusClasses[i];
+        const styleAttr = isOrderStatus && orderStatusCell.style
+          ? ` style="${orderStatusCell.style}"`
+          : '';
         const statusHtml = `
-          <td class="cell val status-cell ${statusClasses[i]}" colspan="2">${statusLabels[i] ?? ''}</td>`;
+          <td class="cell val status-cell ${cls}" colspan="2"${styleAttr}>${statusLabels[i] ?? ''}</td>`;
         return `<tr>${leftCells}${statusHtml}</tr>`;
       }
       if (i === STATUS_ROWS_BEFORE_IMG) {
