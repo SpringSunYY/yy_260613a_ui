@@ -124,6 +124,7 @@ function isCellEmpty(v: any): boolean {
 
 const totalNumber = ref(0);
 const sizeStats = ref([] as SizeStat[]);
+
 /** 触发统计重算 */
 function refreshSizeStats() {
   const map = new Map<string, number>();
@@ -245,17 +246,14 @@ function convertFromJspreadsheetData(data: any[][]): OrderApi.OrderDetail[] {
     results.push({
       id: original?.id,
       orderNo: original?.orderNo ?? props.orderNo,
-      setName: row[0] === '' ? (original?.setName ?? undefined) : row[0],
-      setNumber: row[1] === '' ? (original?.setNumber ?? undefined) : row[1],
-      setSize:
-        row[SIZE_COL_INDEX] === ''
-          ? (original?.setSize ?? undefined)
-          : row[SIZE_COL_INDEX],
+      setName: row[0] === '' ? '' : row[0],
+      setNumber: row[1] === '' ? '' : row[1],
+      setSize: row[SIZE_COL_INDEX] === '' ? '' : row[SIZE_COL_INDEX],
       setQuantity:
         row[QTY_COL_INDEX] !== '' && row[QTY_COL_INDEX] !== undefined
           ? Number(row[QTY_COL_INDEX])
-          : (original?.setQuantity ?? undefined),
-      remark: row[4] === '' ? (original?.remark ?? undefined) : row[4],
+          : undefined,
+      remark: row[4] === '' ? '' : row[4],
     } as OrderApi.OrderDetail);
   }
   return results;
