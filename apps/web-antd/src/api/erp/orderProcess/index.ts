@@ -12,6 +12,7 @@ export namespace OrderProcessApi {
     id: number; // 编号
     currentProcess?: string; // 当前工序
     orderNo?: string; // 订单号
+    orderName?: string; // 订单名称
     layoutPerson: string; // 排版人
     orderImage: string; // 图片
     qrCode: string; // 二维码

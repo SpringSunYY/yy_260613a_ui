@@ -148,7 +148,7 @@
     "copyUrl": "复制链接",
     "message": {
       "urlEmpty": "文件 URL 为空",
-      "copyFailed": "复制失败"
+      "copyFailed": "复制失败，请查看是否内容为空"
     },
     "upload": {
       "modalTitle": "上传图片",

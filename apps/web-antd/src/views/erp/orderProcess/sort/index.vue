@@ -183,7 +183,7 @@ async function reselectRow(targetId: number) {
   const next = findRowInPane(targetId, rightPane.list);
   if (!next) {
     selectedRow.value = null;
-    detailFormApi.setValues({});
+    await detailFormApi.setValues({});
     detailFormApi.setState({ commonConfig: { disabled: true } });
     return;
   }
@@ -206,6 +206,7 @@ async function loadDetail(id: number) {
       (detail as OrderProcessApi.OrderProcessSort).layoutPerson =
         currentLoginUserName.value;
     }
+    detail.orderName = selectedRow.value?.name || '';
     await detailFormApi.setValues(detail);
     detailFormApi.setState({ commonConfig: { disabled: false } });
   } finally {

@@ -4,7 +4,9 @@ import type { OrderApi } from '#/api/erp/order';
 import { computed, ref } from 'vue';
 
 import { useVbenModelDrawer } from '@vben/common-ui';
+import { Copy } from '@vben/icons';
 
+import { useClipboard } from '@vueuse/core';
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
@@ -32,6 +34,25 @@ const [Form, formApi] = useVbenForm({
   schema: useShipFormSchema(),
   showDefaultActions: false,
 });
+
+/** 剪贴板 */
+const { copy } = useClipboard({ legacy: true });
+
+/** 复制发货地址 */
+async function handleCopyShippingAddress() {
+  const values = (await formApi.getValues()) as Record<string, any>;
+  const value = values?.shippingAddress;
+  if (!value) {
+    message.warning($t('infra.file.message.copyFailed'));
+    return;
+  }
+  try {
+    await copy(value);
+    message.success($t('ui.actionMessage.copySuccess'));
+  } catch {
+    message.error($t('infra.file.message.copyFailed'));
+  }
+}
 
 const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
   async onConfirm() {
@@ -79,6 +100,21 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 
 <template>
   <ModalDrawer :title="getTitle">
-    <Form class="mx-4" />
+    <Form class="mx-4">
+      <template #shippingAddress="slotProps">
+        <AInput v-bind="slotProps">
+          <template #suffix>
+            <AButton
+              type="link"
+              size="small"
+              :title="$t('common.copy')"
+              @click="handleCopyShippingAddress"
+            >
+              <Copy class="size-4" />
+            </AButton>
+          </template>
+        </AInput>
+      </template>
+    </Form>
   </ModalDrawer>
 </template>

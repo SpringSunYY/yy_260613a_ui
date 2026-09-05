@@ -27,6 +27,17 @@ export function useFormSchema(): VbenFormSchema[] {
         show: () => false,
       },
     },
+    /** 客户 */
+    {
+      fieldName: 'customer',
+      label: $t('erp.order.field.customer'),
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.customer'),
+        ]),
+      },
+    },
     /** 订单名称 */
     {
       fieldName: 'name',
@@ -49,31 +60,6 @@ export function useFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 下单日期 */
-    {
-      fieldName: 'orderTime',
-      label: $t('erp.order.field.orderTime'),
-      rules: 'required',
-      component: 'DatePicker',
-      componentProps: {
-        showTime: true,
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-      },
-    },
-    /** 订单来源 */
-    {
-      fieldName: 'orderResource',
-      label: $t('erp.order.field.orderResource'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_ORDER_RESOURCE, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.orderResource'),
-        ]),
-      },
-    },
     /** 订单状态 */
     {
       fieldName: 'orderStatus',
@@ -87,99 +73,30 @@ export function useFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 审核状态 */
-    /*    {
-      fieldName: 'auditStatus',
-      label: $t('erp.order.field.auditStatus'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_ORDER_AUDIT_STATUS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.auditStatus'),
-        ]),
-      },
-    },*/
-    /** 当前工序 */
-    /*    {
-      fieldName: 'currentProcess',
-      label: $t('erp.order.field.currentProcess'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_ORDER_CURRENT_PROCESS, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.currentProcess'),
-        ]),
-      },
-    },*/
-    /** 客户 */
+    /** 下单日期 */
     {
-      fieldName: 'customer',
-      label: $t('erp.order.field.customer'),
-      component: 'Input',
+      fieldName: 'orderTime',
+      label: $t('erp.order.field.orderTime'),
+      rules: 'required',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.order.field.customer'),
-        ]),
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
       },
     },
-    /** 图片 */
-    /* {
-      fieldName: 'orderImage',
-      label: $t('erp.order.field.orderImage'),
-      component: 'ImageUpload',
-      componentProps: {
-        moduleType: MODULE_TYPE_ENUM.ERP,
-      },
-    },*/
-    /** 二维码 */
-    /*  {
-      fieldName: 'qrCode',
-      label: $t('erp.order.field.qrCode'),
-      component: 'ImageUpload',
-      componentProps: {
-        moduleType: MODULE_TYPE_ENUM.ERP,
-      },
-    },*/
-    /** 规格 */
-    /*  {
-      fieldName: 'specification',
-      label: $t('erp.order.field.specification'),
+    /** 预计发货时间 */
+    {
+      fieldName: 'exceptShippingTime',
+      label: $t('erp.order.field.exceptShippingTime'),
       rules: 'required',
-      component: 'I18nSelect',
+      component: 'DatePicker',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_SPECIFICATION, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.specification'),
-        ]),
+        showTime: true,
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
       },
-    },*/
-    /** 版型 */
-    /* {
-      fieldName: 'pattern',
-      label: $t('erp.order.field.pattern'),
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_PATTERN, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.pattern'),
-        ]),
-      },
-    },*/
-    /** 布料 */
-    /*  {
-      fieldName: 'fabric',
-      label: $t('erp.order.field.fabric'),
-      rules: 'required',
-      component: 'I18nSelect',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.ERP_FABRIC, 'string'),
-        placeholder: $t('ui.placeholder.select', [
-          $t('erp.order.field.fabric'),
-        ]),
-      },
-    },*/
+    },
     /** 数量 */
     {
       fieldName: 'number',
@@ -196,19 +113,6 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
       ? [
-          /** 贷款状态 */
-          {
-            fieldName: 'loanStatus',
-            label: $t('erp.order.field.loanStatus'),
-            rules: 'required',
-            component: 'I18nSelect',
-            componentProps: {
-              options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
-              placeholder: $t('ui.placeholder.select', [
-                $t('erp.order.field.loanStatus'),
-              ]),
-            },
-          },
           /** 贷款 */
           {
             fieldName: 'loan',
@@ -222,6 +126,19 @@ export function useFormSchema(): VbenFormSchema[] {
               controlsPosition: 'right',
               placeholder: $t('ui.placeholder.input', [
                 $t('erp.order.field.loan'),
+              ]),
+            },
+          },
+          /** 贷款状态 */
+          {
+            fieldName: 'loanStatus',
+            label: $t('erp.order.field.loanStatus'),
+            rules: 'required',
+            component: 'I18nSelect',
+            componentProps: {
+              options: getDictOptions(DICT_TYPE.ERP_LOAN_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.loanStatus'),
               ]),
             },
           },
@@ -242,19 +159,6 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     ...(hasAccessByCodes([ErpOrderFieldPermission.ORDER_FIELD_POSTAGE])
       ? [
-          /** 邮费状态 */
-          {
-            fieldName: 'postageStatus',
-            label: $t('erp.order.field.postageStatus'),
-            rules: 'required',
-            component: 'I18nSelect',
-            componentProps: {
-              options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
-              placeholder: $t('ui.placeholder.select', [
-                $t('erp.order.field.postageStatus'),
-              ]),
-            },
-          },
           /** 邮费 */
           {
             fieldName: 'postage',
@@ -267,6 +171,19 @@ export function useFormSchema(): VbenFormSchema[] {
               controlsPosition: 'right',
               placeholder: $t('ui.placeholder.input', [
                 $t('erp.order.field.postage'),
+              ]),
+            },
+          },
+          /** 邮费状态 */
+          {
+            fieldName: 'postageStatus',
+            label: $t('erp.order.field.postageStatus'),
+            rules: 'required',
+            component: 'I18nSelect',
+            componentProps: {
+              options: getDictOptions(DICT_TYPE.ERP_POSTAGE_STATUS, 'string'),
+              placeholder: $t('ui.placeholder.select', [
+                $t('erp.order.field.postageStatus'),
               ]),
             },
           },
@@ -283,16 +200,17 @@ export function useFormSchema(): VbenFormSchema[] {
         ]),
       },
     },
-    /** 预计发货时间 */
+    /** 订单来源 */
     {
-      fieldName: 'exceptShippingTime',
-      label: $t('erp.order.field.exceptShippingTime'),
+      fieldName: 'orderResource',
+      label: $t('erp.order.field.orderResource'),
       rules: 'required',
-      component: 'DatePicker',
+      component: 'I18nSelect',
       componentProps: {
-        showTime: true,
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
+        options: getDictOptions(DICT_TYPE.ERP_ORDER_RESOURCE, 'string'),
+        placeholder: $t('ui.placeholder.select', [
+          $t('erp.order.field.orderResource'),
+        ]),
       },
     },
     /** 发货订单 */
@@ -588,6 +506,18 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         ...getRangePickerDefaultProps(),
         allowClear: true,
+      },
+    },
+    /** 发货地址 */
+    {
+      fieldName: 'shippingAddress',
+      label: $t('erp.order.field.shippingAddress'),
+      component: 'Input',
+      componentProps: {
+        allowClear: true,
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.order.field.shippingAddress'),
+        ]),
       },
     },
     /** 打印状态 */

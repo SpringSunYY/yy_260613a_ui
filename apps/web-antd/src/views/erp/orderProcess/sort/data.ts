@@ -154,6 +154,16 @@ export function useDetailSchema(): VbenFormSchema[] {
         readonly: true,
       },
     },
+    /** 订单名称 */
+    {
+      fieldName: 'orderName',
+      label: $t('erp.order.field.name'),
+      rules: 'required',
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [$t('erp.order.field.name')]),
+      },
+    },
     /** 排版人 */
     {
       fieldName: 'layoutPerson',
@@ -291,6 +301,18 @@ export function useDetailSchema(): VbenFormSchema[] {
         ]),
       },
     },
+    /** 特别备注 */
+    {
+      fieldName: 'remark',
+      label: $t('erp.orderProcess.field.remark'),
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t('ui.placeholder.input', [
+          $t('erp.orderProcess.field.remark'),
+        ]),
+      },
+      // formItemClass: 'col-span-4',
+    },
     /** 图片 */
     {
       fieldName: 'orderImage',
@@ -316,18 +338,6 @@ export function useDetailSchema(): VbenFormSchema[] {
         moduleType: MODULE_TYPE_ENUM.ERP,
         disabled: true,
       },
-    },
-    /** 特别备注 */
-    {
-      fieldName: 'remark',
-      label: $t('erp.orderProcess.field.remark'),
-      component: 'Textarea',
-      componentProps: {
-        placeholder: $t('ui.placeholder.input', [
-          $t('erp.orderProcess.field.remark'),
-        ]),
-      },
-      formItemClass: 'col-span-4',
     },
   ];
 }

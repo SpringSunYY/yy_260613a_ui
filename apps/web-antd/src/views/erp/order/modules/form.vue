@@ -136,6 +136,9 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     if (data.orderNo) {
       // 查询订单工序
       getOrderProcessByOrderNo(data.orderNo).then((res) => {
+        if (isCopy && res.qrCode) {
+          res.qrCode = '';
+        }
         processFormApi.setValues(res);
       });
       orderNo.value = data.orderNo;
@@ -152,6 +155,10 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
         shippingNo: undefined,
         hydration: undefined,
         shippingTime: undefined,
+        loan: undefined,
+        loanStatus: undefined,
+        postage: undefined,
+        postageStatus: undefined,
         // // 清空订单明细中的 orderNo
         // orderDetails: data.orderDetails?.map((item) => ({
         //   ...item,
@@ -170,7 +177,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
     // 设置到 values
     formData.value = data;
     await formApi.setValues(formData.value);
-    processFormApi.setFieldValue('orderNo', data.orderNo);
+    await processFormApi.setFieldValue('orderNo', data.orderNo);
   },
 });
 </script>
