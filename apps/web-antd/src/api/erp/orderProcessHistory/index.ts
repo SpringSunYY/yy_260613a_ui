@@ -42,7 +42,12 @@ export function getOrderProcessHistory(id: number) {
 /** 查询订单工序记录详情根据no */
 export function getOrderProcessHistoryByNo(no: string) {
   return requestClient.get<OrderProcessHistoryApi.OrderProcessHistoryDetail[]>(
-    `/erp/order-process-history/get/no?no=${no}`,
+    `/erp/order-process-history/get/no`,
+    {
+      params: {
+        no,
+      },
+    },
   );
 }
 

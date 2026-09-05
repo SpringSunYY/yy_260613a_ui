@@ -117,7 +117,12 @@ export function getOrderProcess(id: number) {
 /** 查询订单工序 */
 export function getOrderProcessByOrderNo(orderNo: string) {
   return requestClient.get<OrderProcessApi.OrderProcess>(
-    `/erp/order-process/get-by-order-no?orderNo=${orderNo}`,
+    `/erp/order-process/get-by-order-no`,
+    {
+      params: {
+        orderNo,
+      },
+    },
   );
 }
 

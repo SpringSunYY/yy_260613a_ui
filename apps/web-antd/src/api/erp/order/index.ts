@@ -116,16 +116,20 @@ export function getOrder(id: number) {
 
 /** 查询订单信息-no*/
 export function getOrderNo(orderNo: string) {
-  return requestClient.get<OrderApi.Order>(
-    `/erp/order/get/no?orderNo=${orderNo}`,
-  );
+  return requestClient.get<OrderApi.Order>(`/erp/order/get/no`, {
+    params: {
+      orderNo,
+    },
+  });
 }
 
 /** 获取订单详细信息-no*/
 export function getOrderDetailNo(orderNo: string) {
-  return requestClient.get<OrderApi.Order>(
-    `/erp/order/get/detail/no?orderNo=${orderNo}`,
-  );
+  return requestClient.get<OrderApi.Order>(`/erp/order/get/detail/no`, {
+    params: {
+      orderNo,
+    },
+  });
 }
 
 /** 统计*/
@@ -220,6 +224,11 @@ export function exportOrder(params: OrderApi.Order) {
 /** 获得订单明细列表 */
 export function getOrderDetailListByOrderNo(orderNo: string) {
   return requestClient.get<OrderApi.OrderDetail[]>(
-    `/erp/order/order-detail/list-by-order-no?orderNo=${orderNo}`,
+    `/erp/order/order-detail/list-by-order-no`,
+    {
+      params: {
+        orderNo,
+      },
+    },
   );
 }

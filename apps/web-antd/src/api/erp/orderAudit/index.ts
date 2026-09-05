@@ -47,7 +47,12 @@ export function getOrderAudit(id: number) {
 /** 查询订单审核记录详情 */
 export function getOrderAuditByNo(no: string) {
   return requestClient.get<OrderAuditApi.OrderAuditDetail[]>(
-    `/erp/order-audit/get/no?no=${no}`,
+    `/erp/order-audit/get/no`,
+    {
+      params: {
+        no,
+      },
+    },
   );
 }
 
