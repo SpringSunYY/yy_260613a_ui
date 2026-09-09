@@ -21,7 +21,7 @@ import { formatDate } from '@vben/utils';
 import { toPng } from 'html-to-image';
 
 import { getOrderDetailNo, updateOrderPrintImage } from '#/api/erp/order';
-import { DICT_TYPE, getDictLabel, getDictObj } from '#/utils';
+import { DICT_TYPE, getDictLabel } from '#/utils';
 
 const PRINT_CONTAINER_ID = 'orderPrintDiv';
 
@@ -31,37 +31,26 @@ const TABLE_ROW_PX = 24;
 const STATUS_ROWS_BEFORE_IMG = 3;
 
 /**
- * 订单状态字典 colorType → 字体色 hex（与 print-form.vue 保持一致）。
+ * 判断是否为"正常"状态（orderStatus === '3'）
  */
-const ORDER_STATUS_COLOR_MAP: Record<string, string> = {
-  default: '#333333',
-  processing: '#1677ff',
-  success: '#52c41a',
-  warning: '#faad14',
-  error: '#ff4d4f',
-  danger: '#ff4d4f',
-  pink: '#eb2f96',
-  red: '#ff4d4f',
-  orange: '#fa8c16',
-  green: '#52c41a',
-  cyan: '#13c2c2',
-  blue: '#1677ff',
-  purple: '#722ed1',
-};
+function isNormalStatus(orderStatus: any): boolean {
+  return orderStatus === '3';
+}
 
+/**
+ * 订单状态样式：
+ * - 正常（3）→ 绿底黑字
+ * - 其他 → 红底黑字
+ */
 function buildOrderStatusCell(value: any): {
   className: string;
   label: string;
   style: string;
 } {
   const label = dictLabel(DICT_TYPE.ERP_ORDER_STATUS, value);
-  const dict = getDictObj(DICT_TYPE.ERP_ORDER_STATUS, value);
-  const cssClass = (dict?.cssClass ?? '').toString().trim();
-  const colorType = (dict?.colorType ?? '').toString().trim();
-  const colorHex =
-    ORDER_STATUS_COLOR_MAP[colorType] || ORDER_STATUS_COLOR_MAP.default;
-  const className = ['status-normal', cssClass].filter(Boolean).join(' ');
-  const style = cssClass ? '' : `color: ${colorHex}; font-weight: 700;`;
+  const normal = isNormalStatus(value);
+  const className = normal ? 'status-green' : 'status-red';
+  const style = normal ? '' : 'font-weight: 700;';
   return { label, className, style };
 }
 
@@ -176,6 +165,10 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
 #${PRINT_CONTAINER_ID} .status-cell { font-weight: 700; }
 /* 字体颜色由内联 style 控制（取字典 colorType 映射），这里只兜底 */
 #${PRINT_CONTAINER_ID} .status-normal { background: transparent; }
+/* 绿底黑字（正常状态 orderStatus === '3'） */
+#${PRINT_CONTAINER_ID} .status-green { background: #52c41a; color: #000; font-weight: 700; }
+/* 红底黑字（非正常状态） */
+#${PRINT_CONTAINER_ID} .status-red { background: #ff4d4f; color: #000; font-weight: 700; }
 #${PRINT_CONTAINER_ID} .status-mid { background: #ffff00; color: #000; }
 #${PRINT_CONTAINER_ID} .status-neck { color: #d40000; background: #eef3fb; }
 #${PRINT_CONTAINER_ID} .qr-cell { vertical-align: middle; padding: 0; height: 96px; }
@@ -358,8 +351,16 @@ function buildHtmlBody(
   qrCodeUrls: string[] = [],
   printerName = '',
   printTime = '',
+  orderStatus?: number | string,
 ): string {
   const orderImages = getOrderImages((orderDetail as any)?.orderImage);
+  const isNormal = isNormalStatus(orderStatus);
+
+  // 标题样式
+  const titleStyle = isNormal
+    ? 'background:#52c41a;color:#000;'
+    : 'background:#ff4d4f;color:#000;';
+  const titleClass = isNormal ? 'status-green' : 'status-red';
 
   const validDetails = (orderDetails ?? []).filter(
     (row) => row.setSize && Number(row.setQuantity) > 0,
@@ -489,7 +490,7 @@ function buildHtmlBody(
   <table class="jls-table">
     <colgroup>${cols}</colgroup>
     <tbody>
-      <tr><th class="cell title-cell" colspan="12">${orderTitle}</th></tr>
+      <tr><th class="cell title-cell ${titleClass}" colspan="12" style="${titleStyle}">${orderTitle}</th></tr>
 
       <tr>
         <th class="cell lbl" colspan="2">版型</th>
@@ -611,7 +612,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
   const orderImages = getOrderImages((order as any)?.orderImage);
   const qrCodeUrls = getOrderImages((order as any)?.qrCode);
 
-  const title = `JLS制单-${order.name ?? order.customer}-${order.orderNo}-${dictLabel(
+  const title = `JLS制单-${order.customer ? `${order.customer}-` : ''}${order.name ? `${order.name}-` : ''}${order.orderNo}-${dictLabel(
     DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
     order.pickupMethod,
   )}`;
@@ -651,6 +652,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
         qrCodeUrls,
         printerName,
         printTime,
+        order.orderStatus,
       );
       await waitForImages(renderEl);
       imgHeightPx = calcImageGridHeight(renderEl, orderImages);
@@ -666,6 +668,7 @@ export async function exportOrderPrintImage(orderNo: string): Promise<File> {
       qrCodeUrls,
       printerName,
       printTime,
+      order.orderStatus,
     );
 
     const element = renderEl.querySelector<HTMLElement>(

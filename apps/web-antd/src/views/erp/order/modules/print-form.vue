@@ -15,12 +15,7 @@ import { toPng } from 'html-to-image';
 
 import { getOrderDetailNo, printOrder } from '#/api/erp/order';
 import { $t } from '#/locales';
-import {
-  DICT_TYPE,
-  ErpOrderPrintStatus,
-  getDictLabel,
-  getDictObj,
-} from '#/utils';
+import { DICT_TYPE, ErpOrderPrintStatus, getDictLabel } from '#/utils';
 
 const emit = defineEmits(['success']);
 
@@ -364,7 +359,7 @@ const printObj = computed(() => {
       }
       const title =
         orderTitle.value ||
-        `JLS制单-${orderDetail.value?.name ?? orderDetail.value?.customer}-${orderDetail.value?.orderNo}`;
+        `JLS制单-${orderDetail.value?.customer ? `${orderDetail.value?.customer}-` : ''}${orderDetail.value?.name ? `${orderDetail.value?.name}-` : ''}-${orderDetail.value?.orderNo}`;
       // Firefox：同步读 iframe 自己的 title
       const doc = currentPrintIframe?.contentDocument;
       if (doc) doc.title = title;
@@ -710,25 +705,15 @@ const sizeRows = computed(() => [
  * 字典查不到值时返回空串，由 .val 占位，避免出现误导的"占位词"。
  */
 /**
- * 订单状态取色：只针对订单状态（statusCells[0]），
- * 从字典 dictObj.colorType 映射到固定字体色 hex（打印 PDF 兼容性最好）。
- * 其他两格（取件方式 / 领型）保持硬编码样式，不参与本次改造。
+ * 订单状态/标题颜色逻辑：
+ * - 状态为 3（正常）→ 绿底黑字
+ * - 其他状态 → 黑底红字
  */
-const ORDER_STATUS_COLOR_MAP: Record<string, string> = {
-  default: '#333333',
-  processing: '#1677ff',
-  success: '#52c41a',
-  warning: '#faad14',
-  error: '#ff4d4f',
-  danger: '#ff4d4f',
-  pink: '#eb2f96',
-  red: '#ff4d4f',
-  orange: '#fa8c16',
-  green: '#52c41a',
-  cyan: '#13c2c2',
-  blue: '#1677ff',
-  purple: '#722ed1',
-};
+
+/** 判断是否为"正常"状态（orderStatus === 3） */
+function isNormalStatus(): boolean {
+  return orderDetail.value?.orderStatus === '3';
+}
 
 interface StatusCell {
   label: string;
@@ -736,21 +721,26 @@ interface StatusCell {
   style?: { color?: string; fontWeight: number };
 }
 
+/** 订单状态格子样式 */
 function buildOrderStatusCell(): StatusCell {
-  const value = orderDetail.value?.orderStatus;
-  const label = dictLabel(DICT_TYPE.ERP_ORDER_STATUS, value);
-  const dict = getDictObj(DICT_TYPE.ERP_ORDER_STATUS, value);
-  const cssClass = (dict?.cssClass ?? '').toString().trim();
-  const colorType = (dict?.colorType ?? '').toString().trim();
-  const colorHex =
-    ORDER_STATUS_COLOR_MAP[colorType] || ORDER_STATUS_COLOR_MAP.default;
+  const label = dictLabel(
+    DICT_TYPE.ERP_ORDER_STATUS,
+    orderDetail.value?.orderStatus,
+  );
+  const normal = isNormalStatus();
   return {
     label,
-    cls: ['status-normal', cssClass].filter(Boolean).join(' '),
-    // 内联 style → 字体颜色（优先 cssClass 字典没设色时才用 colorType 映射）
-    style: cssClass ? undefined : { color: colorHex, fontWeight: 700 },
+    cls: normal ? 'status-green' : 'status-red',
+    style: normal ? undefined : { fontWeight: 700 },
   };
 }
+
+/** 标题样式（与订单状态同逻辑） */
+const titleStyle = computed(() =>
+  isNormalStatus()
+    ? { background: '#52c41a', color: '#000' }
+    : { background: '#ff4d4f', color: '#000' },
+);
 
 const statusCells = computed<StatusCell[]>(() => [
   buildOrderStatusCell(),
@@ -796,7 +786,7 @@ async function loadPrintData(orderNo: string) {
     orderDetails.value = (order?.orderDetails ?? []).filter(
       (row) => row.setSize && Number(row.setQuantity) > 0,
     );
-    orderTitle.value = `JLS制单-${orderDetail.value.name ?? orderDetail.value.customer}-${orderDetail.value.orderNo}-${dictLabel(
+    orderTitle.value = `JLS制单-${orderDetail.value.customer ? `${orderDetail.value.customer}-` : ''}${orderDetail.value.name ? `${orderDetail.value.name}-` : ''}${orderDetail.value.orderNo}-${dictLabel(
       DICT_TYPE.ERP_ORDER_PICKUP_METHOD,
       orderDetail.value?.pickupMethod,
     )}`;
@@ -832,6 +822,7 @@ async function waitForImages(element: HTMLElement) {
 
 /** 一次性缓存：只取"非 CSS 变量"的属性名，传给 toPng 跳过 CSS 变量拷贝 */
 let cachedNonCustomPropNames: null | string[] = null;
+
 function getNonCustomPropNames() {
   if (cachedNonCustomPropNames) return cachedNonCustomPropNames;
   const names: string[] = [];
@@ -1049,7 +1040,7 @@ async function exportAsImage() {
 
     const rawFileName =
       orderTitle.value ||
-      `JLS制单-${orderDetail.value.name ?? orderDetail.value.customer}-${orderDetail.value.orderNo}`;
+      `JLS制单-${orderDetail.value.customer ? `${orderDetail.value.customer}-` : ''}${orderDetail.value.name ? `${orderDetail.value.name}-` : ''}${orderDetail.value.orderNo}`;
     const fileName = rawFileName.replaceAll(/[<>:"/\\|?*]/g, '-');
 
     // html-to-image 走 SVG → 浏览器解码 → Canvas → dataURL，
@@ -1160,7 +1151,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
             <tbody>
               <!-- 标题 -->
               <tr>
-                <th class="cell title-cell" colspan="12">
+                <th class="cell title-cell" colspan="12" :style="titleStyle">
                   {{ orderTitle }}
                 </th>
               </tr>
@@ -1269,7 +1260,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 <th class="cell lbl" colspan="2">订单状态</th>
 
                 <!-- 二维码：紧贴订单状态右边，向下合并 表头 + 3 个状态行 = 4 行。
-                     支持多张图（qrCode 字段用 || 等分隔），用 CSS Grid 让图块撑满整个净空。 -->
+                 支持多张图（qrCode 字段用 || 等分隔），用 CSS Grid 让图块撑满整个净空。 -->
                 <td class="cell qr-cell" colspan="4" rowspan="4">
                   <div
                     v-if="qrCodes.length > 0"
@@ -1538,6 +1529,20 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
    这里只覆盖历史 .status-normal 的背景色，避免绿底白字遮住字典色。 */
 #orderPrintDiv .status-normal {
   background: transparent;
+}
+
+/* 绿底黑字（正常状态 orderStatus === 3） */
+#orderPrintDiv .status-green {
+  background: #52c41a;
+  color: #000;
+  font-weight: 700;
+}
+
+/* 红底黑字（非正常状态） */
+#orderPrintDiv .status-red {
+  background: #ff4d4f;
+  color: #000;
+  font-weight: 700;
 }
 
 #orderPrintDiv .status-mid {
