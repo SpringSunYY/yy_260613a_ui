@@ -95,11 +95,17 @@ function matchDropdownValue(
   );
 }
 
-/** 将可匹配的下拉值统一成字典中的大小写，未匹配项视为脏值清空 */
+/**
+ * 将可匹配的下拉值统一成字典中的大小写。
+ * - 命中 source：归一化成字典的标准写法
+ * - 未命中：原样保留（用户已经在 onbeforechange 策略 B 下被允许输入非标值，
+ *   这里不应再二次清空，否则外部回填 props.data 时会丢数据）
+ */
 function normalizeDropdownValue(colIndex: number, value: any): any {
   const col = props.columns[colIndex];
   if (col?.type !== 'dropdown' || value === '' || value === null) return value;
-  return matchDropdownValue(col, value) ?? '';
+  const matched = matchDropdownValue(col, value);
+  return matched ?? (typeof value === 'string' ? value.trim() : value);
 }
 
 /** 构建列配置 */
@@ -113,6 +119,9 @@ function buildColumns(): any[] {
     if (col.type === 'dropdown') {
       config.type = 'dropdown';
       config.source = resolveDropdownSource(col);
+      // 开启 jsuitse dropdown 自带的本地 like 搜索输入框；
+      // 数据项多的时候（字典 / SKU 等）特别有用，录单员边输边筛。
+      config.autocomplete = true;
     } else if (col.type === 'numeric') {
       config.type = 'numeric';
       // decimal 用于格式化显示；不限制输入，而是由 onbeforechange 做最终拦截
@@ -404,18 +413,13 @@ function init() {
         if (typeof newValue === 'string' && newValue.trim() === '') {
           return undefined;
         }
+        // 命中 source：归一化成字典里的标准大小写
         const matchedValue = matchDropdownValue(column, newValue);
         if (matchedValue !== undefined) return matchedValue;
-        console.warn('[Jspreadsheet] validation failed', {
-          reason: 'dropdown value not in source (case-insensitive), rejected',
-          rowIndex,
-          colIndex,
-          columnTitle: column.title,
-          columnType: column.type,
-          newValue,
-          source: resolveDropdownSource(column),
-        });
-        return '';
+        // 未命中：策略 B —— 允许用户先录入"字典外的口径"，
+        // 原样保留 trim 后的字符串。提交时由业务层做最终校验。
+        if (typeof newValue === 'string') return newValue.trim();
+        return newValue;
       }
       if (typeof newValue === 'string') {
         return newValue === '' ? undefined : newValue;
