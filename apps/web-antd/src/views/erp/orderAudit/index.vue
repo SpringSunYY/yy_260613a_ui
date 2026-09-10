@@ -5,7 +5,7 @@ import type { OrderAuditApi } from '#/api/erp/orderAudit';
 import { ref } from 'vue';
 
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, getCurrentTime, isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
@@ -95,8 +95,14 @@ async function handleExport() {
     });
     const data = await exportOrderAudit(await gridApi.formApi.getValues());
     downloadFileFromBlobPart({
-      fileName: `${$t('erp.orderAudit.orderAudit')}.xls`,
+      fileName: `${$t('erp.orderAudit.orderAudit')}${getCurrentTime()}.xls`,
       source: data,
+    });
+  } catch (error: any) {
+    message.error({
+      content:
+        error?.response?.msg || error?.msg || error?.message || '导出失败',
+      key: 'action_key_msg',
     });
   } finally {
     exportLoading.value = false;

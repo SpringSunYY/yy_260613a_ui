@@ -9,7 +9,12 @@ import { ref } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, formatTime, isEmpty } from '@vben/utils';
+import {
+  downloadFileFromBlobPart,
+  formatTime,
+  getCurrentTime,
+  isEmpty,
+} from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
@@ -201,9 +206,17 @@ async function handleExport() {
       key: 'action_key_msg',
     });
     const data = await exportOrder(await gridApi.formApi.getValues());
+    // download 方法会在收到错误响应时抛出异常，不会到达这里
     downloadFileFromBlobPart({
-      fileName: `${$t('erp.order.order')}.xls`,
+      fileName: `${$t('erp.order.order')}${getCurrentTime()}.xls`,
       source: data,
+    });
+  } catch (error: any) {
+    // 捕获 download 方法抛出的错误（包含后端返回的错误信息）
+    message.error({
+      content:
+        error?.response?.msg || error?.msg || error?.message || '导出失败',
+      key: 'action_key_msg',
     });
   } finally {
     exportLoading.value = false;

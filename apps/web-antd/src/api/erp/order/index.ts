@@ -215,7 +215,7 @@ export function deleteOrderList(ids: number[]) {
 export function exportOrder(params: OrderApi.Order) {
   return requestClient.download('/erp/order/export-excel', {
     params,
-    timeout: 30_000,
+    timeout: 0,
   });
 }
 

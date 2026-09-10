@@ -7,7 +7,11 @@ import type { OrderApi } from '#/api/erp/order';
 import { ref } from 'vue';
 
 import { Page, useVbenModelDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, formatPast2 } from '@vben/utils';
+import {
+  downloadFileFromBlobPart,
+  formatPast2,
+  getCurrentTime,
+} from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -75,8 +79,14 @@ async function handleExport() {
     });
     const data = await exportOrder(await gridApi.formApi.getValues());
     downloadFileFromBlobPart({
-      fileName: `${$t('erp.order.order')}.xls`,
+      fileName: `${$t('erp.order.order')}${getCurrentTime()}.xls`,
       source: data,
+    });
+  } catch (error: any) {
+    message.error({
+      content:
+        error?.response?.msg || error?.msg || error?.message || '导出失败',
+      key: 'action_key_msg',
     });
   } finally {
     exportLoading.value = false;
