@@ -1234,7 +1234,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
               <!-- 车间要求 -->
               <tr>
                 <th class="cell lbl lbl-tall" colspan="1">车间要求</th>
-                <td class="cell val val-area" colspan="11">
+                <td class="cell val val-area jls-emph-red" colspan="11">
                   {{ orderProcess?.workshopRequirements ?? '' }}
                 </td>
               </tr>
@@ -1338,7 +1338,7 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
                 <th class="cell lbl lbl-yellow lbl-tall" colspan="1">
                   包装要求
                 </th>
-                <td class="cell val val-area" colspan="11">
+                <td class="cell val val-area jls-emph-red" colspan="11">
                   {{ orderProcess?.packagingRequirements ?? '' }}
                 </td>
               </tr>
@@ -1700,6 +1700,12 @@ const [ModalDrawer, modalDrawerApi] = useVbenModelDrawer({
 
 /* ---------- 尺码统计：红色加粗 ---------- */
 #orderPrintDiv .jls-stat-text {
+  color: #d40000;
+  font-weight: 700;
+}
+
+/* ---------- 车间要求 / 包装要求：红色加粗加大 ---------- */
+#orderPrintDiv .jls-emph-red {
   color: #d40000;
   font-weight: 700;
 }

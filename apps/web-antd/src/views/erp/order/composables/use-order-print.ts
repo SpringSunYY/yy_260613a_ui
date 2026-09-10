@@ -194,6 +194,11 @@ html, body { margin: 0 !important; padding: 0 !important; height: auto !importan
   color: #d40000;
   font-weight: 700;
 }
+/* 车间要求 / 包装要求：红色加粗加大 */
+#${PRINT_CONTAINER_ID} .jls-emph-red {
+  color: #d40000;
+  font-weight: 700;
+}
 #${PRINT_CONTAINER_ID} .img-panel {
   vertical-align: top;
   padding: 8px;
@@ -527,7 +532,7 @@ function buildHtmlBody(
       </tr>
       <tr>
         <th class="cell lbl lbl-tall" colspan="1">车间要求</th>
-        <td class="cell val val-area" colspan="11">${orderProcess?.workshopRequirements ?? ''}</td>
+        <td class="cell val val-area jls-emph-red" colspan="11">${orderProcess?.workshopRequirements ?? ''}</td>
       </tr>
 
       <tr>
@@ -562,7 +567,7 @@ function buildHtmlBody(
 
       <tr>
         <th class="cell lbl lbl-yellow lbl-tall" colspan="1">包装要求</th>
-        <td class="cell val val-area" colspan="11">${orderProcess?.packagingRequirements ?? ''}</td>
+        <td class="cell val val-area jls-emph-red" colspan="11">${orderProcess?.packagingRequirements ?? ''}</td>
       </tr>
       <tr>
         <th class="cell lbl lbl-yellow lbl-tall" colspan="1">地址</th>
