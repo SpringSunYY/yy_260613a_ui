@@ -219,6 +219,14 @@ export function exportOrder(params: OrderApi.Order) {
   });
 }
 
+/** 导出订单信息 */
+export function exportShipOrder(params: OrderApi.Order) {
+  return requestClient.download('/erp/order/ship/export-excel', {
+    params,
+    timeout: 0,
+  });
+}
+
 // ==================== 子表（订单明细） ====================
 
 /** 获得订单明细列表 */

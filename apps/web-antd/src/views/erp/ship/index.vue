@@ -18,7 +18,7 @@ import dayjs from 'dayjs';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  exportOrder,
+  exportShipOrder,
   getOrderShipStatistics,
   getShipOrderPage,
 } from '#/api/erp/order';
@@ -77,7 +77,7 @@ async function handleExport() {
       content: $t('ui.actionMessage.exporting'),
       key: 'action_key_msg',
     });
-    const data = await exportOrder(await gridApi.formApi.getValues());
+    const data = await exportShipOrder(await gridApi.formApi.getValues());
     downloadFileFromBlobPart({
       fileName: `${$t('erp.order.order')}${getCurrentTime()}.xls`,
       source: data,
@@ -87,6 +87,7 @@ async function handleExport() {
       content:
         error?.response?.msg || error?.msg || error?.message || '导出失败',
       key: 'action_key_msg',
+      duration: 3,
     });
   } finally {
     exportLoading.value = false;

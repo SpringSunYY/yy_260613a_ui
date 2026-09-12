@@ -217,6 +217,7 @@ async function handleExport() {
       content:
         error?.response?.msg || error?.msg || error?.message || '导出失败',
       key: 'action_key_msg',
+      duration: 3,
     });
   } finally {
     exportLoading.value = false;

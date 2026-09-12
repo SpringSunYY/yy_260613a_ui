@@ -75,6 +75,7 @@ async function handleDelete(row: OrderVectorApi.OrderVector) {
     message.success({
       content: $t('ui.actionMessage.deleteSuccess', [row.id]),
       key: 'action_key_msg',
+      duration: 3,
     });
     onRefresh();
   } finally {
