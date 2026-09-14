@@ -215,7 +215,7 @@ function parseExceptShippingTime(exceptShippingTime: number) {
     diff = -diff;
     prefix = '还剩';
   }
-  const timeStr = formatPast2(diff);
+  const timeStr = formatPast2(diff, $t);
   return `${prefix}${timeStr}`;
 }
 

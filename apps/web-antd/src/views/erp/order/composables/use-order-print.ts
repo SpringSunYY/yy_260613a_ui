@@ -34,7 +34,7 @@ const STATUS_ROWS_BEFORE_IMG = 3;
  * 判断是否为"正常"状态（orderStatus === '3'）
  */
 function isNormalStatus(orderStatus: any): boolean {
-  return orderStatus === '3';
+  return orderStatus === '1';
 }
 
 /**

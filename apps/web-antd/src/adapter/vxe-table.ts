@@ -379,13 +379,12 @@ setupVbenVxeTable({
 
     // 这里可以自行扩展 vxe-table 的全局配置，比如自定义格式化
     // vxeUI.formats.add
-
     addFormat('formatPast2', {
       tableCellFormatMethod({ cellValue }: { cellValue: any }) {
         if (cellValue === null || cellValue === undefined) {
           return '';
         }
-        return formatPast2(cellValue);
+        return formatPast2(cellValue, $t);
       },
     });
 

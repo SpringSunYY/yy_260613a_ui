@@ -65,6 +65,7 @@ async function handleLogout() {
 
 /** 获得未读消息数 */
 async function handleNotificationGetUnreadCount(isRemind = false) {
+  if (!userStore.userInfo) return;
   unreadCount.value = await getUnreadNotifyMessageCount();
   // 提示
   if (isRemind && unreadCount.value > 0 && unreadCount.value > 0) {

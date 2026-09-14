@@ -712,7 +712,7 @@ const sizeRows = computed(() => [
 
 /** 判断是否为"正常"状态（orderStatus === 3） */
 function isNormalStatus(): boolean {
-  return orderDetail.value?.orderStatus === '3';
+  return orderDetail.value?.orderStatus === '1';
 }
 
 interface StatusCell {
