@@ -108,6 +108,59 @@ function normalizeDropdownValue(colIndex: number, value: any): any {
   return matched ?? (typeof value === 'string' ? value.trim() : value);
 }
 
+/**
+ * 计算单项与输入词的相似度评分。
+ * score 越小越"相似"（应该排越前）：
+ *   0 = 完全相等（大小写归一化）
+ *   1 = 以输入开头
+ *   2 = 包含输入
+ *   3 = 不包含
+ *
+ * @param item      下拉选项文本
+ * @param input     当前 cell 的值（搜索词）
+ */
+function getSimilarityScore(item: string, input: string): number {
+  const normalized = item.trim().toLocaleLowerCase();
+  if (normalized === input) return 0;
+  if (normalized.indexOf(input) === 0) return 1;
+  if (normalized.indexOf(input) > 0) return 2;
+  return 3;
+}
+
+/**
+ * 对 jsuites dropdown 的 DOM 节点列表做相似度排序。
+ * 当下拉打开时，调用此函数重排 .jdropdown-item，使其按匹配度排列：
+ *   精确匹配 → 前缀匹配 → 包含匹配 → 其他
+ *
+ * @param content   jsuites dropdown 的 .jdropdown-content 容器
+ * @param input     当前 cell 值（搜索词）
+ */
+function sortDropdownItemsBySimilarity(content: Element, input: string): void {
+  const inputNorm = input.trim().toLocaleLowerCase();
+  if (!inputNorm) return;
+
+  const items = [...content.querySelectorAll<HTMLElement>('.jdropdown-item')];
+  if (items.length <= 1) return;
+
+  // 按相似度 + 原始数组下标 稳定排序（score 相同保持相对顺序）
+  items.sort((a, b) => {
+    const textA = a.textContent ?? '';
+    const textB = b.textContent ?? '';
+    const scoreA = getSimilarityScore(textA, inputNorm);
+    const scoreB = getSimilarityScore(textB, inputNorm);
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return items.indexOf(a) - items.indexOf(b);
+  });
+
+  // 从容器中摘掉，再按排好序的顺序重新插入
+  items.forEach((item) => {
+    item.remove();
+  });
+  items.forEach((item) => {
+    content.append(item);
+  });
+}
+
 /** 构建列配置 */
 function buildColumns(): any[] {
   return props.columns.map((col) => {
@@ -184,9 +237,7 @@ function lockColumns() {
   if (actual <= expected) return;
   try {
     for (let i = actual - 1; i >= expected; i--) {
-      try {
-        worksheetInstance.deleteColumn?.(i);
-      } catch {}
+      worksheetInstance.deleteColumn?.(i);
     }
   } catch (error) {
     console.warn('lockColumns failed', error);
@@ -497,6 +548,97 @@ function init() {
         emitChange(data);
       });
     },
+    // jspreadsheet-ce 5 的 openEditor() 内部流程：
+    //   dispatch "oneditionstart" → 创建 div → jSuites.dropdown(a, c)
+    // c 是 jspreadsheet 内部定义的 config 对象，不接受 column.options 透传。
+    // 所以我们拦截 oncreateeditor（dropdown 实例创建后立即触发），
+    // 此时 e.children[0].dropdown 就是 jsuites dropdown 实例，
+    // 直接覆盖它的 open() 方法做相似度排序。
+    oncreateeditor: (worksheet: any, cell: HTMLElement) => {
+      const x = cell.dataset.x;
+      const col = props.columns[Number(x)];
+      const childTags: string[] = [];
+      for (let i = 0; i < cell.children.length; i++) {
+        childTags.push(
+          `${cell?.children[i]?.tagName}.${
+            cell?.children[i]?.className || '(no-class)'
+          }`,
+        );
+      }
+      // 只处理 dropdown 类型
+      if (!col || col.type !== 'dropdown') {
+        return;
+      }
+
+      // cell.children[0] 是 jsuites dropdown 的根元素 a (但 jSuites.dropdown(a,c)
+      // 还没调用，a.dropdown 还没赋值)。我们用 MutationObserver 等它就绪。
+      const dropdownEl = cell.children[0] as HTMLElement | undefined;
+      if (!dropdownEl) {
+        return;
+      }
+
+      // 已包装过就跳过
+      if ((dropdownEl as any).__wrappedSort) {
+        return;
+      }
+
+      let attempts = 0;
+      const tryWrap = () => {
+        const dropdown = (dropdownEl as any).dropdown;
+        if (
+          dropdown &&
+          typeof dropdown.open === 'function' &&
+          typeof dropdown.find === 'function'
+        ) {
+          (dropdownEl as any).__wrappedSort = true;
+
+          // 拦截 find() —— jsuites 每次用户输入搜索词时调它，内部会把
+          // items append 到 content。find 之后做相似度排序。
+          const originalFind = dropdown.find.bind(dropdown);
+          dropdown.find = function (str: string) {
+            const ret = originalFind(str);
+            // 此时 content 已经按 jsuites 自己的搜索过滤并 appendChild 完成。
+            // 但 jsuites 已经把 element 从 content 移除再按原顺序重 append。
+            // 我们直接对 content 里的 .jdropdown-item 做相似度重排。
+            try {
+              const content =
+                dropdownEl.querySelector<HTMLElement>('.jdropdown-content');
+              if (content) {
+                sortDropdownItemsBySimilarity(content, str);
+              }
+            } catch (error) {
+              console.warn('[DD] sort error', error);
+            }
+            return ret;
+          };
+
+          // 同时拦截 open() —— 第一次打开时（虽然 items 是全量，也要排序一下）
+          const originalOpen = dropdown.open.bind(dropdown);
+          dropdown.open = function () {
+            originalOpen();
+            setTimeout(() => {
+              const header =
+                dropdownEl.querySelector<HTMLInputElement>('.jdropdown-header');
+              const searchValue = header?.value?.trim() ?? '';
+              if (!searchValue) return;
+              const content =
+                dropdownEl.querySelector<HTMLElement>('.jdropdown-content');
+              if (!content) return;
+              sortDropdownItemsBySimilarity(content, searchValue);
+            }, 0);
+          };
+        } else if (attempts++ < 30) {
+          setTimeout(tryWrap, 10);
+        } else {
+          console.warn('[DD] dropdown.open never appeared after 30 attempts');
+        }
+      };
+      tryWrap();
+    },
+    // 兜底：编辑器打开时
+    oneditionstart: () => {
+      // 不做事，所有逻辑走 oncreateeditor
+    },
     oninsertrow: () => {
       const data = worksheetInstance?.getData?.() ?? [];
       emitChange(data);
@@ -686,6 +828,7 @@ defineExpose({
 :deep(.jss_spreadsheet > .jexcel_footer) {
   display: none !important;
 }
+
 :deep(.jss_spreadsheet > div:first-child) {
   display: none !important;
 }
@@ -745,26 +888,32 @@ defineExpose({
   background-color: hsl(var(--primary) / 15%) !important;
   color: hsl(var(--primary)) !important;
 }
+
 :deep(.jss_worksheet tbody .jss_freezed) {
   background-color: hsl(var(--card)) !important;
   box-shadow: 1px 1px 1px 1px hsl(var(--border)) !important;
 }
+
 :deep(.jss_worksheet thead .jss_freezed),
 :deep(.jss_worksheet tfoot .jss_freezed) {
   box-shadow: 2px 0px 2px 0.2px hsl(var(--border)) !important;
 }
+
 :deep(.jss_worksheet .editor .jupload),
 :deep(.jss_worksheet .editor .jss_richtext) {
   background-color: hsl(var(--popover)) !important;
   color: hsl(var(--foreground)) !important;
   box-shadow: 0 8px 10px 1px hsl(var(--overlay)) !important;
 }
+
 :deep(.jss_worksheet > tbody > tr > td.readonly) {
   color: hsl(var(--muted-foreground)) !important;
 }
+
 :deep(.jss_worksheet > tbody > tr.dragging > td) {
   background-color: hsl(var(--muted)) !important;
 }
+
 :deep(.fullscreen) {
   background-color: hsl(var(--background)) !important;
 }
@@ -775,6 +924,7 @@ defineExpose({
 :deep(.jss_content::-webkit-scrollbar-track) {
   background: hsl(var(--muted)) !important;
 }
+
 :deep(.jss_content::-webkit-scrollbar-thumb) {
   background: hsl(var(--border)) !important;
 }
@@ -798,27 +948,33 @@ defineExpose({
   max-height: 260px !important;
   overflow-y: auto !important;
 }
+
 :deep(.jdropdown-content) {
   background-color: hsl(var(--popover)) !important;
   color: hsl(var(--foreground)) !important;
 }
+
 :deep(.jdropdown-item) {
   color: hsl(var(--foreground)) !important;
   background-color: transparent !important;
 }
+
 :deep(.jdropdown-item:hover),
 :deep(.jdropdown-item.jdropdown-cursor),
 :deep(.jdropdown-item.jdropdown-focus) {
   background-color: hsl(var(--accent-hover)) !important;
   color: hsl(var(--foreground)) !important;
 }
+
 :deep(.jdropdown-default .jdropdown-selected) {
   background-color: hsl(var(--primary) / 15%) !important;
   color: hsl(var(--primary)) !important;
 }
+
 :deep(.jdropdown-group) {
   background-color: hsl(var(--popover)) !important;
 }
+
 :deep(.jdropdown-group-name) {
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--foreground)) !important;
@@ -831,10 +987,12 @@ defineExpose({
 :deep(.jss_worksheet .editor > input) {
   caret-color: hsl(var(--primary)) !important;
 }
+
 :deep(.jss_worksheet > tbody > tr > td > input::placeholder),
 :deep(.jss_worksheet > tbody > tr > td > textarea::placeholder) {
   color: hsl(var(--muted-foreground)) !important;
 }
+
 :deep(.jss_worksheet > tbody > tr > td > input:focus),
 :deep(.jss_worksheet > tbody > tr > td > textarea:focus),
 :deep(.jss_worksheet .editor > input:focus) {

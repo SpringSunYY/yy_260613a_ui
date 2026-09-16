@@ -39,7 +39,7 @@ function isNormalStatus(orderStatus: any): boolean {
 
 /**
  * 订单状态样式：
- * - 正常（3）→ 绿底黑字
+ * - 正常（1）→ 绿底黑字
  * - 其他 → 红底黑字
  */
 function buildOrderStatusCell(value: any): {
@@ -361,11 +361,9 @@ function buildHtmlBody(
   const orderImages = getOrderImages((orderDetail as any)?.orderImage);
   const isNormal = isNormalStatus(orderStatus);
 
-  // 标题样式
-  const titleStyle = isNormal
-    ? 'background:#52c41a;color:#000;'
-    : 'background:#ff4d4f;color:#000;';
-  const titleClass = isNormal ? 'status-green' : 'status-red';
+  // 标题样式：正常状态无背景色，非正常状态红底黑字
+  const titleStyle = isNormal ? '' : 'background:#ff4d4f;color:#000;';
+  const titleClass = isNormal ? '' : 'status-red';
 
   const validDetails = (orderDetails ?? []).filter(
     (row) => row.setSize && Number(row.setQuantity) > 0,

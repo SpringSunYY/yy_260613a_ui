@@ -735,10 +735,10 @@ function buildOrderStatusCell(): StatusCell {
   };
 }
 
-/** 标题样式（与订单状态同逻辑） */
+/** 标题样式：非正常状态红底黑字，正常状态无背景色 */
 const titleStyle = computed(() =>
   isNormalStatus()
-    ? { background: '#52c41a', color: '#000' }
+    ? {}
     : { background: '#ff4d4f', color: '#000' },
 );
 
