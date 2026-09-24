@@ -41,7 +41,7 @@ const columns = [
   },
   {
     title: $t('erp.orderDetail.field.setNumber'),
-    type: 'text' as const,
+    type: 'numeric' as const,
   },
   {
     title: $t('erp.orderDetail.field.setSize'),
